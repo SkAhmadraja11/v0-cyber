@@ -1,0 +1,196 @@
+"use client"
+
+import type React from "react"
+
+import { createClient } from "@/lib/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { Shield, Mail, Chrome, Scan } from "lucide-react"
+
+export default function LoginPage() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const supabase = createClient()
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      if (error) throw error
+      router.push("/dashboard")
+      router.refresh()
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "An error occurred")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleGoogleLogin = async () => {
+    const supabase = createClient()
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const redirectUrl =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/auth/callback`
+          : "http://localhost:3000/auth/callback"
+
+      console.log("[v0] Starting Google OAuth with redirect:", redirectUrl)
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      })
+
+      if (error) {
+        console.error("[v0] OAuth error:", error)
+        throw error
+      }
+
+      console.log("[v0] OAuth initiated successfully:", data)
+    } catch (error: unknown) {
+      console.error("[v0] Caught error:", error)
+      setError(error instanceof Error ? error.message : "An error occurred")
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-6">
+      {/* Animated background */}
+      <div className="fixed inset-0 bg-grid-pattern opacity-20" />
+      <div className="fixed inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
+
+      <div className="w-full max-w-md relative z-10">
+        <div className="flex flex-col gap-6">
+          {/* Header */}
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/30">
+              <Shield className="w-8 h-8 text-primary-foreground" />
+            </div>
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-foreground">Welcome Back</h1>
+              <p className="text-muted-foreground">Sign in to PhishGuard AI</p>
+            </div>
+          </div>
+
+          <Card className="glassmorphism border-border/50">
+            <CardHeader>
+              <CardTitle className="text-2xl">Login</CardTitle>
+              <CardDescription>Choose your preferred sign-in method</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleEmailLogin}>
+                <div className="flex flex-col gap-6">
+                  {/* Google Login */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full bg-transparent"
+                    onClick={handleGoogleLogin}
+                    disabled={isLoading}
+                  >
+                    <Chrome className="w-4 h-4 mr-2" />
+                    Continue with Google
+                  </Button>
+
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
+                    </div>
+                  </div>
+
+                  {/* Email Login */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="your@email.com"
+                        className="pl-10"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                  {error && (
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                      <p className="text-sm text-destructive">{error}</p>
+                    </div>
+                  )}
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Signing in..." : "Sign In"}
+                  </Button>
+                </div>
+              </form>
+
+              <div className="mt-6 text-center text-sm">
+                <p className="text-muted-foreground">
+                  Don't have an account?{" "}
+                  <Link href="/auth/sign-up" className="text-primary hover:underline font-medium">
+                    Sign up
+                  </Link>
+                </p>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-border/50">
+                <Link href="/auth/face-verify">
+                  <Button variant="ghost" className="w-full justify-center" size="sm">
+                    <Scan className="w-4 h-4 mr-2" />
+                    Sign in with Face Verification
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="text-center">
+            <Link href="/">
+              <Button variant="ghost" size="sm">
+                Back to Home
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
