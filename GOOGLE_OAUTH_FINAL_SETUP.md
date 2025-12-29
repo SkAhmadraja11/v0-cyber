@@ -42,9 +42,9 @@
    
 5. **Add Authorized Redirect URIs:**
    - Under **Authorized redirect URIs**, add:
-     ```
+     \`\`\`
      https://ghtgjwxtljqhlybbnhzq.supabase.co/auth/v1/callback
-     ```
+     \`\`\`
    - **IMPORTANT:** This URL must be EXACT (no trailing slash, case-sensitive)
    - Click **Save**
 
@@ -101,9 +101,9 @@
 
 **Solution:**
 1. Verify the redirect URI in Google Cloud Console exactly matches:
-   ```
+   \`\`\`
    https://ghtgjwxtljqhlybbnhzq.supabase.co/auth/v1/callback
-   ```
+   \`\`\`
 2. Make sure there are no typos, trailing slashes, or case differences
 3. Wait 5-10 minutes after saving for changes to propagate
 

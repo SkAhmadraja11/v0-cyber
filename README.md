@@ -23,7 +23,7 @@ PhishGuard AI is an enterprise-grade cybersecurity platform that combines machin
 
 ### Installation
 
-```bash
+\`\`\`bash
 # Clone the repository
 git clone https://github.com/yourusername/phishguard-ai.git
 
@@ -37,7 +37,7 @@ cp .env.example .env.local
 
 # Run development server
 npm run dev
-```
+\`\`\`
 
 Visit `http://localhost:3000` to see the application.
 
@@ -45,12 +45,12 @@ Visit `http://localhost:3000` to see the application.
 
 The system works with intelligent simulation, but for production-level accuracy, add API keys:
 
-```env
+\`\`\`env
 GOOGLE_SAFE_BROWSING_API_KEY=your_key_here
 PHISHTANK_API_KEY=your_key_here
 VIRUSTOTAL_API_KEY=your_key_here
 WHOIS_API_KEY=your_key_here
-```
+\`\`\`
 
 See `docs/API_SETUP.md` for detailed setup instructions with free tier information.
 
@@ -100,7 +100,7 @@ Real-time integration with 6 trusted security databases:
 
 Every scan provides comprehensive, structured results:
 
-```json
+\`\`\`json
 {
   "riskScore": 87,
   "classification": "PHISHING",
@@ -129,7 +129,7 @@ Every scan provides comprehensive, structured results:
   "timestamp": "2025-01-15T10:30:00.000Z",
   "processingTime": 342
 }
-```
+\`\`\`
 
 ### 3. Real-Time Scanning Interface
 
@@ -179,7 +179,7 @@ Every scan provides comprehensive, structured results:
 
 ### Multi-Source Detection Pipeline
 
-```typescript
+\`\`\`typescript
 // Parallel API calls to all sources
 const [googleResult, phishTankResult, virusTotalResult, 
        domainAgeResult, sslResult, nlpResult] = await Promise.all([
@@ -198,20 +198,20 @@ riskScore = Σ(source.confidence × source.weight)
 if (riskScore >= 70) return "PHISHING"
 if (riskScore >= 40) return "SUSPICIOUS"
 return "SAFE"
-```
+\`\`\`
 
 ### Feature Extraction
 
 50+ security indicators analyzed:
 
-```typescript
+\`\`\`typescript
 Features = {
   Structural: [url_length, subdomain_count, special_chars, path_depth],
   Content: [suspicious_keywords, brand_names, obfuscation_patterns],
   Statistical: [entropy, char_distribution, n_grams],
   External: [domain_age, ssl_status, dns_reputation, threat_intel]
 }
-```
+\`\`\`
 
 ## 🔐 Security & Privacy
 
@@ -223,7 +223,7 @@ Features = {
 
 ## 📁 Project Structure
 
-```
+\`\`\`
 phishguard-ai/
 ├── app/
 │   ├── page.tsx              # Landing page with cyber UI
@@ -247,7 +247,7 @@ phishguard-ai/
 │   └── cyber-grid.tsx        # Custom cyber UI elements
 ├── .env.example              # Environment variables template
 └── README.md
-```
+\`\`\`
 
 ## 🔍 API Documentation
 
@@ -256,15 +256,15 @@ phishguard-ai/
 Analyze a URL or email using 6 trusted data sources with parallel verification.
 
 **Request:**
-```json
+\`\`\`json
 {
   "input": "https://verify-account-urgent.com/login",
   "mode": "url"
 }
-```
+\`\`\`
 
 **Response:**
-```json
+\`\`\`json
 {
   "riskScore": 87,
   "classification": "PHISHING",
@@ -317,7 +317,7 @@ Analyze a URL or email using 6 trusted data sources with parallel verification.
   "timestamp": "2025-01-15T10:30:45.123Z",
   "processingTime": 342
 }
-```
+\`\`\`
 
 **Source Attribution:** Each detection includes the specific security database that identified the threat, providing transparency and confidence in results.
 

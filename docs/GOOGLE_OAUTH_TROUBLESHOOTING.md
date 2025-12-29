@@ -43,9 +43,9 @@ If you're seeing a "Content is blocked" error when trying to sign in with Google
 
 ### Issue: "Error 400: redirect_uri_mismatch"
 **Solution**: Make sure the redirect URI in Google Cloud Console exactly matches:
-```
+\`\`\`
 https://ghtgjwxtljqhlybbnhzq.supabase.co/auth/v1/callback
-```
+\`\`\`
 
 ### Issue: "OAuth not configured"
 **Solution**: Ensure Google provider is enabled in Supabase and credentials are saved.

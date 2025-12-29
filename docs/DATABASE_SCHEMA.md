@@ -10,7 +10,7 @@ PhishGuard AI can optionally store scan history, user data, and analytics in a d
 
 Stores all phishing detection scans performed by users.
 
-```sql
+\`\`\`sql
 CREATE TABLE scans (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -41,13 +41,13 @@ CREATE POLICY "Users can view their own scans"
 CREATE POLICY "Users can insert their own scans"
   ON scans FOR INSERT
   WITH CHECK (auth.uid() = user_id);
-```
+\`\`\`
 
 ### 2. users_profile
 
 Extended user profile information.
 
-```sql
+\`\`\`sql
 CREATE TABLE users_profile (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT,
@@ -69,13 +69,13 @@ CREATE POLICY "Users can view their own profile"
 CREATE POLICY "Users can update their own profile"
   ON users_profile FOR UPDATE
   USING (auth.uid() = id);
-```
+\`\`\`
 
 ### 3. threat_intelligence
 
 Store known phishing patterns and malicious indicators.
 
-```sql
+\`\`\`sql
 CREATE TABLE threat_intelligence (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   indicator_type VARCHAR(50) NOT NULL,
@@ -90,13 +90,13 @@ CREATE TABLE threat_intelligence (
   INDEX idx_threat_indicator (indicator_value),
   INDEX idx_threat_level (threat_level)
 );
-```
+\`\`\`
 
 ### 4. api_usage
 
 Track API calls for rate limiting and analytics.
 
-```sql
+\`\`\`sql
 CREATE TABLE api_usage (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -110,13 +110,13 @@ CREATE TABLE api_usage (
   INDEX idx_api_usage_provider (api_provider),
   INDEX idx_api_usage_created (created_at DESC)
 );
-```
+\`\`\`
 
 ## Functions
 
 ### Update user stats after scan
 
-```sql
+\`\`\`sql
 CREATE OR REPLACE FUNCTION update_user_scan_stats()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -137,7 +137,7 @@ CREATE TRIGGER trigger_update_user_stats
 AFTER INSERT ON scans
 FOR EACH ROW
 EXECUTE FUNCTION update_user_scan_stats();
-```
+\`\`\`
 
 ## Setup Instructions
 
@@ -153,14 +153,14 @@ EXECUTE FUNCTION update_user_scan_stats();
 
 Create migration files in your project:
 
-```bash
+\`\`\`bash
 # If using Supabase CLI
 supabase migration new initial_schema
 
 # Add the SQL to the generated migration file
 # Run migrations
 supabase db push
-```
+\`\`\`
 
 ### Option 3: v0 Scripts Folder
 
@@ -170,7 +170,7 @@ Place SQL files in `/scripts` folder and run them directly in v0.
 
 ### Get user scan statistics
 
-```sql
+\`\`\`sql
 SELECT 
   classification,
   COUNT(*) as count,
@@ -179,11 +179,11 @@ SELECT
 FROM scans
 WHERE user_id = 'user-uuid'
 GROUP BY classification;
-```
+\`\`\`
 
 ### Top detected threats
 
-```sql
+\`\`\`sql
 SELECT 
   input_value,
   risk_score,
@@ -193,11 +193,11 @@ FROM scans
 WHERE classification = 'PHISHING'
 ORDER BY risk_score DESC, created_at DESC
 LIMIT 10;
-```
+\`\`\`
 
 ### Detection accuracy over time
 
-```sql
+\`\`\`sql
 SELECT 
   DATE_TRUNC('day', created_at) as date,
   AVG(confidence) as avg_confidence,
@@ -205,7 +205,7 @@ SELECT
 FROM scans
 GROUP BY DATE_TRUNC('day', created_at)
 ORDER BY date DESC;
-```
+\`\`\`
 
 ## Notes
 

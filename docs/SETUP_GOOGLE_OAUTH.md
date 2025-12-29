@@ -29,9 +29,9 @@
    - User support email: Your email
    - Developer contact: Your email
 6. Add **Authorized redirect URIs**:
-   ```
+   \`\`\`
    https://ghtgjwxtljqhlybbnhzq.supabase.co/auth/v1/callback
-   ```
+   \`\`\`
 7. Click **Create**
 8. Copy the **Client Secret** and add it to Supabase (Step 1)
 
@@ -57,9 +57,9 @@ After setting up both sides:
 
 ### Redirect URI mismatch
 - Ensure the redirect URI in Google Cloud Console exactly matches:
-  ```
+  \`\`\`
   https://ghtgjwxtljqhlybbnhzq.supabase.co/auth/v1/callback
-  ```
+  \`\`\`
 - No trailing slashes, must be exact
 
 ## Testing

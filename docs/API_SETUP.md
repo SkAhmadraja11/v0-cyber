@@ -61,13 +61,13 @@ PhishGuard AI uses multiple trusted data sources for high-confidence phishing de
 
 Create a `.env.local` file in your project root:
 
-```env
+\`\`\`env
 # Copy from .env.example and add your keys
 GOOGLE_SAFE_BROWSING_API_KEY=your_actual_key_here
 PHISHTANK_API_KEY=your_actual_key_here
 VIRUSTOTAL_API_KEY=your_actual_key_here
 WHOIS_API_KEY=your_actual_key_here
-```
+\`\`\`
 
 ## Fallback Mode
 
