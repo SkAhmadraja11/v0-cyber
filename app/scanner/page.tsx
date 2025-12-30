@@ -72,7 +72,8 @@ export default function ScannerPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      <header className="border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-50">
+
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -166,7 +167,7 @@ export default function ScannerPage() {
                     placeholder="Paste the full email content here including subject and body..."
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
-                    className="min-h-[150px] text-base"
+                    className="min-h-37.5 text-base"
                     disabled={isScanning}
                   />
                 </div>
@@ -192,7 +193,7 @@ export default function ScannerPage() {
           {/* Scanning Animation - Enhanced with progress bar */}
           {isScanning && (
             <Card className="p-8 mb-8 border-2 border-primary/50 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 animate-pulse" />
+              <div className="absolute inset-0 bg-linear-to-r from-primary/5 via-primary/10 to-primary/5 animate-pulse" />
               <div className="relative space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -208,7 +209,7 @@ export default function ScannerPage() {
                 </div>
                 <div className="h-3 bg-secondary rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-primary via-primary to-primary/50 rounded-full transition-all duration-300"
+                    className="h-full bg-linear-to-r from-primary via-primary to-primary/50 rounded-full transition-all duration-300"
                     style={{ width: `${scanProgress}%` }}
                   />
                 </div>
@@ -247,7 +248,7 @@ export default function ScannerPage() {
                 <div className="relative">
                   <div className="flex items-start gap-6 mb-6">
                     <div
-                      className={`w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+                      className={`w-20 h-20 rounded-2xl flex items-center justify-center shrink-0 ${
                         result.classification === "PHISHING"
                           ? "bg-destructive/20 shadow-lg shadow-destructive/20"
                           : result.classification === "SUSPICIOUS"
@@ -312,10 +313,10 @@ export default function ScannerPage() {
                       <div
                         className={`h-full rounded-full transition-all shadow-lg ${
                           result.classification === "PHISHING"
-                            ? "bg-gradient-to-r from-destructive to-destructive/70"
+                            ? "bg-linear-to-r from-destructive to-destructive/70"
                             : result.classification === "SUSPICIOUS"
-                              ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
-                              : "bg-gradient-to-r from-green-500 to-green-600"
+                              ? "bg-linear-to-r from-yellow-500 to-yellow-600"
+                              : "bg-linear-to-r from-green-500 to-green-600"
                         }`}
                         style={{ width: `${result.riskScore}%` }}
                       />
@@ -387,7 +388,7 @@ export default function ScannerPage() {
                       key={idx}
                       className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors"
                     >
-                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                       <span className="text-foreground leading-relaxed">{reason}</span>
                     </div>
                   ))}

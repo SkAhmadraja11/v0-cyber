@@ -6,10 +6,10 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
-  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://ghtgjwxtljqhlybbnhzq.supabase.co"
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://hntttwcudnetgufhpelf.supabase.co"
   const SUPABASE_ANON_KEY =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdodGdqd3h0bGpxaGx5YmJuaHpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MjYwODUsImV4cCI6MjA4MjMwMjA4NX0.tJp39dphXOYD02QMYw2lP22w4csCReFxim763KcW1CY"
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhudHR0d2N1ZG5ldGd1ZmhwZWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3NjM2MzUsImV4cCI6MjA4MjMzOTYzNX0.acccYuow8CaDPEqE1wGhekoEaGWpUmz3YYagWCK7ejQ"
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {

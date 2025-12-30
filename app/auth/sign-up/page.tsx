@@ -100,12 +100,12 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-6">
       <div className="fixed inset-0 bg-grid-pattern opacity-20" />
-      <div className="fixed inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
+      <div className="fixed inset-0 bg-linear-to-br from-primary/10 via-transparent to-primary/5" />
 
       <div className="w-full max-w-md relative z-10">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center gap-4">
-            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/30">
+            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br from-primary to-primary/60 shadow-lg shadow-primary/30">
               <Shield className="w-8 h-8 text-primary-foreground" />
             </div>
             <div className="text-center">

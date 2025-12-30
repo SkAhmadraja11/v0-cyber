@@ -14,7 +14,11 @@ import { createClient } from "@/lib/supabase/client"
 import { User, Settings, LogOut, Shield, Activity } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
+import type {
+  User as SupabaseUser,
+  AuthChangeEvent,
+  Session,
+} from "@supabase/supabase-js"
 
 export function UserNav() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
@@ -28,13 +32,16 @@ export function UserNav() {
       } = await supabase.auth.getUser()
       setUser(user)
     }
+
     getUser()
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
+    } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, session: Session | null) => {
+        setUser(session?.user ?? null)
+      }
+    )
 
     return () => subscription.unsubscribe()
   }, [supabase.auth])
@@ -72,7 +79,7 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10 border-2 border-primary/20">
-            <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-semibold">
+            <AvatarFallback className="bg-linear-to-br from-primary to-primary/60 text-primary-foreground font-semibold">
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -81,8 +88,12 @@ export function UserNav() {
       <DropdownMenuContent className="w-56 glassmorphism" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || "User"}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+            <p className="text-sm font-medium leading-none">
+              {user.user_metadata?.full_name || "User"}
+            </p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user.email}
+            </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -103,7 +114,10 @@ export function UserNav() {
           <span>Settings</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+        <DropdownMenuItem
+          onClick={handleSignOut}
+          className="text-destructive focus:text-destructive"
+        >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>

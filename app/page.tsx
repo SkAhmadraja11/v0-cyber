@@ -28,14 +28,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <div className="fixed inset-0 bg-grid-pattern opacity-30" />
-      <div className="fixed inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
+      <div className="fixed inset-0 bg-linear-to-br from-primary/10 via-transparent to-primary/5" />
 
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/30">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-linear-to-br from-primary to-primary/60 shadow-lg shadow-primary/30">
                 <Shield className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
@@ -62,7 +62,7 @@ export default function Home() {
       <main className="relative h-[calc(100vh-80px)]">
         <div className="container mx-auto px-4 h-full flex flex-col lg:flex-row gap-6 py-6">
           {/* Left Panel - Navigation */}
-          <div className="lg:w-64 flex-shrink-0">
+          <div className="lg:w-64 shrink-0">
             <Card className="p-4 h-full glassmorphism">
               <nav className="space-y-2">
                 <button
@@ -151,15 +151,15 @@ export default function Home() {
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="p-6 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+                    <div className="p-6 rounded-xl bg-linear-to-br from-primary/10 to-primary/5 border border-primary/20">
                       <div className="text-4xl font-bold text-foreground mb-1">99.2%</div>
                       <div className="text-sm text-muted-foreground">Detection Rate</div>
                     </div>
-                    <div className="p-6 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+                    <div className="p-6 rounded-xl bg-linear-to-br from-primary/10 to-primary/5 border border-primary/20">
                       <div className="text-4xl font-bold text-foreground mb-1">15K+</div>
                       <div className="text-sm text-muted-foreground">Threats Blocked</div>
                     </div>
-                    <div className="p-6 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+                    <div className="p-6 rounded-xl bg-linear-to-br from-primary/10 to-primary/5 border border-primary/20">
                       <div className="text-4xl font-bold text-foreground mb-1">&lt;400ms</div>
                       <div className="text-sm text-muted-foreground">Response Time</div>
                     </div>
@@ -167,7 +167,7 @@ export default function Home() {
 
                   <div className="p-6 rounded-xl border-2 border-destructive/30 bg-destructive/5">
                     <div className="flex items-start gap-4">
-                      <div className="w-14 h-14 rounded-xl bg-destructive/20 flex items-center justify-center flex-shrink-0">
+                      <div className="w-14 h-14 rounded-xl bg-destructive/20 flex items-center justify-center shrink-0">
                         <AlertTriangle className="w-7 h-7 text-destructive" />
                       </div>
                       <div className="flex-1">
@@ -330,7 +330,7 @@ export default function Home() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-6 rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/20">
+                    <div className="p-6 rounded-xl bg-linear-to-br from-green-500/10 to-green-500/5 border border-green-500/20">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-muted-foreground">True Positive Rate</span>
                         <CheckCircle2 className="w-5 h-5 text-green-500" />
@@ -338,7 +338,7 @@ export default function Home() {
                       <div className="text-3xl font-bold text-foreground">99.2%</div>
                     </div>
 
-                    <div className="p-6 rounded-xl bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20">
+                    <div className="p-6 rounded-xl bg-linear-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-muted-foreground">False Positive Rate</span>
                         <Activity className="w-5 h-5 text-blue-500" />
@@ -346,7 +346,7 @@ export default function Home() {
                       <div className="text-3xl font-bold text-foreground">0.3%</div>
                     </div>
 
-                    <div className="p-6 rounded-xl bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20">
+                    <div className="p-6 rounded-xl bg-linear-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-muted-foreground">Processing Speed</span>
                         <Zap className="w-5 h-5 text-purple-500" />
@@ -354,7 +354,7 @@ export default function Home() {
                       <div className="text-3xl font-bold text-foreground">385ms</div>
                     </div>
 
-                    <div className="p-6 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-500/5 border border-orange-500/20">
+                    <div className="p-6 rounded-xl bg-linear-to-br from-orange-500/10 to-orange-500/5 border border-orange-500/20">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-muted-foreground">Model Accuracy</span>
                         <TrendingUp className="w-5 h-5 text-orange-500" />
@@ -386,7 +386,7 @@ export default function Home() {
           </div>
 
           {/* Right Panel - Quick Stats */}
-          <div className="lg:w-80 flex-shrink-0">
+          <div className="lg:w-80 shrink-0">
             <div className="space-y-4 h-full">
               <Card className="p-6 glassmorphism">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Live Status</h3>
@@ -448,7 +448,7 @@ export default function Home() {
                 </div>
               </Card>
 
-              <Card className="p-6 glassmorphism bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+              <Card className="p-6 glassmorphism bg-linear-to-br from-primary/10 to-primary/5 border-primary/20">
                 <h3 className="text-lg font-semibold text-foreground mb-2">Ready to Scan?</h3>
                 <p className="text-sm text-muted-foreground mb-4">Start detecting threats in seconds</p>
                 <Link href="/scanner">

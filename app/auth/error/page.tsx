@@ -14,7 +14,7 @@ function ErrorContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-6">
       <div className="fixed inset-0 bg-grid-pattern opacity-20" />
-      <div className="fixed inset-0 bg-gradient-to-br from-destructive/10 via-transparent to-destructive/5" />
+      <div className="fixed inset-0 bg-linear-to-br from-destructive/10 via-transparent to-destructive/5" />
 
       <div className="w-full max-w-md relative z-10">
         <Card className="glassmorphism border-destructive/50">
@@ -25,9 +25,12 @@ function ErrorContent() {
             </div>
             <CardDescription>There was a problem signing you in</CardDescription>
           </CardHeader>
+
           <CardContent className="space-y-6">
             <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-              <p className="text-sm text-destructive font-mono break-words">{error}</p>
+              <p className="text-sm text-destructive font-mono wrap-break-word">
+                {error}
+              </p>
             </div>
 
             <div className="space-y-4">
@@ -59,6 +62,7 @@ function ErrorContent() {
                   Back to Login
                 </Button>
               </Link>
+
               <Link href="/">
                 <Button variant="outline" className="w-full bg-transparent">
                   <Home className="w-4 h-4 mr-2" />

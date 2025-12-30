@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (result.classification === "PHISHING") {
-      const domain = new URL(input.startsWith("http") ? input : `https://${input}`).hostname
+      const domain = new URL(input.startsWith("http") ? input : `https://localhost:3000`).hostname
 
       await supabase.from("threat_intel").upsert(
         {

@@ -179,7 +179,8 @@ export default function TrainingPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      <header className="border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-50">
+
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -249,7 +250,7 @@ export default function TrainingPage() {
                   >
                     <div className="flex items-start gap-4">
                       <div
-                        className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${
                           module.locked ? "bg-muted" : "bg-primary/10"
                         }`}
                       >
@@ -262,7 +263,7 @@ export default function TrainingPage() {
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
                           <h4 className="text-lg font-semibold text-foreground">{module.title}</h4>
-                          {module.completed && <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 ml-2" />}
+                          {module.completed && <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 ml-2" />}
                         </div>
                         <p className="text-sm text-muted-foreground leading-relaxed mb-4">{module.description}</p>
                         <div className="flex items-center gap-4 text-sm">
@@ -329,7 +330,7 @@ export default function TrainingPage() {
 
               <Card className="p-8 mb-8">
                 <div className="flex items-start gap-4 mb-6">
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <GraduationCap className="w-6 h-6 text-primary" />
                   </div>
                   <div>
@@ -351,30 +352,30 @@ export default function TrainingPage() {
                   <h4 className="text-lg font-semibold text-foreground mb-3">Common Phishing Indicators</h4>
                   <ul className="space-y-2 mb-6">
                     <li className="flex items-start gap-2 text-foreground">
-                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                       <span>Urgent or threatening language creating a sense of panic</span>
                     </li>
                     <li className="flex items-start gap-2 text-foreground">
-                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                       <span>Suspicious sender addresses that don't match official domains</span>
                     </li>
                     <li className="flex items-start gap-2 text-foreground">
-                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                       <span>Requests for sensitive information via email or text</span>
                     </li>
                     <li className="flex items-start gap-2 text-foreground">
-                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                       <span>Poor grammar, spelling errors, or unusual formatting</span>
                     </li>
                     <li className="flex items-start gap-2 text-foreground">
-                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                       <span>Links that don't match the apparent destination</span>
                     </li>
                   </ul>
 
                   <Card className="p-4 bg-primary/5 border-primary/20 mb-6">
                     <div className="flex gap-3">
-                      <AlertTriangle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                      <AlertTriangle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                       <div>
                         <h5 className="font-semibold text-foreground mb-1">Real-World Example</h5>
                         <p className="text-sm text-foreground leading-relaxed">
@@ -419,7 +420,7 @@ export default function TrainingPage() {
                       >
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
                               selectedAnswer === index
                                 ? showResult
                                   ? index === quizzes[currentQuiz].correctAnswer
@@ -450,7 +451,7 @@ export default function TrainingPage() {
                   <Card className="p-4 mb-6 bg-muted/50 border-border">
                     <div className="flex gap-3">
                       <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
                           selectedAnswer === quizzes[currentQuiz].correctAnswer
                             ? "bg-green-500/10"
                             : "bg-destructive/10"
