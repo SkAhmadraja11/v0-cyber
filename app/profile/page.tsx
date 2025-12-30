@@ -39,7 +39,7 @@ export default async function ProfilePage() {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <div className="fixed inset-0 bg-grid-pattern opacity-20" />
-      <div className="fixed inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
+      <div className="fixed inset-0 bg-linear-to-br from-primary/10 via-transparent to-primary/5" />
 
       <div className="relative z-10 container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
@@ -50,7 +50,7 @@ export default async function ProfilePage() {
             </Button>
           </Link>
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/30">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-linear-to-br from-primary to-primary/60 shadow-lg shadow-primary/30">
               <Shield className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
@@ -80,7 +80,7 @@ export default async function ProfilePage() {
             <CardContent>
               <div className="flex items-start gap-6">
                 <Avatar className="w-24 h-24 border-4 border-primary/20">
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground text-2xl font-bold">
+                  <AvatarFallback className="bg-linear-to-br from-primary to-primary/60 text-primary-foreground text-2xl font-bold">
                     {initials}
                   </AvatarFallback>
                 </Avatar>

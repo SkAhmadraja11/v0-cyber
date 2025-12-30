@@ -95,7 +95,8 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      <header className="border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-50">
+
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -170,7 +171,7 @@ export default function DashboardPage() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl" />
             <div className="relative">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-primary/20 to-primary/10 flex items-center justify-center">
                   <Activity className="w-6 h-6 text-primary" />
                 </div>
                 <div className="flex items-center gap-1 text-sm text-green-500 font-medium">
@@ -187,7 +188,7 @@ export default function DashboardPage() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/5 rounded-full blur-2xl" />
             <div className="relative">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-destructive/20 to-destructive/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-destructive/20 to-destructive/10 flex items-center justify-center">
                   <AlertTriangle className="w-6 h-6 text-destructive" />
                 </div>
                 <div className="flex items-center gap-1 text-sm text-green-500 font-medium">
@@ -204,7 +205,7 @@ export default function DashboardPage() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-2xl" />
             <div className="relative">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-green-500/20 to-green-500/10 flex items-center justify-center">
                   <CheckCircle2 className="w-6 h-6 text-green-500" />
                 </div>
                 <div className="flex items-center gap-1 text-sm text-green-500 font-medium">
@@ -221,7 +222,7 @@ export default function DashboardPage() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl" />
             <div className="relative">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-primary/20 to-primary/10 flex items-center justify-center">
                   <Clock className="w-6 h-6 text-primary" />
                 </div>
                 <div className="flex items-center gap-1 text-sm text-green-500 font-medium">
@@ -309,7 +310,7 @@ export default function DashboardPage() {
                   >
                     <div className="flex items-start gap-3 flex-1 min-w-0">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                           scan.classification === "phishing" ? "bg-destructive/10" : "bg-green-500/10"
                         }`}
                       >
@@ -339,7 +340,7 @@ export default function DashboardPage() {
                         )}
                       </div>
                     </div>
-                    <div className="text-sm text-muted-foreground flex-shrink-0 ml-4">{scan.created_at}</div>
+                    <div className="text-sm text-muted-foreground shrink-0 ml-4">{scan.created_at}</div>
                   </div>
                 ))}
               </div>

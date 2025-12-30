@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
       })
       .select()
       .single()
+      
 
     if (insertError) {
       console.error("[v0] Error saving scan to database:", insertError)

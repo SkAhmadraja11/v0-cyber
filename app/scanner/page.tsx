@@ -26,6 +26,11 @@ export default function ScannerPage() {
   const [isScanning, setIsScanning] = useState(false)
   const [result, setResult] = useState<RealDetectionResult | null>(null)
   const [scanProgress, setScanProgress] = useState(0)
+  const sources = Array.isArray(result?.sources) ? result!.sources : []
+  const reasons = Array.isArray(result?.reasons) ? result!.reasons : []
+  
+
+
 
   const handleScan = async () => {
     if (!inputValue.trim()) return
@@ -281,7 +286,7 @@ export default function ScannerPage() {
                         <div className="h-4 w-px bg-border" />
                         <div className="flex items-center gap-2">
                           <span className="text-muted-foreground">Sources:</span>
-                          <span className="font-medium text-foreground">{result.sources.length} APIs</span>
+                          <span className="font-medium text-foreground">{sources.length} APIs</span>
                         </div>
                         <div className="h-4 w-px bg-border" />
                         <div className="flex items-center gap-2">
@@ -324,55 +329,76 @@ export default function ScannerPage() {
                   </div>
                 </div>
               </Card>
+              
+
 
               {/* Data Sources Analysis */}
-              <Card className="p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Database className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-semibold text-foreground">Trusted Data Sources</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Real-time checks across {result.sources.length} security databases
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  {result.sources.map((source, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-4 rounded-lg border transition-colors ${
-                        source.detected
-                          ? "bg-destructive/5 border-destructive/30 hover:border-destructive/50"
-                          : "bg-green-500/5 border-green-500/30 hover:border-green-500/50"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="font-semibold text-foreground">{source.name}</span>
-                            <span
-                              className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                source.detected
-                                  ? "bg-destructive/20 text-destructive"
-                                  : "bg-green-500/20 text-green-600"
-                              }`}
-                            >
-                              {source.detected ? "THREAT DETECTED" : "SAFE"}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{source.reason}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm text-muted-foreground">Confidence</div>
-                          <div className="text-xl font-bold text-foreground">{source.confidence}%</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
+              {/* Data Sources Analysis */}
+<Card className="p-8">
+  <div className="flex items-center gap-3 mb-6">
+    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+      <Database className="w-5 h-5 text-primary" />
+    </div>
+    <div>
+      <h4 className="text-xl font-semibold text-foreground">
+        Trusted Data Sources
+      </h4>
+      <p className="text-sm text-muted-foreground">
+        Real-time checks across {sources.length} security databases
+      </p>
+    </div>
+  </div>
+
+  {/* 👇 THIS BLOCK HERE */}
+  <div className="space-y-3">
+
+    {/* REPLACE old result.sources.map(...) with this */}
+    {sources.map((source, idx) => {
+      if (!source) return null
+
+      return (
+        <div
+          key={idx}
+          className={`p-4 rounded-lg border transition-colors ${
+            source.detected
+              ? "bg-destructive/5 border-destructive/30 hover:border-destructive/50"
+              : "bg-green-500/5 border-green-500/30 hover:border-green-500/50"
+          }`}
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="font-semibold text-foreground">
+                  {source.name ?? "Unknown Source"}
+                </span>
+                <span
+                  className={`px-2 py-0.5 rounded text-xs font-medium ${
+                    source.detected
+                      ? "bg-destructive/20 text-destructive"
+                      : "bg-green-500/20 text-green-600"
+                  }`}
+                >
+                  {source.detected ? "THREAT DETECTED" : "SAFE"}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {source.reason ?? "No details available"}
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-muted-foreground">Confidence</div>
+              <div className="text-xl font-bold text-foreground">
+                {source.confidence ?? 0}%
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    })}
+
+  </div>
+</Card>
+
 
               {/* Detection Reasons */}
               <Card className="p-8">
@@ -383,7 +409,7 @@ export default function ScannerPage() {
                   <h4 className="text-xl font-semibold text-foreground">Detection Summary</h4>
                 </div>
                 <div className="space-y-3">
-                  {result.reasons.map((reason, idx) => (
+                  {reasons.map((reason, idx) => (
                     <div
                       key={idx}
                       className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 border border-border hover:border-primary/30 transition-colors"
