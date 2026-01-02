@@ -27,7 +27,7 @@ export default function DocsPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="border-b border-border bg-gradient-to-b from-primary/5 to-background">
+      <section className="border-b border-border bg-linear-to-b from-primary/5 to-background">
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
@@ -128,7 +128,7 @@ export default function DocsPage() {
             {/* Step 1 */}
             <Card className="p-6 border-l-4 border-l-primary">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0">
                   1
                 </div>
                 <div>
@@ -152,7 +152,7 @@ export default function DocsPage() {
             {/* Step 2 */}
             <Card className="p-6 border-l-4 border-l-primary">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0">
                   2
                 </div>
                 <div>
@@ -162,27 +162,27 @@ export default function DocsPage() {
                   </p>
                   <ul className="space-y-2 text-muted-foreground">
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                       <span>
                         <strong>Domain Registries:</strong> WHOIS data, registration date, registrar reputation
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                       <span>
                         <strong>SSL Certificate Databases:</strong> Certificate validation, issuer verification, expiry
                         dates
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                       <span>
                         <strong>Threat Intelligence Feeds:</strong> Known malicious domains, phishing campaigns, threat
                         actor patterns
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                       <span>
                         <strong>Brand Protection Services:</strong> Trademark databases, official domain verification
                       </span>
@@ -195,7 +195,7 @@ export default function DocsPage() {
             {/* Step 3 */}
             <Card className="p-6 border-l-4 border-l-primary">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0">
                   3
                 </div>
                 <div>
@@ -254,7 +254,7 @@ export default function DocsPage() {
             {/* Step 4 */}
             <Card className="p-6 border-l-4 border-l-primary">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0">
                   4
                 </div>
                 <div>
@@ -281,7 +281,7 @@ export default function DocsPage() {
             {/* Step 5 */}
             <Card className="p-6 border-l-4 border-l-primary">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold shrink-0">
                   5
                 </div>
                 <div>
@@ -388,28 +388,28 @@ export default function DocsPage() {
               <h3 className="text-xl font-semibold mb-4 text-foreground">Security & Compliance</h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
                     <div className="font-medium text-foreground">Data Privacy</div>
                     <div className="text-sm text-muted-foreground">No data retention, real-time analysis only</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
                     <div className="font-medium text-foreground">Encrypted Transport</div>
                     <div className="text-sm text-muted-foreground">TLS 1.3 for all API communications</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
                     <div className="font-medium text-foreground">Audit Logging</div>
                     <div className="text-sm text-muted-foreground">Complete activity tracking for compliance</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
                     <div className="font-medium text-foreground">Role-Based Access</div>
                     <div className="text-sm text-muted-foreground">Granular permission controls</div>
@@ -466,7 +466,7 @@ export default function DocsPage() {
       </section>
 
       {/* CTA */}
-      <section className="border-t border-border bg-gradient-to-b from-background to-primary/5">
+      <section className="border-t border-border bg-linear-to-b from-background to-primary/5">
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-4xl font-bold text-foreground mb-4">Ready to Get Started?</h2>

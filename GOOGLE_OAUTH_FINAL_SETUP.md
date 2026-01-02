@@ -5,9 +5,9 @@
 **Google OAuth Client ID:** `7e26617f-399e-4d9a-9e25-f884e107e8b6`
 
 **Supabase Project:**
-- Project ID: `ghtgjwxtljqhlybbnhzq`
-- Project URL: `https://ghtgjwxtljqhlybbnhzq.supabase.co`
-- Callback URL: `https://ghtgjwxtljqhlybbnhzq.supabase.co/auth/v1/callback`
+- Project ID: `hntttwcudnetgufhpelf`
+- Project URL: `https://hntttwcudnetgufhpelf.supabase.co`
+- Callback URL: `https://hntttwcudnetgufhpelf.supabase.co/auth/v1/callback`
 
 ---
 
@@ -42,9 +42,9 @@
    
 5. **Add Authorized Redirect URIs:**
    - Under **Authorized redirect URIs**, add:
-     \`\`\`
-     https://ghtgjwxtljqhlybbnhzq.supabase.co/auth/v1/callback
-     \`\`\`
+     ```
+     https://hntttwcudnetgufhpelf.supabase.co/auth/v1/callback
+     ```
    - **IMPORTANT:** This URL must be EXACT (no trailing slash, case-sensitive)
    - Click **Save**
 
@@ -57,7 +57,7 @@
 ### Step 2: Supabase Dashboard Configuration
 
 1. **Go to Supabase Dashboard:**
-   - Visit: https://supabase.com/dashboard/project/ghtgjwxtljqhlybbnhzq
+   - Visit: https://supabase.com/dashboard/project/hntttwcudnetgufhpelf
    - Sign in to your account
 
 2. **Enable Google Provider:**
@@ -101,9 +101,9 @@
 
 **Solution:**
 1. Verify the redirect URI in Google Cloud Console exactly matches:
-   \`\`\`
-   https://ghtgjwxtljqhlybbnhzq.supabase.co/auth/v1/callback
-   \`\`\`
+   ```
+   https://hntttwcudnetgufhpelf.supabase.co/auth/v1/callback
+   ```
 2. Make sure there are no typos, trailing slashes, or case differences
 3. Wait 5-10 minutes after saving for changes to propagate
 
@@ -137,7 +137,7 @@
 **Cause:** The redirect URI doesn't match what's configured in Google
 
 **Solution:**
-1. The callback URL MUST be: `https://ghtgjwxtljqhlybbnhzq.supabase.co/auth/v1/callback`
+1. The callback URL MUST be: `https://hntttwcudnetgufhpelf.supabase.co/auth/v1/callback`
 2. Check for:
    - No trailing slash
    - Correct protocol (https)
@@ -161,7 +161,7 @@ Your app has built-in debug logging. Check browser console (F12) for:
 - [ ] Google Cloud Console project created/selected
 - [ ] OAuth consent screen configured
 - [ ] Client ID matches: `7e26617f-399e-4d9a-9e25-f884e107e8b6`
-- [ ] Redirect URI added: `https://ghtgjwxtljqhlybbnhzq.supabase.co/auth/v1/callback`
+- [ ] Redirect URI added: `https://hntttwcudnetgufhpelf.supabase.co/auth/v1/callback`
 - [ ] Client Secret copied
 - [ ] Supabase Google provider enabled
 - [ ] Client ID and Secret added to Supabase

@@ -6,7 +6,7 @@ If you're seeing a "Content is blocked" error when trying to sign in with Google
 
 ### Step 1: Enable Google Auth in Supabase
 
-1. Go to your Supabase Dashboard: https://supabase.com/dashboard/project/ghtgjwxtljqhlybbnhzq
+1. Go to your Supabase Dashboard: https://supabase.com/dashboard/project/hntttwcudnetgufhpelf
 2. Navigate to **Authentication** → **Providers**
 3. Find **Google** in the list
 4. Toggle it to **Enabled**
@@ -19,7 +19,7 @@ If you're seeing a "Content is blocked" error when trying to sign in with Google
 4. Click **Create Credentials** → **OAuth client ID**
 5. Choose **Web application**
 6. Add these **Authorized redirect URIs**:
-   - `https://ghtgjwxtljqhlybbnhzq.supabase.co/auth/v1/callback`
+   - `https://hntttwcudnetgufhpelf.supabase.co/auth/v1/callback`
    - `http://localhost:3000/auth/callback` (for local testing)
    - Your production URL callback (if deploying)
 
@@ -43,9 +43,9 @@ If you're seeing a "Content is blocked" error when trying to sign in with Google
 
 ### Issue: "Error 400: redirect_uri_mismatch"
 **Solution**: Make sure the redirect URI in Google Cloud Console exactly matches:
-\`\`\`
-https://ghtgjwxtljqhlybbnhzq.supabase.co/auth/v1/callback
-\`\`\`
+```
+https://hntttwcudnetgufhpelf.supabase.co/auth/v1/callback
+```
 
 ### Issue: "OAuth not configured"
 **Solution**: Ensure Google provider is enabled in Supabase and credentials are saved.

@@ -11,13 +11,13 @@ To enable Google Sign-In for your PhishGuard AI platform, follow these steps:
 5. Configure the OAuth consent screen if prompted
 6. Select **Web application** as the application type
 7. Add the following authorized redirect URIs:
-   - `https://ghtgjwxtljqhlybbnhzq.supabase.co/auth/v1/callback`
+   - `https://hntttwcudnetgufhpelf.supabase.co/auth/v1/callback`
    - `http://localhost:3000/auth/callback` (for local development)
 8. Copy your **Client ID** and **Client Secret**
 
 ## 2. Configure Supabase
 
-1. Go to your [Supabase Dashboard](https://supabase.com/dashboard/project/ghtgjwxtljqhlybbnhzq)
+1. Go to your [Supabase Dashboard](https://supabase.com/dashboard/project/hntttwcudnetgufhpelf)
 2. Navigate to **Authentication** > **Providers**
 3. Find **Google** in the list and click to expand
 4. Enable Google authentication
@@ -36,7 +36,7 @@ To enable Google Sign-In for your PhishGuard AI platform, follow these steps:
 ### Common Issues:
 
 **Error: "redirect_uri_mismatch"**
-- Make sure the redirect URI in Google Cloud Console exactly matches: `https://ghtgjwxtljqhlybbnhzq.supabase.co/auth/v1/callback`
+- Make sure the redirect URI in Google Cloud Console exactly matches: `https://hntttwcudnetgufhpelf.supabase.co/auth/v1/callback`
 
 **Error: "OAuth provider not enabled"**
 - Ensure Google provider is enabled in Supabase Dashboard under Authentication > Providers

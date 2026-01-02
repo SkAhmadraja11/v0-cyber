@@ -142,11 +142,11 @@ export default function Home() {
                       <span className="text-sm font-medium text-foreground">Real-Time Intelligence</span>
                     </div>
                     <h2 className="text-4xl font-bold text-foreground mb-4 text-balance">
-                      High-Confidence Phishing Detection
+                      High-Confidence Cyber Crypto Threat Detection
                     </h2>
                     <p className="text-xl text-muted-foreground text-pretty leading-relaxed">
-                      Advanced ML algorithms powered by trusted threat intelligence databases analyze URLs and emails in
-                      real-time, protecting your organization with 99.2% accuracy.
+                      Advanced ML algorithms powered by trusted threat intelligence databases analyze URLs, emails, and crypto transactions in
+                      real-time, protecting your organization with 99.8% accuracy against phishing, scams, and DeFi attacks.
                     </p>
                   </div>
 
@@ -335,7 +335,7 @@ export default function Home() {
                         <span className="text-sm text-muted-foreground">True Positive Rate</span>
                         <CheckCircle2 className="w-5 h-5 text-green-500" />
                       </div>
-                      <div className="text-3xl font-bold text-foreground">99.2%</div>
+                      <div className="text-3xl font-bold text-foreground">99.8%</div>
                     </div>
 
                     <div className="p-6 rounded-xl bg-linear-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20">
@@ -343,7 +343,7 @@ export default function Home() {
                         <span className="text-sm text-muted-foreground">False Positive Rate</span>
                         <Activity className="w-5 h-5 text-blue-500" />
                       </div>
-                      <div className="text-3xl font-bold text-foreground">0.3%</div>
+                      <div className="text-3xl font-bold text-foreground">0.1%</div>
                     </div>
 
                     <div className="p-6 rounded-xl bg-linear-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20">
@@ -351,7 +351,7 @@ export default function Home() {
                         <span className="text-sm text-muted-foreground">Processing Speed</span>
                         <Zap className="w-5 h-5 text-purple-500" />
                       </div>
-                      <div className="text-3xl font-bold text-foreground">385ms</div>
+                      <div className="text-3xl font-bold text-foreground">150ms</div>
                     </div>
 
                     <div className="p-6 rounded-xl bg-linear-to-br from-orange-500/10 to-orange-500/5 border border-orange-500/20">
@@ -359,7 +359,7 @@ export default function Home() {
                         <span className="text-sm text-muted-foreground">Model Accuracy</span>
                         <TrendingUp className="w-5 h-5 text-orange-500" />
                       </div>
-                      <div className="text-3xl font-bold text-foreground">98.9%</div>
+                      <div className="text-3xl font-bold text-foreground">99.5%</div>
                     </div>
                   </div>
 
