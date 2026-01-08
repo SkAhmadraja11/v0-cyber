@@ -8,6 +8,10 @@ const mockAnalytics = {
   mlAccuracy: 99.2,
   avgResponseTime: 347,
   trends: [],
+  scanTypes: [
+    { name: "URL Scans", value: 450, color: "#3b82f6" },
+    { name: "Email Analysis", value: 320, color: "#8b5cf6" },
+  ],
 }
 
 export async function GET(request: NextRequest) {
@@ -55,12 +59,30 @@ export async function GET(request: NextRequest) {
       .gte("created_at", startDate.toISOString())
       .order("created_at", { ascending: true })
 
+    const { data: scanTypesData } = await supabase
+      .from("scan_results")
+      .select("scan_type")
+      .gte("created_at", startDate.toISOString())
+
+    const scanTypesDistribution = scanTypesData?.reduce((acc: any, curr) => {
+      const type = curr.scan_type || 'url'
+      acc[type] = (acc[type] || 0) + 1
+      return acc
+    }, {})
+
+    // Format for Recharts
+    const scanTypesCharts = [
+      { name: "URL Scans", value: scanTypesDistribution?.url || 0, color: "#3b82f6" },
+      { name: "Email Analysis", value: scanTypesDistribution?.email || 0, color: "#8b5cf6" },
+    ]
+
     const analytics = {
       totalScans: totalScans || 0,
       threatsBlocked: threatsBlocked || 0,
       mlAccuracy: avgConfidence,
       avgResponseTime: 347,
       trends: trendsData || [],
+      scanTypes: scanTypesCharts,
     }
 
     return NextResponse.json(analytics)

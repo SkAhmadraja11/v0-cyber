@@ -57,6 +57,10 @@ export class GoogleSafeBrowsingClient {
         }),
       })
 
+      if (!response.ok) {
+        throw new Error(`Google Safe Browsing API error: ${response.status} ${response.statusText}`)
+      }
+
       const data: GoogleSafeBrowsingResponse = await response.json()
 
       if (data.matches && data.matches.length > 0) {
@@ -112,7 +116,15 @@ export class PhishTankClient {
         body: `url=${encodedUrl}&format=json&app_key=${this.apiKey}`,
       })
 
+      if (!response.ok) {
+        throw new Error(`PhishTank API error: ${response.status} ${response.statusText}`)
+      }
+
       const data: PhishTankResponse = await response.json()
+
+      if (!data.results) {
+        throw new Error("Invalid response format from PhishTank")
+      }
 
       if (data.results.in_database && data.results.verified) {
         return {
@@ -172,7 +184,16 @@ export class VirusTotalClient {
         headers: { "x-apikey": this.apiKey },
       })
 
+      if (!response.ok) {
+        throw new Error(`VirusTotal API error: ${response.status} ${response.statusText}`)
+      }
+
       const data: VirusTotalResponse = await response.json()
+
+      if (!data.data?.attributes?.last_analysis_stats) {
+        throw new Error("Invalid response format from VirusTotal")
+      }
+
       const stats = data.data.attributes.last_analysis_stats
 
       const maliciousCount = stats.malicious + stats.suspicious
@@ -229,7 +250,16 @@ export class WHOISClient {
         `https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=${this.apiKey}&domainName=${domain}&outputFormat=JSON`,
       )
 
+      if (!response.ok) {
+        throw new Error(`WHOIS API error: ${response.status} ${response.statusText}`)
+      }
+
       const data = await response.json()
+
+      if (!data.WhoisRecord?.createdDate) {
+        throw new Error("Invalid response format from WHOIS API")
+      }
+
       const createdDate = new Date(data.WhoisRecord.createdDate)
       const age = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24))
 

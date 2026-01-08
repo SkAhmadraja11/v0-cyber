@@ -27,23 +27,34 @@ export function UserNav() {
 
   useEffect(() => {
     const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setUser(user)
+      try {
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser()
+        if (error) throw error
+        setUser(user)
+      } catch (error) {
+        // console.error("Error fetching user:", error)
+        setUser(null)
+      }
     }
 
     getUser()
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
-        setUser(session?.user ?? null)
-      }
-    )
-
-    return () => subscription.unsubscribe()
+    try {
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(
+        (_event: AuthChangeEvent, session: Session | null) => {
+          setUser(session?.user ?? null)
+        }
+      )
+      return () => subscription.unsubscribe()
+    } catch (error) {
+      // console.log("Supabase subscription error:", error)
+      return () => { }
+    }
   }, [supabase.auth])
 
   const handleSignOut = async () => {
@@ -67,11 +78,11 @@ export function UserNav() {
 
   const initials = user.user_metadata?.full_name
     ? user.user_metadata.full_name
-        .split(" ")
-        .map((n: string) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
     : user.email?.charAt(0).toUpperCase() || "U"
 
   return (

@@ -127,6 +127,30 @@ export default function ScannerPage() {
           <Card className="p-8 mb-8 relative overflow-hidden border-2">
             <div className="absolute inset-0 bg-grid-pattern opacity-[0.03]" />
             <div className="relative space-y-6">
+              {/* Quick Fraud Checklist - Only visible when not scanning and no result */}
+              {!isScanning && !result && (
+                <div className="bg-card/50 backdrop-blur-sm border rounded-xl p-6 mb-8">
+                  <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    Quick Fraud Detection Checklist
+                  </h3>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      "Domain spelling correct",
+                      "No urgency/threat",
+                      "Official sender email",
+                      "No suspicious attachments",
+                      "You expected the message",
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-2 text-sm text-foreground/80 bg-background/50 p-3 rounded-lg border border-border/50">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Mode Toggle */}
               <div className="flex gap-2 p-1 bg-muted rounded-lg w-fit">
                 <button
