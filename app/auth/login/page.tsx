@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-import { Shield, Mail, Chrome, Scan, AlertTriangle } from "lucide-react"
+import { Shield, Mail, Chrome, AlertTriangle } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -82,13 +82,13 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden px-4">
       {/* Background */}
       <div className="fixed inset-0 bg-grid-pattern opacity-20" />
-      <div className="fixed inset-0 bg-linear-to-br from-primary/10 via-transparent to-primary/5" />
+      <div className="fixed inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
 
       <div className="w-full max-w-md relative z-10">
         <div className="flex flex-col gap-8">
           {/* Logo / Title */}
           <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/30">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/30">
               <Shield className="w-8 h-8 text-primary-foreground" />
             </div>
             <div className="text-center">
@@ -189,14 +189,7 @@ export default function LoginPage() {
                 </p>
               </div>
 
-              <div className="pt-4 border-t border-border/50">
-                <Link href="/auth/face-verify">
-                  <Button variant="ghost" size="sm" className="w-full">
-                    <Scan className="w-4 h-4 mr-2" />
-                    Sign in with Face Verification
-                  </Button>
-                </Link>
-              </div>
+
             </CardContent>
           </Card>
 

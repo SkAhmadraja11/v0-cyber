@@ -7,7 +7,7 @@ export default function SignUpSuccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-6">
       <div className="fixed inset-0 bg-grid-pattern opacity-20" />
-      <div className="fixed inset-0 bg-linear-to-br from-primary/10 via-transparent to-primary/5" />
+      <div className="fixed inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
 
       <div className="w-full max-w-md relative z-10">
         <Card className="glassmorphism border-border/50">

@@ -35,25 +35,36 @@ import { UserNav } from "@/components/user-nav"
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState<"overview" | "how-it-works" | "tech" | "features" | "analytics">("overview")
-  const [showOnboarding, setShowOnboarding] = useState(true)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false })
 
   // Check if onboarding was already seen
   useEffect(() => {
-    const seen = localStorage.getItem("onboarding_seen")
-    if (seen) {
-      setShowOnboarding(false)
-    }
+    // Small timeout to ensure hydration is complete and smoother transition
+    const timer = setTimeout(() => {
+      // Session storage persists only as long as the tab/browser is open
+      // This allows seeing onboarding again when "opening web" (new session)
+      // but NOT when navigating back within the same session.
+      const seen = sessionStorage.getItem("onboarding_session_seen")
+      if (!seen) {
+        setShowOnboarding(true)
+      }
+      setIsChecking(false)
+    }, 100)
+
+    return () => clearTimeout(timer)
   }, [])
 
   const completeOnboarding = () => {
-    localStorage.setItem("onboarding_seen", "true")
+    sessionStorage.setItem("onboarding_session_seen", "true")
     setShowOnboarding(false)
   }
 
   const scrollNext = () => {
     if (emblaApi) emblaApi.scrollNext()
   }
+
 
   const slides = [
     {
@@ -105,6 +116,16 @@ export default function Home() {
     },
   ]
 
+
+
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+      </div>
+    )
+  }
+
   if (showOnboarding) {
     return (
       <div className="min-h-screen bg-black relative overflow-hidden flex items-center justify-center font-sans">
@@ -116,7 +137,7 @@ export default function Home() {
           <div className="flex touch-pan-y">
             {slides.map((slide, index) => (
               <div key={index} className="flex-[0_0_100%] min-w-0 pl-4 py-12">
-                <div className={`relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-linear-to-br ${slide.gradient} backdrop-blur-2xl shadow-2xl h-[600px] flex flex-col items-center justify-center text-center p-8 md:p-12 transition-all duration-500 hover:scale-[1.02] hover:shadow-primary/20 group`}>
+                <div className={`relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br ${slide.gradient} backdrop-blur-2xl shadow-2xl h-[600px] flex flex-col items-center justify-center text-center p-8 md:p-12 transition-all duration-500 hover:scale-[1.02] hover:shadow-primary/20 group`}>
 
                   {/* Dynamic Background Elements */}
                   <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-white/10 transition-colors" />
@@ -163,7 +184,7 @@ export default function Home() {
                       <div className="relative">
                         <Quote className={`w-32 h-32 absolute -top-16 -left-10 text-${slide.color}-500/10 pointer-events-none`} />
                         <blockquote className="relative z-10 space-y-8">
-                          <p className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-linear-to-r from-white to-white/60 leading-tight">
+                          <p className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60 leading-tight">
                             "{slide.text}"
                           </p>
                           <footer className="text-2xl text-white/50 font-medium tracking-wide">
@@ -228,14 +249,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <div className="fixed inset-0 bg-grid-pattern opacity-30" />
-      <div className="fixed inset-0 bg-linear-to-br from-primary/10 via-transparent to-primary/5" />
+      <div className="fixed inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
 
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-primary to-primary/60 shadow-lg shadow-primary/30">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/30">
                 <Shield className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
@@ -249,11 +270,7 @@ export default function Home() {
                   Documentation
                 </Button>
               </Link>
-              <Link href="/api-access">
-                <Button variant="ghost" size="sm">
-                  API Access
-                </Button>
-              </Link>
+
               <Link href="/scanner">
                 <Button className="shadow-lg shadow-primary/20">Launch Scanner</Button>
               </Link>
@@ -344,7 +361,7 @@ export default function Home() {
 
                     <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 text-balance leading-tight">
                       Advanced AI-Powered <br />
-                      <span className="text-primary bg-clip-text text-transparent bg-linear-to-r from-primary to-purple-500">
+                      <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">
                         Cyber Threat Detection
                       </span>
                     </h2>

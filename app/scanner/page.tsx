@@ -28,7 +28,7 @@ export default function ScannerPage() {
   const [scanProgress, setScanProgress] = useState(0)
   const sources = Array.isArray(result?.sources) ? result!.sources : []
   const reasons = Array.isArray(result?.reasons) ? result!.reasons : []
-  
+
 
 
 
@@ -155,21 +155,19 @@ export default function ScannerPage() {
               <div className="flex gap-2 p-1 bg-muted rounded-lg w-fit">
                 <button
                   onClick={() => setScanMode("url")}
-                  className={`px-6 py-2 rounded-md font-medium transition-all ${
-                    scanMode === "url"
+                  className={`px-6 py-2 rounded-md font-medium transition-all ${scanMode === "url"
                       ? "bg-primary text-primary-foreground shadow-lg"
                       : "text-muted-foreground hover:text-foreground"
-                  }`}
+                    }`}
                 >
                   URL Scanner
                 </button>
                 <button
                   onClick={() => setScanMode("email")}
-                  className={`px-6 py-2 rounded-md font-medium transition-all ${
-                    scanMode === "email"
+                  className={`px-6 py-2 rounded-md font-medium transition-all ${scanMode === "email"
                       ? "bg-primary text-primary-foreground shadow-lg"
                       : "text-muted-foreground hover:text-foreground"
-                  }`}
+                    }`}
                 >
                   Email Scanner
                 </button>
@@ -222,7 +220,7 @@ export default function ScannerPage() {
           {/* Scanning Animation - Enhanced with progress bar */}
           {isScanning && (
             <Card className="p-8 mb-8 border-2 border-primary/50 relative overflow-hidden">
-              <div className="absolute inset-0 bg-linear-to-r from-primary/5 via-primary/10 to-primary/5 animate-pulse" />
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 animate-pulse" />
               <div className="relative space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -238,7 +236,7 @@ export default function ScannerPage() {
                 </div>
                 <div className="h-3 bg-secondary rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-linear-to-r from-primary via-primary to-primary/50 rounded-full transition-all duration-300"
+                    className="h-full bg-gradient-to-r from-primary via-primary to-primary/50 rounded-full transition-all duration-300"
                     style={{ width: `${scanProgress}%` }}
                   />
                 </div>
@@ -265,25 +263,23 @@ export default function ScannerPage() {
             <div className="space-y-6">
               {/* Main Result Card */}
               <Card
-                className={`p-8 border-2 relative overflow-hidden ${
-                  result.classification === "PHISHING"
+                className={`p-8 border-2 relative overflow-hidden ${result.classification === "PHISHING"
                     ? "border-destructive/50 bg-destructive/5"
                     : result.classification === "SUSPICIOUS"
                       ? "border-yellow-500/50 bg-yellow-500/5"
                       : "border-green-500/50 bg-green-500/5"
-                }`}
+                  }`}
               >
                 <div className="absolute inset-0 bg-grid-pattern opacity-[0.03]" />
                 <div className="relative">
                   <div className="flex items-start gap-6 mb-6">
                     <div
-                      className={`w-20 h-20 rounded-2xl flex items-center justify-center shrink-0 ${
-                        result.classification === "PHISHING"
+                      className={`w-20 h-20 rounded-2xl flex items-center justify-center shrink-0 ${result.classification === "PHISHING"
                           ? "bg-destructive/20 shadow-lg shadow-destructive/20"
                           : result.classification === "SUSPICIOUS"
                             ? "bg-yellow-500/20 shadow-lg shadow-yellow-500/20"
                             : "bg-green-500/20 shadow-lg shadow-green-500/20"
-                      }`}
+                        }`}
                     >
                       {result.classification === "PHISHING" ? (
                         <AlertTriangle className="w-10 h-10 text-destructive" />
@@ -327,101 +323,97 @@ export default function ScannerPage() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground font-medium">Risk Score Analysis</span>
                       <span
-                        className={`font-bold text-xl ${
-                          result.classification === "PHISHING"
+                        className={`font-bold text-xl ${result.classification === "PHISHING"
                             ? "text-destructive"
                             : result.classification === "SUSPICIOUS"
                               ? "text-yellow-600"
                               : "text-green-500"
-                        }`}
+                          }`}
                       >
                         {result.riskScore}/100
                       </span>
                     </div>
                     <div className="h-4 bg-secondary rounded-full overflow-hidden shadow-inner">
                       <div
-                        className={`h-full rounded-full transition-all shadow-lg ${
-                          result.classification === "PHISHING"
-                            ? "bg-linear-to-r from-destructive to-destructive/70"
+                        className={`h-full rounded-full transition-all shadow-lg ${result.classification === "PHISHING"
+                            ? "bg-gradient-to-r from-destructive to-destructive/70"
                             : result.classification === "SUSPICIOUS"
-                              ? "bg-linear-to-r from-yellow-500 to-yellow-600"
-                              : "bg-linear-to-r from-green-500 to-green-600"
-                        }`}
+                              ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
+                              : "bg-gradient-to-r from-green-500 to-green-600"
+                          }`}
                         style={{ width: `${result.riskScore}%` }}
                       />
                     </div>
                   </div>
                 </div>
               </Card>
-              
+
 
 
               {/* Data Sources Analysis */}
               {/* Data Sources Analysis */}
-<Card className="p-8">
-  <div className="flex items-center gap-3 mb-6">
-    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-      <Database className="w-5 h-5 text-primary" />
-    </div>
-    <div>
-      <h4 className="text-xl font-semibold text-foreground">
-        Trusted Data Sources
-      </h4>
-      <p className="text-sm text-muted-foreground">
-        Real-time checks across {sources.length} security databases
-      </p>
-    </div>
-  </div>
+              <Card className="p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Database className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-semibold text-foreground">
+                      Trusted Data Sources
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      Real-time checks across {sources.length} security databases
+                    </p>
+                  </div>
+                </div>
 
-  {/* 👇 THIS BLOCK HERE */}
-  <div className="space-y-3">
+                {/* 👇 THIS BLOCK HERE */}
+                <div className="space-y-3">
 
-    {/* REPLACE old result.sources.map(...) with this */}
-    {sources.map((source, idx) => {
-      if (!source) return null
+                  {/* REPLACE old result.sources.map(...) with this */}
+                  {sources.map((source, idx) => {
+                    if (!source) return null
 
-      return (
-        <div
-          key={idx}
-          className={`p-4 rounded-lg border transition-colors ${
-            source.detected
-              ? "bg-destructive/5 border-destructive/30 hover:border-destructive/50"
-              : "bg-green-500/5 border-green-500/30 hover:border-green-500/50"
-          }`}
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="font-semibold text-foreground">
-                  {source.name ?? "Unknown Source"}
-                </span>
-                <span
-                  className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    source.detected
-                      ? "bg-destructive/20 text-destructive"
-                      : "bg-green-500/20 text-green-600"
-                  }`}
-                >
-                  {source.detected ? "THREAT DETECTED" : "SAFE"}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {source.reason ?? "No details available"}
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-muted-foreground">Confidence</div>
-              <div className="text-xl font-bold text-foreground">
-                {source.confidence ?? 0}%
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    })}
+                    return (
+                      <div
+                        key={idx}
+                        className={`p-4 rounded-lg border transition-colors ${source.detected
+                            ? "bg-destructive/5 border-destructive/30 hover:border-destructive/50"
+                            : "bg-green-500/5 border-green-500/30 hover:border-green-500/50"
+                          }`}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="font-semibold text-foreground">
+                                {source.name ?? "Unknown Source"}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded text-xs font-medium ${source.detected
+                                    ? "bg-destructive/20 text-destructive"
+                                    : "bg-green-500/20 text-green-600"
+                                  }`}
+                              >
+                                {source.detected ? "THREAT DETECTED" : "SAFE"}
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {source.reason ?? "No details available"}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm text-muted-foreground">Confidence</div>
+                            <div className="text-xl font-bold text-foreground">
+                              {source.confidence ?? 0}%
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
 
-  </div>
-</Card>
+                </div>
+              </Card>
 
 
               {/* Detection Reasons */}

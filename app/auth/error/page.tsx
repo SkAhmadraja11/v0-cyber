@@ -14,7 +14,7 @@ function ErrorContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-6">
       <div className="fixed inset-0 bg-grid-pattern opacity-20" />
-      <div className="fixed inset-0 bg-linear-to-br from-destructive/10 via-transparent to-destructive/5" />
+      <div className="fixed inset-0 bg-gradient-to-br from-destructive/10 via-transparent to-destructive/5" />
 
       <div className="w-full max-w-md relative z-10">
         <Card className="glassmorphism border-destructive/50">
