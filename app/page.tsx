@@ -270,6 +270,16 @@ export default function Home() {
                   Documentation
                 </Button>
               </Link>
+              <Link href="/awareness">
+                <Button variant="ghost" size="sm">
+                  Security Awareness
+                </Button>
+              </Link>
+              <Link href="/encryption">
+                <Button variant="ghost" size="sm">
+                  Cryptography
+                </Button>
+              </Link>
 
               <Link href="/scanner">
                 <Button className="shadow-lg shadow-primary/20">Launch Scanner</Button>
@@ -378,9 +388,6 @@ export default function Home() {
                           <ArrowRight className="ml-2 w-5 h-5" />
                         </Button>
                       </Link>
-                      <Button variant="outline" size="lg" className="h-12 px-8 text-lg bg-background/50 backdrop-blur-sm">
-                        View Demo
-                      </Button>
                     </div>
                   </div>
                 </Card>

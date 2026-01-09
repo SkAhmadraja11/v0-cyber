@@ -10,10 +10,11 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { Shield, Mail, User, Chrome } from "lucide-react"
+import { Shield, Mail, User, Chrome, Phone } from "lucide-react"
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [fullName, setFullName] = useState("")
@@ -44,6 +45,7 @@ export default function SignUpPage() {
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        phone,
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
@@ -170,6 +172,21 @@ export default function SignUpPage() {
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="phone">Phone Number (Optional)</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="+1234567890"
+                        className="pl-10"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
                       />
                     </div>
                   </div>

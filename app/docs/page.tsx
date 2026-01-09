@@ -437,11 +437,16 @@ export default function DocsPage() {
 
             <Card className="p-6">
               <h3 className="text-xl font-semibold mb-3 text-foreground">Security Awareness Training</h3>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed mb-4">
                 Use our interactive training modules and real phishing examples to educate employees about threat
                 recognition. Track training completion and quiz scores through the admin dashboard to measure security
                 posture improvements.
               </p>
+              <Link href="/awareness">
+                <Button variant="outline" size="sm" className="bg-transparent">
+                  Explore Awareness Platform
+                </Button>
+              </Link>
             </Card>
 
             <Card className="p-6">

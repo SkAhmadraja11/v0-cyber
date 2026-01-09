@@ -12,10 +12,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-import { Shield, Mail, Chrome, AlertTriangle } from "lucide-react"
+import { Shield, Mail, Chrome, AlertTriangle, Phone } from "lucide-react"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
+  const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -23,7 +23,7 @@ export default function LoginPage() {
   const router = useRouter()
 
   /* ---------------- Email Login ---------------- */
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     const supabase = createClient()
 
@@ -31,10 +31,14 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      // Check if identifier is email or phone
+      const isPhone = /^\+?[\d\s-]{10,}$/.test(identifier)
+
+      const { error } = await supabase.auth.signInWithPassword(
+        isPhone
+          ? { phone: identifier, password }
+          : { email: identifier, password }
+      )
 
       if (error) throw error
 
@@ -104,7 +108,7 @@ export default function LoginPage() {
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl">Sign in</CardTitle>
               <CardDescription>
-                Use your email or continue with Google
+                Use your email/phone or continue with Google
               </CardDescription>
             </CardHeader>
 
@@ -128,24 +132,28 @@ export default function LoginPage() {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-background px-2 text-muted-foreground">
-                    Or sign in with email
+                    Or sign in with credentials
                   </span>
                 </div>
               </div>
 
               {/* Email Form */}
-              <form onSubmit={handleEmailLogin} className="space-y-4">
+              <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="identifier">Email or Phone Number</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    {/^\+?[\d\s-]{10,}$/.test(identifier) ? (
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    )}
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="you@example.com"
+                      id="identifier"
+                      type="text"
+                      placeholder="you@example.com or +1234567890"
                       className="pl-10"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
                       required
                     />
                   </div>

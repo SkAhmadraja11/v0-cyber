@@ -99,6 +99,17 @@ export default function TrainingPage() {
       lessons: 10,
       icon: Shield,
     },
+    {
+      id: 6,
+      title: "Cryptography & Key Management",
+      description: "Learn encryption fundamentals and how to protect data",
+      duration: "25 mins",
+      difficulty: "intermediate",
+      completed: false,
+      locked: false,
+      lessons: 8,
+      icon: Lock,
+    },
   ]
 
   const quizzes: Quiz[] = [
@@ -214,9 +225,15 @@ export default function TrainingPage() {
             {/* Title */}
             <div className="text-center mb-12">
               <h1 className="text-4xl font-bold text-foreground mb-4 text-balance">Phishing Awareness Training</h1>
-              <p className="text-lg text-muted-foreground text-pretty max-w-2xl mx-auto">
+              <p className="text-lg text-muted-foreground text-pretty max-w-2xl mx-auto mb-6">
                 Interactive modules designed to educate users on identifying and preventing phishing attacks
               </p>
+              <Link href="/awareness">
+                <Button variant="outline" className="bg-transparent">
+                  <Shield className="w-4 h-4 mr-2" />
+                  View Awareness Dashboard
+                </Button>
+              </Link>
             </div>
 
             {/* Progress Overview */}
@@ -243,16 +260,14 @@ export default function TrainingPage() {
                 return (
                   <Card
                     key={module.id}
-                    className={`p-6 ${
-                      module.locked ? "opacity-60" : "hover:shadow-lg transition-shadow cursor-pointer"
-                    }`}
+                    className={`p-6 ${module.locked ? "opacity-60" : "hover:shadow-lg transition-shadow cursor-pointer"
+                      }`}
                     onClick={() => !module.locked && setSelectedModule(module.id)}
                   >
                     <div className="flex items-start gap-4">
                       <div
-                        className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${
-                          module.locked ? "bg-muted" : "bg-primary/10"
-                        }`}
+                        className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${module.locked ? "bg-muted" : "bg-primary/10"
+                          }`}
                       >
                         {module.locked ? (
                           <Lock className="w-6 h-6 text-muted-foreground" />
@@ -406,29 +421,27 @@ export default function TrainingPage() {
                         key={index}
                         onClick={() => handleAnswerSelect(index)}
                         disabled={showResult}
-                        className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                          selectedAnswer === index
-                            ? showResult
-                              ? index === quizzes[currentQuiz].correctAnswer
-                                ? "border-green-500 bg-green-500/10"
-                                : "border-destructive bg-destructive/10"
-                              : "border-primary bg-primary/5"
-                            : showResult && index === quizzes[currentQuiz].correctAnswer
+                        className={`w-full text-left p-4 rounded-lg border-2 transition-all ${selectedAnswer === index
+                          ? showResult
+                            ? index === quizzes[currentQuiz].correctAnswer
                               ? "border-green-500 bg-green-500/10"
-                              : "border-border hover:border-primary/50"
-                        }`}
+                              : "border-destructive bg-destructive/10"
+                            : "border-primary bg-primary/5"
+                          : showResult && index === quizzes[currentQuiz].correctAnswer
+                            ? "border-green-500 bg-green-500/10"
+                            : "border-border hover:border-primary/50"
+                          }`}
                       >
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                              selectedAnswer === index
-                                ? showResult
-                                  ? index === quizzes[currentQuiz].correctAnswer
-                                    ? "border-green-500 bg-green-500"
-                                    : "border-destructive bg-destructive"
-                                  : "border-primary bg-primary"
-                                : "border-muted-foreground"
-                            }`}
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${selectedAnswer === index
+                              ? showResult
+                                ? index === quizzes[currentQuiz].correctAnswer
+                                  ? "border-green-500 bg-green-500"
+                                  : "border-destructive bg-destructive"
+                                : "border-primary bg-primary"
+                              : "border-muted-foreground"
+                              }`}
                           >
                             {selectedAnswer === index && showResult && (
                               <>
@@ -451,11 +464,10 @@ export default function TrainingPage() {
                   <Card className="p-4 mb-6 bg-muted/50 border-border">
                     <div className="flex gap-3">
                       <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                          selectedAnswer === quizzes[currentQuiz].correctAnswer
-                            ? "bg-green-500/10"
-                            : "bg-destructive/10"
-                        }`}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${selectedAnswer === quizzes[currentQuiz].correctAnswer
+                          ? "bg-green-500/10"
+                          : "bg-destructive/10"
+                          }`}
                       >
                         {selectedAnswer === quizzes[currentQuiz].correctAnswer ? (
                           <CheckCircle2 className="w-6 h-6 text-green-500" />

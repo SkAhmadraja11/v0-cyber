@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { createClient } from "@/lib/supabase/client"
-import { User, Settings, LogOut, Shield, Activity } from "lucide-react"
+import { User, Settings, LogOut, Shield, Activity, GraduationCap, Lock } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import type {
@@ -118,6 +118,14 @@ export function UserNav() {
         <DropdownMenuItem onClick={() => router.push("/scanner")}>
           <Shield className="mr-2 h-4 w-4" />
           <span>Scanner</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push("/awareness")}>
+          <GraduationCap className="mr-2 h-4 w-4" />
+          <span>Security Awareness</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push("/encryption")}>
+          <Lock className="mr-2 h-4 w-4" />
+          <span>Cryptography Hub</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => router.push("/profile")}>
           <User className="mr-2 h-4 w-4" />
