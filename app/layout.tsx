@@ -4,9 +4,18 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 
+// Try to load Google Fonts with fallbacks
+const _geist = Geist({
+  subsets: ["latin"],
+  display: 'swap',
+  fallback: ['system-ui', 'arial', 'sans-serif']
+})
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const _geistMono = Geist_Mono({
+  subsets: ["latin"],
+  display: 'swap',
+  fallback: ['Consolas', 'Monaco', 'monospace']
+})
 
 export const metadata: Metadata = {
   title: 'v0 App',
@@ -40,7 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={_geist.className}>
+      <body className={`${_geist.className} ${_geistMono.className}`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

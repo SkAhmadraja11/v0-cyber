@@ -22,6 +22,30 @@ export default function LoginPage() {
 
   const router = useRouter()
 
+  // Send login confirmation notification
+  const sendLoginNotification = async (email: string) => {
+    try {
+      const response = await fetch('/api/auth/login-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          loginTime: new Date().toISOString(),
+          ipAddress: 'unknown', // In production, you'd get this from request headers
+          userAgent: navigator.userAgent
+        })
+      })
+
+      if (!response.ok) {
+        console.error('Failed to send login notification')
+      }
+    } catch (error) {
+      console.error('Error sending login notification:', error)
+    }
+  }
+
   /* ---------------- Email Login ---------------- */
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,7 +58,29 @@ export default function LoginPage() {
       // Check if identifier is email or phone
       const isPhone = /^\+?[\d\s-]{10,}$/.test(identifier)
 
-      const { error } = await supabase.auth.signInWithPassword(
+      // First, send confirmation email
+      if (!isPhone) {
+        const confirmationResponse = await fetch('/api/auth/send-confirmation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: identifier })
+        })
+
+        if (confirmationResponse.ok) {
+          // Redirect to confirmation page
+          router.push(`/auth/confirm-email?sent=true&email=${encodeURIComponent(identifier)}`)
+          return
+        } else {
+          setError('Failed to send confirmation email')
+          setIsLoading(false)
+          return
+        }
+      }
+
+      // For phone login, proceed normally (or implement SMS confirmation)
+      const { data, error } = await supabase.auth.signInWithPassword(
         isPhone
           ? { phone: identifier, password }
           : { email: identifier, password }
@@ -42,8 +88,35 @@ export default function LoginPage() {
 
       if (error) throw error
 
+      // Check if user has MFA enabled
+      if (data.user) {
+        const { data: mfaData, error: mfaError } = await supabase
+          .from('user_mfa')
+          .select('enabled')
+          .eq('user_id', data.user.id)
+          .single()
+
+        // If MFA is enabled, redirect to MFA verification
+        if (!mfaError && mfaData?.enabled) {
+          const redirectTo = new URLSearchParams({
+            redirectTo: '/dashboard'
+          }).toString()
+          router.push(`/auth/mfa-verify?${redirectTo}`)
+          return
+        }
+      }
+
+      // If no MFA or MFA check failed, proceed to dashboard
       router.push("/dashboard")
       router.refresh()
+      
+      // Send login confirmation email (non-blocking)
+      try {
+        await sendLoginNotification(data.user?.email || identifier)
+      } catch (emailError) {
+        console.error('Failed to send login notification email:', emailError)
+        // Don't block authentication if email fails
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Authentication failed")
     } finally {
@@ -51,7 +124,6 @@ export default function LoginPage() {
     }
   }
 
-  /* ---------------- Google Login ---------------- */
   const handleGoogleLogin = async () => {
     const supabase = createClient()
 

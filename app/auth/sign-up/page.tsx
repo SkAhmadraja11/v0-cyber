@@ -1,252 +1,172 @@
 "use client"
 
-import type React from "react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { Shield, Mail, User, Chrome, Phone } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+
+import { Shield, Mail, CheckCircle, AlertTriangle, ArrowRight } from "lucide-react"
 
 export default function SignUpPage() {
-  const [email, setEmail] = useState("")
-  const [phone, setPhone] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [fullName, setFullName] = useState("")
-  const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+
   const router = useRouter()
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match")
-      setIsLoading(false)
-      return
-    }
-
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long")
-      setIsLoading(false)
-      return
-    }
-
-    const supabase = createClient()
+    setSuccess(null)
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        phone,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-          data: {
-            full_name: fullName,
-          },
+      const response = await fetch('/api/auth/send-activation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ email })
       })
-      if (error) throw error
-      router.push("/auth/sign-up-success")
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess(`Activation email sent to ${email}. Please check your inbox and click the activation link to continue creating your account.`)
+      } else {
+        setError(data.error || 'Failed to send activation email')
+      }
+    } catch (error) {
+      console.error('Error sending activation email:', error)
+      setError('Failed to send activation email. Please try again.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleGoogleSignUp = async () => {
-    const supabase = createClient()
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const redirectUrl =
-        typeof window !== "undefined"
-          ? `${window.location.origin}/auth/callback`
-          : "http://localhost:3000/auth/callback"
-
-      console.log("[v0] Starting Google OAuth signup with redirect:", redirectUrl)
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
-        },
-      })
-
-      if (error) {
-        console.error("[v0] OAuth signup error:", error)
-        throw error
-      }
-
-      console.log("[v0] OAuth signup initiated successfully:", data)
-    } catch (error: unknown) {
-      console.error("[v0] Caught signup error:", error)
-      setError(error instanceof Error ? error.message : "An error occurred")
-      setIsLoading(false)
-    }
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden p-6">
+    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden px-4">
       <div className="fixed inset-0 bg-grid-pattern opacity-20" />
       <div className="fixed inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
 
       <div className="w-full max-w-md relative z-10">
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-8">
+          {/* Header */}
           <div className="flex flex-col items-center gap-4">
-            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/30">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/30">
               <Shield className="w-8 h-8 text-primary-foreground" />
             </div>
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-foreground">Create Account</h1>
-              <p className="text-muted-foreground">Join PhishGuard AI security platform</p>
+              <h1 className="text-3xl font-bold tracking-tight">Create Account</h1>
+              <p className="text-muted-foreground">
+                Start your secure journey with PhishGuard AI
+              </p>
             </div>
           </div>
 
-          <Card className="glassmorphism border-border/50">
-            <CardHeader>
-              <CardTitle className="text-2xl">Sign Up</CardTitle>
-              <CardDescription>Create your secure account</CardDescription>
+          {/* Card */}
+          <Card className="glassmorphism border-border/60 shadow-xl">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl">Step 1: Email Verification</CardTitle>
+              <CardDescription>
+                Enter your email address to receive an activation link
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSignUp}>
-                <div className="flex flex-col gap-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full bg-transparent"
-                    onClick={handleGoogleSignUp}
-                    disabled={isLoading}
-                  >
-                    <Chrome className="w-4 h-4 mr-2" />
-                    Sign up with Google
-                  </Button>
 
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-border" />
+            <CardContent className="space-y-6">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="w-4 h-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {success && (
+                <Alert className="border-green-500/60 text-green-600">
+                  <CheckCircle className="w-4 h-4" />
+                  <AlertDescription>{success}</AlertDescription>
+                </Alert>
+              )}
+
+              <form onSubmit={handleEmailSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isLoading || !!success}
+                    className="h-11"
+                  />
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full h-11" 
+                  disabled={isLoading || !!success || !email}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                      Sending Activation Email...
                     </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">Or sign up with email</span>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="fullName"
-                        type="text"
-                        placeholder="John Doe"
-                        className="pl-10"
-                        required
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="your@email.com"
-                        className="pl-10"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="phone">Phone Number (Optional)</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="+1234567890"
-                        className="pl-10"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Min. 8 characters"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="Repeat your password"
-                      required
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
-                  </div>
-
-                  {error && (
-                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                      <p className="text-sm text-destructive">{error}</p>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      Send Activation Email
+                      <ArrowRight className="w-4 h-4" />
                     </div>
                   )}
-
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Creating account..." : "Create Account"}
-                  </Button>
-                </div>
+                </Button>
               </form>
 
-              <div className="mt-6 text-center text-sm">
-                <p className="text-muted-foreground">
+              {success && (
+                <div className="text-center space-y-4 pt-4 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Next Steps:</strong>
+                  </p>
+                  <ol className="text-sm text-muted-foreground text-left space-y-1">
+                    <li>1. Check your email inbox</li>
+                    <li>2. Click the activation link</li>
+                    <li>3. Set your password on the activation page</li>
+                    <li>4. Complete your account setup</li>
+                  </ol>
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setEmail("")
+                      setSuccess(null)
+                      setError(null)
+                    }}
+                    className="w-full"
+                  >
+                    Send to Different Email
+                  </Button>
+                </div>
+              )}
+
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
                   Already have an account?{" "}
-                  <Link href="/auth/login" className="text-primary hover:underline font-medium">
+                  <button
+                    onClick={() => router.push("/auth/login")}
+                    className="text-primary hover:underline font-medium"
+                  >
                     Sign in
-                  </Link>
+                  </button>
                 </p>
               </div>
-
-
             </CardContent>
           </Card>
-
-          <div className="text-center">
-            <Link href="/">
-              <Button variant="ghost" size="sm">
-                Back to Home
-              </Button>
-            </Link>
-          </div>
         </div>
       </div>
     </div>
