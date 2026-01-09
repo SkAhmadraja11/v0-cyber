@@ -82,24 +82,34 @@ export async function POST(request: NextRequest) {
                 <h2>Welcome to PhishGuard AI!</h2>
                 <p>Thank you for starting your account creation. To continue, please click the activation button below:</p>
                 
-                <div class="warning">
-                  <strong>⚠️ Important:</strong> This activation link expires in 24 hours.
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${activationLink}" class="button">
+                    🚀 Activate Your Account & Set Password
+                  </a>
                 </div>
                 
-                <div style="text-align: center; margin: 20px 0;">
-                  <a href="${activationLink}" class="button">
-                    Activate Your Account
-                  </a>
+                <div class="warning">
+                  <strong>⚠️ Important:</strong> This activation link expires in 24 hours.
                 </div>
                 
                 <div class="steps">
                   <h3>📋 What happens next?</h3>
                   <ol>
-                    <li><strong>Click the button above</strong> to activate your email</li>
-                    <li><strong>Set your password</strong> on the secure activation page</li>
+                    <li><strong>Click the button above</strong> to verify your email</li>
+                    <li><strong>Create your password</strong> on the secure activation page</li>
                     <li><strong>Complete your profile</strong> and start using PhishGuard AI</li>
                     <li><strong>Enable MFA</strong> for enhanced security (optional but recommended)</li>
                   </ol>
+                </div>
+                
+                <div style="background: #f0f9ff; border: 1px solid #0ea5e9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                  <h4 style="color: #0ea5e9; margin: 0 0 10px 0;">🔗 Direct Activation Link:</h4>
+                  <p style="margin: 0; word-break: break-all; font-size: 12px; color: #666;">
+                    ${activationLink}
+                  </p>
+                  <p style="margin: 10px 0 0 0; font-size: 11px; color: #999;">
+                    If the button doesn't work, copy and paste this link into your browser.
+                  </p>
                 </div>
                 
                 <p><strong>Account Details:</strong></p>
