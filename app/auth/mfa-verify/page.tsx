@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { MFAUtils, MFARateLimit } from "@/lib/mfa-utils"
@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 
 import { Shield, Smartphone, Key, AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react"
 
-export default function MFAVerifyPage() {
+function MFAVerifyContent() {
   const [verificationCode, setVerificationCode] = useState("")
   const [backupCode, setBackupCode] = useState("")
   const [useBackupCode, setUseBackupCode] = useState(false)
@@ -378,5 +378,17 @@ export default function MFAVerifyPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function MFAVerifyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <MFAVerifyContent />
+    </Suspense>
   )
 }

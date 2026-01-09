@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 
 import { Shield, Mail, CheckCircle, AlertTriangle, Clock } from "lucide-react"
 
-export default function EmailConfirmationPage() {
+function EmailConfirmationContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [isConfirmed, setIsConfirmed] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -255,5 +255,17 @@ export default function EmailConfirmationPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function EmailConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <EmailConfirmationContent />
+    </Suspense>
   )
 }
