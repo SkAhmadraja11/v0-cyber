@@ -10,24 +10,29 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
-  Lock,
-  ExternalLink,
-  Hash,
-  Fingerprint,
-  Database,
-  Cpu,
-  BarChart3,
   Activity,
+  ArrowLeft,
   ArrowRight,
   ChevronRight,
-  Quote,
-  Search,
-  Code,
+  Download,
+  Filter,
+  RefreshCcw,
   Globe,
-  Server,
-  FileSearch,
+  Wallet,
+  FileText,
+  MessageSquare,
+  Lock,
+  Quote,
   Layers,
-  Network
+  Cpu,
+  BarChart3,
+  Search,
+  Server,
+  Hash,
+  Network,
+  Code,
+  Fingerprint,
+  BarChart,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -185,10 +190,10 @@ export default function Home() {
                       <div className="relative">
                         <Quote className={`w-32 h-32 absolute -top-16 -left-10 text-${slide.color}-500/10 pointer-events-none`} />
                         <blockquote className="relative z-10 space-y-8">
-                          <p className="text-4xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60 leading-tight">
+                          <p className="text-2xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60 leading-tight">
                             "{slide.text}"
                           </p>
-                          <footer className="text-2xl text-white/50 font-medium tracking-wide">
+                          <footer className="text-lg md:text-xl text-white/50 font-medium tracking-wide">
                             — <span className={`text-${slide.color}-400`}>{slide.author}</span>
                           </footer>
                         </blockquote>
@@ -257,6 +262,17 @@ export default function Home() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
+              {/* Back Arrow Button */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => window.history.back()}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+              
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/30">
                 <Shield className="w-6 h-6 text-primary-foreground" />
               </div>

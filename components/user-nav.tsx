@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { createClient } from "@/lib/supabase/client"
-import { User, Settings, LogOut, Shield, Activity, GraduationCap, Lock } from "lucide-react"
+import { User, Settings, LogOut, Shield, Activity, GraduationCap, Lock, ArrowRight, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import type {
@@ -65,11 +65,22 @@ export function UserNav() {
 
   if (!user) {
     return (
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/auth/login")}>
+      <div className="flex items-center gap-3">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => router.push("/auth/login")}
+          className="border-primary/30 hover:border-primary hover:bg-primary/10 transition-all duration-200 font-medium"
+        >
+          <ArrowRight className="w-4 h-4 mr-2" />
           Sign In
         </Button>
-        <Button size="sm" onClick={() => router.push("/auth/sign-up")}>
+        <Button 
+          size="sm" 
+          onClick={() => router.push("/auth/sign-up")}
+          className="shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-105 transition-all duration-200 font-medium bg-gradient-to-r from-primary to-primary/80"
+        >
+          <Plus className="w-4 h-4 mr-2" />
           Sign Up
         </Button>
       </div>

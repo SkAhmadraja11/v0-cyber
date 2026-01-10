@@ -24,30 +24,6 @@ export default function LoginPage() {
 
   const router = useRouter()
 
-  // Send login confirmation notification
-  const sendLoginNotification = async (email: string) => {
-    try {
-      const notificationResponse = await fetch('/api/auth/login-notification', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          loginTime: new Date().toISOString(),
-          ipAddress: 'unknown', // In production, you'd get this from request headers
-          userAgent: navigator.userAgent
-        })
-      })
-
-      if (!notificationResponse.ok) {
-        console.error('Failed to send login notification')
-      }
-    } catch (error) {
-      console.error('Error sending login notification:', error)
-    }
-  }
-
   /* ---------------- Email Login ---------------- */
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -79,33 +55,17 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        // Send login notification (non-blocking)
-        sendLoginNotification(identifier)
-
-        // Check if user has MFA enabled
-        const { data: mfaData, error: mfaError } = await supabase
-          .from('user_mfa')
-          .select('enabled')
-          .eq('user_id', data.user.id)
-          .single()
-
-        // If MFA is enabled, redirect to MFA verification
-        if (!mfaError && mfaData?.enabled) {
-          router.push('/auth/mfa-verify')
-          return
-        }
-
         // Successful login - redirect to dashboard
         setSuccess('Login successful! Redirecting...')
+        
+        // Redirect to dashboard after 1 second
         setTimeout(() => {
           router.push('/dashboard')
         }, 1000)
       }
-
     } catch (error) {
       console.error('Login error:', error)
-      setError('An unexpected error occurred during login. Please try again.')
-    } finally {
+      setError('An unexpected error occurred. Please try again.')
       setIsLoading(false)
     }
   }

@@ -27,46 +27,62 @@ export async function POST(request: NextRequest) {
     // Perform real multi-source detection
     const result = await detector.detect(input, mode)
 
-    const { data: scanRecord, error: insertError } = await supabase
-      .from("scan_results")
-      .insert({
-        user_id: user?.id || null,
-        url: input,
-        scan_type: mode,
-        risk_score: result.riskScore,
-        classification: result.classification,
-        confidence: result.confidence,
-        detection_sources: result.sources,
-        reasons: result.reasons,
-        ip_address: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
-        user_agent: request.headers.get("user-agent") || "unknown",
-      })
-      .select()
-      .single()
-      
+    // Save scan results to database (with error handling for missing tables)
+    try {
+      const { data: scanRecord, error: insertError } = await supabase
+        .from("scan_results")
+        .insert({
+          user_id: user?.id || null,
+          url: input,
+          scan_type: mode,
+          risk_score: result.riskScore,
+          classification: result.classification,
+          confidence: result.confidence,
+          detection_sources: result.sources,
+          reasons: result.reasons,
+          ip_address: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
+          user_agent: request.headers.get("user-agent") || "unknown",
+        })
+        .select()
+        .single()
 
-    if (insertError) {
-      console.error("[v0] Error saving scan to database:", insertError)
-      // Continue even if database save fails - don't block the scan result
-    } else {
-      console.log("[v0] Scan saved to database with ID:", scanRecord?.id)
+      if (insertError) {
+        if (insertError.message.includes('does not exist') || insertError.message.includes('schema cache')) {
+          console.log("[v0] scan_results table missing - scan result not saved to database")
+        } else {
+          console.error("[v0] Error saving scan to database:", insertError)
+        }
+      } else {
+        console.log("[v0] Scan saved to database with ID:", scanRecord?.id)
+      }
+    } catch (dbError: any) {
+      console.error("[v0] Database error during scan save:", dbError)
+      // Continue even if database save fails - don't block scan result
     }
 
     if (result.classification === "PHISHING") {
-      const domain = new URL(input.startsWith("http") ? input : `https://localhost:3000`).hostname
+      try {
+        const domain = new URL(input.startsWith("http") ? input : `https://localhost:3000`).hostname
 
-      await supabase.from("threat_intel").upsert(
-        {
-          url: input,
-          domain,
-          threat_type: result.classification,
-          sources: result.sources.filter((s) => s.detected).map((s) => s.name),
-          metadata: { confidence: result.confidence, riskScore: result.riskScore },
-        },
-        {
-          onConflict: "url",
-        },
-      )
+        await supabase.from("threat_intel").upsert(
+          {
+            url: input,
+            domain,
+            threat_type: result.classification,
+            sources: result.sources.filter((s) => s.detected).map((s) => s.name),
+            metadata: { confidence: result.confidence, riskScore: result.riskScore },
+          },
+          {
+            onConflict: "url",
+          },
+        )
+      } catch (threatError: any) {
+        if (threatError?.message?.includes('does not exist') || threatError?.message?.includes('schema cache')) {
+          console.log("[v0] threat_intel table missing - threat intel not saved")
+        } else {
+          console.error("[v0] Error saving threat intel:", threatError)
+        }
+      }
     }
 
     const response = NextResponse.json(result)
