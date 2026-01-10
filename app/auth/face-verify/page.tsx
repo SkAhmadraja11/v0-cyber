@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useState, useRef, useEffect } from "react"
-import { Scan, CheckCircle2, XCircle, Camera, Loader2, Shield } from "lucide-react"
+import { Shield, Camera, User, AlertTriangle, CheckCircle, RefreshCw, ArrowRight, Loader2, XCircle, Scan } from "lucide-react"
+import { V0Logo } from "@/components/v0-logo"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -104,7 +105,7 @@ export default function FaceVerifyPage() {
           {/* Header (Hidden if registration form is active to reduce clutter, or keep it?) */}
           <div className="flex flex-col items-center gap-4 transition-all duration-500">
             <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/30">
-              <Shield className="w-8 h-8 text-primary-foreground" />
+              <V0Logo className="w-8 h-8 text-primary-foreground" />
             </div>
             <div className="text-center">
               <h1 className="text-3xl font-bold text-foreground">Face Verification</h1>
@@ -168,7 +169,7 @@ export default function FaceVerifyPage() {
                             <div className="text-center space-y-4">
                               <div className="relative">
                                 <div className="absolute inset-0 bg-green-500 blur-2xl opacity-50 rounded-full" />
-                                <CheckCircle2 className="w-20 h-20 text-green-400 mx-auto relative z-10 drop-shadow-lg" />
+                                <CheckCircle className="w-20 h-20 text-green-400 mx-auto relative z-10 drop-shadow-lg" />
                               </div>
                               <div>
                                 <p className="text-2xl font-bold text-white drop-shadow-md">Verified</p>

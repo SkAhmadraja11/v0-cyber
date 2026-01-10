@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 import { Shield, Mail, Lock, User, Eye, EyeOff, ArrowRight, UserPlus, AlertTriangle, CheckCircle, Camera, Upload, Smartphone } from "lucide-react"
+import { V0Logo } from "@/components/v0-logo"
 
 function SignUpContent() {
   const [isLoading, setIsLoading] = useState(false)
@@ -164,26 +165,69 @@ function SignUpContent() {
         
         // Create profile without is_activated column
         try {
+          const profileData = {
+            id: authData.user.id,
+            email: email,
+            full_name: fullName,
+            role: 'user',
+            avatar_url: profilePictureUrl,
+            updated_at: new Date().toISOString()
+          }
+          
+          console.log('Creating profile with data:', profileData)
+          
           const profileResponse = await supabase
             .from('profiles')
-            .upsert({
-              id: authData.user.id,
-              email: email,
-              full_name: fullName,
-              role: 'user',
-              avatar_url: profilePictureUrl,
-              updated_at: new Date().toISOString()
-            }, {
+            .upsert(profileData, {
               onConflict: 'id' // Handle case where profile already exists
             })
 
+          console.log('Profile response:', profileResponse)
+
           if (profileResponse.error) {
             console.error('Profile creation error:', profileResponse.error)
-            // Don't fail the signup if profile creation fails
-            // User account is created, just log the error
+            console.error('Error details:', {
+              message: profileResponse.error.message,
+              details: profileResponse.error.details,
+              hint: profileResponse.error.hint,
+              code: profileResponse.error.code
+            })
+            
+            // Try creating profile without avatar_url if there's a column issue
+            if (profileResponse.error.message?.includes('column') || profileResponse.error.code === 'PGRST204') {
+              console.log('Attempting to create profile without avatar_url...')
+              const fallbackResponse = await supabase
+                .from('profiles')
+                .upsert({
+                  id: authData.user.id,
+                  email: email,
+                  full_name: fullName,
+                  role: 'user',
+                  updated_at: new Date().toISOString()
+                }, {
+                  onConflict: 'id'
+                })
+              
+              if (fallbackResponse.error) {
+                console.error('Fallback profile creation also failed:', fallbackResponse.error)
+                setError('Profile creation failed, but your account was created. Please contact support.')
+                setTimeout(() => setError(''), 5000)
+              } else {
+                console.log('Fallback profile created successfully')
+              }
+            } else {
+              // Don't fail signup if profile creation fails
+              // User account is created, just log the error
+              setError('Profile creation failed, but your account was created. You can update your profile later.')
+              setTimeout(() => setError(''), 5000)
+            }
+          } else {
+            console.log('Profile created successfully')
           }
         } catch (profileCatchError) {
           console.error('Profile creation exception:', profileCatchError)
+          setError('Profile creation failed, but your account was created. You can update your profile later.')
+          setTimeout(() => setError(''), 5000)
         }
 
         // Set up MFA if enabled
@@ -261,7 +305,7 @@ function SignUpContent() {
           {/* Header */}
           <div className="flex flex-col items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/30">
-              <Shield className="w-8 h-8 text-primary-foreground" />
+              <V0Logo className="w-8 h-8 text-primary-foreground" />
             </div>
             <div className="text-center">
               <h1 className="text-3xl font-bold tracking-tight">Create Account</h1>

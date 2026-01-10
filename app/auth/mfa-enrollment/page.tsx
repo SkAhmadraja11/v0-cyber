@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 
 import { Shield, Smartphone, Key, Copy, Check, AlertTriangle, ArrowRight } from "lucide-react"
+import { V0Logo } from "@/components/v0-logo"
 
 export default function MFAEnrollmentPage() {
   const [secret, setSecret] = useState("")
@@ -155,7 +156,7 @@ export default function MFAEnrollmentPage() {
             {/* Header */}
             <div className="flex flex-col items-center gap-4">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/30">
-                <Shield className="w-8 h-8 text-primary-foreground" />
+                <V0Logo className="w-8 h-8 text-primary-foreground" />
               </div>
               <div className="text-center">
                 <h1 className="text-3xl font-bold tracking-tight">Set Up MFA</h1>

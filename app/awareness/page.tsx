@@ -28,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Footer from "@/components/footer"
 import { UserNav } from "@/components/user-nav"
 
 export default function SecurityAwarenessPage() {
@@ -534,6 +535,9 @@ export default function SecurityAwarenessPage() {
                     </Card>
                 </div>
             </main>
+            
+            {/* Footer */}
+            <Footer />
         </div>
     )
 }

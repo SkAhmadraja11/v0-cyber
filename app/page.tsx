@@ -32,6 +32,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { UserNav } from "@/components/user-nav"
+import Footer from "@/components/footer"
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState<"overview" | "how-it-works" | "tech" | "features" | "analytics">("overview")
@@ -260,7 +261,7 @@ export default function Home() {
                 <Shield className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="font-bold text-xl text-foreground">PhishGuard AI</h1>
+                <h1 className="font-bold text-lg text-foreground">PhishGuard AI</h1>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">Advanced ML Detection</p>
               </div>
             </div>
@@ -369,15 +370,14 @@ export default function Home() {
                       <span className="text-sm font-medium text-primary">Live Threat Intelligence</span>
                     </div>
 
-                    <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 text-balance leading-tight">
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6 text-balance leading-tight">
                       Advanced AI-Powered <br />
                       <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">
-                        Cyber Threat Detection
+                        Phishing Detection
                       </span>
                     </h2>
-
-                    <p className="text-lg text-muted-foreground text-pretty leading-relaxed max-w-2xl mb-8">
-                      Our multi-layered security engine combines global threat databases, heuristic analysis,
+                    <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
+                      Protect your digital assets with our cutting-edge cybersecurity platform that combines real-time threat intelligence 
                       and cutting-edge machine learning to identify phishing, malware, and crypto scams in milliseconds.
                     </p>
 
@@ -418,8 +418,8 @@ export default function Home() {
                     <AlertTriangle className="w-6 h-6 text-destructive" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-1">Recent Global Threat Alert</h3>
-                    <p className="text-muted-foreground text-sm">
+                    <h3 className="text-base font-semibold text-foreground mb-1">Recent Global Threat Alert</h3>
+                    <p className="text-muted-foreground text-xs">
                       New "CryptoDrainer" phishing kit detected targeting DeFi users.
                       Signatures updated 12 mins ago. Our system now proactively blocks these domains.
                     </p>
@@ -432,8 +432,8 @@ export default function Home() {
             {activeSection === "how-it-works" && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="mb-8">
-                  <h2 className="text-3xl font-bold text-foreground mb-4">How It Works</h2>
-                  <p className="text-lg text-muted-foreground">
+                  <h2 className="text-xl font-bold text-foreground mb-4">How It Works</h2>
+                  <p className="text-sm text-muted-foreground">
                     Our 4-stage pipeline transforms raw URLs/Emails into actionable intelligence
                   </p>
                 </div>
@@ -493,8 +493,8 @@ export default function Home() {
             {activeSection === "tech" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="mb-6">
-                  <h2 className="text-3xl font-bold text-foreground mb-4">Under The Hood</h2>
-                  <p className="text-lg text-muted-foreground">
+                  <h2 className="text-xl font-bold text-foreground mb-4">Under The Hood</h2>
+                  <p className="text-sm text-muted-foreground">
                     Enterprise-grade technology stack ensuring minimal latency and maximum security
                   </p>
                 </div>
@@ -527,7 +527,7 @@ export default function Home() {
             {/* Features & Analytics (simplified for brevity of rewrite, keeping structure) */}
             {activeSection === "features" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h2 className="text-3xl font-bold text-foreground mb-6">Key Features</h2>
+                <h2 className="text-xl font-bold text-foreground mb-6">Key Features</h2>
                 <div className="grid gap-4">
                   <FeatureItem icon={Globe} title="Multi-Source Validation" desc="Cross-references 6+ threat intelligence feeds simultaneously." />
                   <FeatureItem icon={Code} title="Malicious Script Detection" desc="Sandboxed analysis of Javascript to detect drive-by downloads." />
@@ -540,8 +540,8 @@ export default function Home() {
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <Card className="p-8 flex flex-col items-center justify-center h-[500px] border-dashed border-2">
                   <BarChart3 className="w-16 h-16 text-muted-foreground mb-4 opacity-50" />
-                  <h3 className="text-xl font-medium text-foreground">Live Analytics Dashboard</h3>
-                  <p className="text-muted-foreground mb-6 text-center max-w-md">
+                  <h3 className="text-lg font-medium text-foreground">Live Analytics Dashboard</h3>
+                  <p className="text-muted-foreground text-xs mb-6 text-center max-w-md">
                     Detailed breakdown of threat vectors and system performance is available in your personalized dashboard.
                   </p>
                   <Link href="/dashboard">
@@ -553,6 +553,9 @@ export default function Home() {
           </div>
         </div>
       </main>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }
@@ -579,7 +582,7 @@ function StatCard({ value, label, sub, trend }: { value: string, label: string, 
   return (
     <Card className="p-6 glassmorphism border-primary/10 hover:border-primary/30 transition-colors">
       <div className="flex flex-col">
-        <span className="text-4xl font-bold text-foreground mb-1">{value}</span>
+        <span className="text-2xl font-bold text-foreground mb-1">{value}</span>
         <span className="text-sm font-medium text-muted-foreground mb-3">{label}</span>
         <div className="flex items-center gap-2 text-xs">
           <span className={`px-2 py-0.5 rounded-full ${trend === "up" ? "bg-green-500/10 text-green-500" : "bg-blue-500/10 text-blue-500"}`}>
@@ -608,9 +611,9 @@ function PipelineStep({ number, title, desc, icon: Icon, align, isLast }: { numb
       `}>
         <Card className="p-6 glassmorphism hover:border-primary/30 transition-all hover:translate-y-[-2px]">
           <div className={`flex flex-col ${align === "left" ? "md:items-end" : "items-start"} ${align === "center" ? "items-center" : ""}`}>
-            <span className="text-4xl font-black text-foreground/5 mb-2">{number}</span>
-            <h3 className="text-xl font-bold text-foreground mb-2">{title}</h3>
-            <p className="text-muted-foreground leading-relaxed">{desc}</p>
+            <span className="text-2xl font-black text-foreground/5 mb-2">{number}</span>
+            <h3 className="text-base font-bold text-foreground mb-2">{title}</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
           </div>
         </Card>
       </div>
@@ -624,10 +627,8 @@ function TechCard({ icon: Icon, title, desc }: { icon: any, title: string, desc:
       <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
         <Icon className="w-6 h-6 text-primary" />
       </div>
-      <h3 className="text-xl font-semibold text-foreground mb-3">{title}</h3>
-      <p className="text-muted-foreground leading-relaxed">
-        {desc}
-      </p>
+      <h3 className="text-base font-bold text-foreground mb-2">{title}</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
     </Card>
   )
 }
@@ -639,8 +640,8 @@ function FeatureItem({ icon: Icon, title, desc }: { icon: any, title: string, de
         <Icon className="w-5 h-5 text-primary" />
       </div>
       <div>
-        <h4 className="font-semibold text-foreground mb-1">{title}</h4>
-        <p className="text-sm text-muted-foreground">{desc}</p>
+        <h4 className="text-sm font-semibold text-foreground mb-2">{title}</h4>
+        <p className="text-xs text-muted-foreground">{desc}</p>
       </div>
     </div>
   )

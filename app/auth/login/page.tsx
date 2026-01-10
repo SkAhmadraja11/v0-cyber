@@ -12,7 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-import { Shield, Mail, Chrome, AlertTriangle, Phone } from "lucide-react"
+import { Shield, Mail, Lock, User, Eye, EyeOff, ArrowRight, AlertTriangle, CheckCircle, Chrome, Phone } from "lucide-react"
+import { V0Logo } from "@/components/v0-logo"
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("")
@@ -150,7 +151,7 @@ export default function LoginPage() {
           {/* Logo / Title */}
           <div className="flex flex-col items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/30">
-              <Shield className="w-8 h-8 text-primary-foreground" />
+              <V0Logo className="w-8 h-8 text-primary-foreground" />
             </div>
             <div className="text-center">
               <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
@@ -261,8 +262,6 @@ export default function LoginPage() {
                   </Link>
                 </p>
               </div>
-
-
             </CardContent>
           </Card>
 
