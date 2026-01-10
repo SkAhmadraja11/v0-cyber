@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
   const router = useRouter()
@@ -25,7 +26,7 @@ export default function LoginPage() {
   // Send login confirmation notification
   const sendLoginNotification = async (email: string) => {
     try {
-      const response = await fetch('/api/auth/login-notification', {
+      const notificationResponse = await fetch('/api/auth/login-notification', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -38,7 +39,7 @@ export default function LoginPage() {
         })
       })
 
-      if (!response.ok) {
+      if (!notificationResponse.ok) {
         console.error('Failed to send login notification')
       }
     } catch (error) {
@@ -55,41 +56,32 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      // Check if identifier is email or phone
-      const isPhone = /^\+?[\d\s-]{10,}$/.test(identifier)
+      // Direct login without email confirmation
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: identifier,
+        password: password
+      })
 
-      // First, send confirmation email
-      if (!isPhone) {
-        const confirmationResponse = await fetch('/api/auth/send-confirmation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email: identifier })
-        })
-
-        if (confirmationResponse.ok) {
-          // Redirect to confirmation page
-          router.push(`/auth/confirm-email?sent=true&email=${encodeURIComponent(identifier)}`)
-          return
+      if (error) {
+        // Provide specific error messages
+        if (error.message.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please check your credentials and try again.')
+        } else if (error.message.includes('Email not confirmed')) {
+          setError('Please check your email and confirm your account before signing in.')
+        } else if (error.message.includes('Too many requests')) {
+          setError('Too many login attempts. Please try again later.')
         } else {
-          setError('Failed to send confirmation email')
-          setIsLoading(false)
-          return
+          setError(error.message)
         }
+        setIsLoading(false)
+        return
       }
 
-      // For phone login, proceed normally (or implement SMS confirmation)
-      const { data, error } = await supabase.auth.signInWithPassword(
-        isPhone
-          ? { phone: identifier, password }
-          : { email: identifier, password }
-      )
-
-      if (error) throw error
-
-      // Check if user has MFA enabled
       if (data.user) {
+        // Send login notification (non-blocking)
+        sendLoginNotification(identifier)
+
+        // Check if user has MFA enabled
         const { data: mfaData, error: mfaError } = await supabase
           .from('user_mfa')
           .select('enabled')
@@ -98,27 +90,20 @@ export default function LoginPage() {
 
         // If MFA is enabled, redirect to MFA verification
         if (!mfaError && mfaData?.enabled) {
-          const redirectTo = new URLSearchParams({
-            redirectTo: '/dashboard'
-          }).toString()
-          router.push(`/auth/mfa-verify?${redirectTo}`)
+          router.push('/auth/mfa-verify')
           return
         }
+
+        // Successful login - redirect to dashboard
+        setSuccess('Login successful! Redirecting...')
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 1000)
       }
 
-      // If no MFA or MFA check failed, proceed to dashboard
-      router.push("/dashboard")
-      router.refresh()
-      
-      // Send login confirmation email (non-blocking)
-      try {
-        await sendLoginNotification(data.user?.email || identifier)
-      } catch (emailError) {
-        console.error('Failed to send login notification email:', emailError)
-        // Don't block authentication if email fails
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Authentication failed")
+    } catch (error) {
+      console.error('Login error:', error)
+      setError('An unexpected error occurred during login. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -242,6 +227,14 @@ export default function LoginPage() {
                     required
                   />
                 </div>
+
+                {/* Success */}
+                {success && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-green-50 border border-green-200">
+                    <Shield className="w-4 h-4 text-green-600 mt-0.5" />
+                    <p className="text-sm text-green-800">{success}</p>
+                  </div>
+                )}
 
                 {/* Error */}
                 {error && (

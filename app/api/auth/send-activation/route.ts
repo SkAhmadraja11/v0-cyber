@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     try {
       const emailData = await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || 'noreply@phishguard.ai',
+        from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
         to: [email],
         subject: 'Activate Your PhishGuard AI Account',
         html: `
@@ -141,6 +141,18 @@ export async function POST(request: NextRequest) {
 
     } catch (emailError: any) {
       console.error('Error sending activation email:', emailError)
+      
+      // Check if it's a 403 error (Resend domain limitation)
+      if (emailError.status === 403) {
+        return NextResponse.json({ 
+          error: 'Email service limitation detected. For testing, please use your Resend account email address.',
+          details: 'The resend.dev domain only sends emails to the account owner. For production use, verify your custom domain.',
+          activation_token, // Include token for manual testing
+          activation_link: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/create-password?token=${activation_token}`,
+          workaround: 'Use your Resend account email for testing, or verify your custom domain in Resend.'
+        }, { status: 403 })
+      }
+      
       return NextResponse.json({ error: 'Failed to send activation email' }, { status: 500 })
     }
 

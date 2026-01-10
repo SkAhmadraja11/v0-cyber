@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Shield, Save, Loader2, CheckCircle2, User, Building } from "lucide-react"
+import { Shield, Save, Loader2, CheckCircle2, User, Building, Smartphone, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
@@ -17,6 +17,7 @@ export default function SettingsPage() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [fullName, setFullName] = useState("")
   const [organization, setOrganization] = useState("")
+  const [mfaEnabled, setMfaEnabled] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -40,6 +41,15 @@ export default function SettingsPage() {
       if (profile) {
         setOrganization(profile.organization || "")
       }
+
+      // Check MFA status
+      const { data: mfaData } = await supabase
+        .from("user_mfa")
+        .select("enabled")
+        .eq("user_id", user.id)
+        .single()
+
+      setMfaEnabled(mfaData?.enabled || false)
     }
     getUser()
   }, [supabase, router])
@@ -84,6 +94,33 @@ export default function SettingsPage() {
       setError(err instanceof Error ? err.message : "Failed to update profile")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const toggleMFA = async () => {
+    if (!user) return
+    
+    try {
+      if (mfaEnabled) {
+        // Disable MFA
+        const { error } = await supabase
+          .from("user_mfa")
+          .update({ enabled: false })
+          .eq("user_id", user.id)
+
+        if (error) {
+          setError("Failed to disable MFA")
+        } else {
+          setMfaEnabled(false)
+          setIsSaved(true)
+          setTimeout(() => setIsSaved(false), 3000)
+        }
+      } else {
+        // Redirect to MFA enrollment
+        router.push("/auth/mfa-enrollment")
+      }
+    } catch (error) {
+      setError("Failed to update MFA settings")
     }
   }
 
@@ -160,6 +197,29 @@ export default function SettingsPage() {
                     onChange={(e) => setOrganization(e.target.value)}
                     className="pl-10"
                   />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Multi-Factor Authentication</Label>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Smartphone className="w-5 h-5 text-primary" />
+                    <div>
+                      <p className="font-medium">MFA Status</p>
+                      <p className="text-sm text-muted-foreground">
+                        {mfaEnabled ? "MFA is enabled" : "MFA is disabled"}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={mfaEnabled ? "outline" : "default"}
+                    onClick={toggleMFA}
+                    disabled={isLoading}
+                  >
+                    {mfaEnabled ? "Disable" : "Enable"}
+                  </Button>
                 </div>
               </div>
 
