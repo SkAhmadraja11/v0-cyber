@@ -1464,6 +1464,656 @@ export default function TrainingPage() {
           "Timely sharing improves community defense"
         ]
       }
+    ],
+    9: [
+      {
+        id: 1,
+        title: "Penetration Testing Phases",
+        content: "Understanding the standard phases of a penetration test: Reconnaissance, Scanning, Exploitation, Maintaining Access, and Reporting.",
+        duration: "5 mins",
+        objectives: [
+          "Define the 5 phases of pentesting",
+          "Understand the limitations of each phase",
+          "Learn how phases interconnect"
+        ],
+        key_points: [
+          "Reconnaissance gathers target data",
+          "Scanning identifies active systems and ports",
+          "Exploitation attempts to breach vulnerabilities",
+          "Reporting documents findings and business impact",
+          "Rules of Engagement (RoE) must be defined first"
+        ]
+      },
+      {
+        id: 2,
+        title: "Vulnerability Scanning vs Pentesting",
+        content: "Distinguishing between automated vulnerability scanning and manual penetration testing.",
+        duration: "4 mins",
+        objectives: [
+          "Differentiate scans from tests",
+          "Know when to use each method",
+          "Understand false positives"
+        ],
+        key_points: [
+          "Scans are automated and broad",
+          "Pentests are manual and deep",
+          "Scans identify potential issues",
+          "Pentests exploit and validate issues",
+          "Compliance often requires both"
+        ]
+      },
+      {
+        id: 3,
+        title: "Reconnaissance Techniques",
+        content: "Active and passive reconnaissance methods to gather information about a target without triggering alarms.",
+        duration: "5 mins",
+        objectives: [
+          "Perform passive information gathering",
+          "Collect public OSINT data",
+          "Map network perimeters"
+        ],
+        key_points: [
+          "Passive recon uses public sources (WHOIS, DNS)",
+          "Active recon interacts with target systems",
+          "Social media provides personnel intel",
+          "Google hacking (Dorks) finds exposed files",
+          "Mapping attack surface is critical"
+        ]
+      },
+      {
+        id: 4,
+        title: "Exploitation Frameworks",
+        content: "Introduction to common exploitation frameworks like Metasploit and their role in security testing.",
+        duration: "5 mins",
+        objectives: [
+          "Understand Metasploit basics",
+          "Select appropriate payloads",
+          "Execute safe exploits"
+        ],
+        key_points: [
+          "Frameworks standardize exploit execution",
+          "Payloads determine post-exploit action",
+          "Meterpreter provides advanced control",
+          "Always test in isolated environments",
+          "Avoid crashing production services"
+        ]
+      },
+      {
+        id: 5,
+        title: "Post-Exploitation and Reporting",
+        content: "What happens after a successful breach: privilege escalation, lateral movement, and creating the final report.",
+        duration: "5 mins",
+        objectives: [
+          "Understand lateral movement",
+          "Explain value of high-quality reports",
+          "Document remediation steps"
+        ],
+        key_points: [
+          "Clearing logs hides tracks",
+          "Privilege escalation gains admin rights",
+          "Lateral movement explores the network",
+          "Reports must speak to business risk",
+          "Executive summaries are crucial"
+        ]
+      }
+    ],
+    10: [
+      {
+        id: 1,
+        title: "Cloud Shared Responsibility Model",
+        content: "Understanding who is responsible for what in SaaS, PaaS, and IaaS cloud models.",
+        duration: "4 mins",
+        objectives: [
+          "Define shared responsibility",
+          "Identify customer vs provider roles",
+          "Apply model to AWS/Azure/GCP"
+        ],
+        key_points: [
+          "Provider secures the 'Cloud' infrastructure",
+          "Customer secures data 'in' the Cloud",
+          "IaaS requires more customer management",
+          "SaaS offloads most security to provider",
+          "Misconfiguration is top cloud risk"
+        ]
+      },
+      {
+        id: 2,
+        title: "DevSecOps Pipeline Integration",
+        content: "Integrating security controls into the CI/CD pipeline to shift security left.",
+        duration: "5 mins",
+        objectives: [
+          "Understand 'Shift Left' concept",
+          "Integrate SAST/DAST tools",
+          "Automate security gates"
+        ],
+        key_points: [
+          "Security built-in, not bolted-on",
+          "Automated scanning in pull requests",
+          "Block builds on critical vulnerabilities",
+          "Faster feeback loops for developers",
+          "Container scanning before deployment"
+        ]
+      },
+      {
+        id: 3,
+        title: "Container Security",
+        content: "Securing Docker containers and Kubernetes orchestrators against runtime threats.",
+        duration: "5 mins",
+        objectives: [
+          "Harden container images",
+          "Secure container runtime",
+          "Manage secrets in containers"
+        ],
+        key_points: [
+          "Use minimal base images (Alpine)",
+          "Scan images for CVEs",
+          "Don't run containers as root",
+          "Limit container resource usage",
+          "Isolate containers with namespaces"
+        ]
+      },
+      {
+        id: 4,
+        title: "Infrastructure as Code (IaC) Security",
+        content: "Scanning Terraform, CloudFormation, and Ansible scripts for misconfigurations before deployment.",
+        duration: "4 mins",
+        objectives: [
+          "Define IaC security",
+          "Scan templates for errors",
+          "Enforce compliance policy"
+        ],
+        key_points: [
+          "Code defines infrastructure state",
+          "Prevent open S3 buckets in code",
+          "Version control infrastructure changes",
+          "Automated policy enforcement (OPA)",
+          "Immutable infrastructure concepts"
+        ]
+      }
+    ],
+    11: [
+      {
+        id: 1,
+        title: "Digital Forensics Lifecycle",
+        content: "The standard legal process for collecting, preserving, analyzing, and presenting digital evidence.",
+        duration: "5 mins",
+        objectives: [
+          "Follow Chain of Custody",
+          "Preserve evidence integrity",
+          "Document investigation steps"
+        ],
+        key_points: [
+          "Identify potential evidence sources",
+          "Preserve state (do not reboot)",
+          "Maintain strict Chain of Custody",
+          "Analysis on copies, never original",
+          "Reporting must be admissible in court"
+        ]
+      },
+      {
+        id: 2,
+        title: "Memory Forensics",
+        content: "Analyzing volatile memory (RAM) to find running processes, network connections, and unencrypted keys.",
+        duration: "5 mins",
+        objectives: [
+          "Capture RAM dumps",
+          "Analyze processes in memory",
+          "Find fileless malware"
+        ],
+        key_points: [
+          "RAM contains ephemeral data",
+          "Capture RAM before powering off",
+          "Tools: Volatility, Rekall",
+          "Finds unpacked malware code",
+          "Reveals active network connections"
+        ]
+      },
+      {
+        id: 3,
+        title: "Disk Forensics",
+        content: "Recovering deleted files, analyzing file systems, and examining operating system artifacts on hard drives.",
+        duration: "5 mins",
+        objectives: [
+          "Create forensic disk images",
+          "Recover deleted files",
+          "Analyze file system timelines"
+        ],
+        key_points: [
+          "Bit-for-bit imaging is required",
+          "Deleted files persist in unallocated space",
+          "Metadata reveals file history",
+          "Registry analysis shows user activity",
+          "Browser history reconstruction"
+        ]
+      },
+      {
+        id: 4,
+        title: "Incident Response Phases (NIST)",
+        content: "The specific steps to take during a security breach: Preparation, Detection, Containment, Eradication, Recovery.",
+        duration: "5 mins",
+        objectives: [
+          "Apply NIST IR lifecycle",
+          "Contain active threats",
+          "Recover systems safely"
+        ],
+        key_points: [
+          "Preparation prevents panic",
+          "Containment limits damage spread",
+          "Eradication removes the root cause",
+          "Recovery restores business function",
+          "Lessons Learned improves future response"
+        ]
+      }
+    ],
+    12: [
+      {
+        id: 1,
+        title: "Zero Trust Principles",
+        content: "The core philosophy: 'Never Trust, Always Verify'. Moving beyond perimeter-based security.",
+        duration: "4 mins",
+        objectives: [
+          "Define Zero Trust",
+          "Eliminate implicit trust",
+          "Verify every request"
+        ],
+        key_points: [
+          "Perimeter security is insufficient",
+          "Identity is the new perimeter",
+          "Assume breach mentality",
+          "Least privilege access always",
+          "Continuous monitoring of trust"
+        ]
+      },
+      {
+        id: 2,
+        title: "Identity Aware Proxy (IAP)",
+        content: "Using modern proxies to authenticate users before they reach internal applications.",
+        duration: "4 mins",
+        objectives: [
+          "Replace VPNs with IAP",
+          "Implement granular usage policies",
+          "Audit user access"
+        ],
+        key_points: [
+          "Access based on identity + context",
+          "No direct network access required",
+          "Supports BYOD policies",
+          "Granular application-level control",
+          "Seamless user experience (SSO)"
+        ]
+      },
+      {
+        id: 3,
+        title: "Micro-Segmentation",
+        content: "Dividing the network into small security zones to prevent lateral movement of attackers.",
+        duration: "5 mins",
+        objectives: [
+          "Design micro-segments",
+          "Write segmentation policies",
+          "Restrict east-west traffic"
+        ],
+        key_points: [
+          "Limits blast radius of a breach",
+          "Isolates critical workloads",
+          "Firewall rules between servers",
+          "Software-defined enforcement",
+          "Prevents lateral movement"
+        ]
+      }
+    ],
+    13: [
+      {
+        id: 1,
+        title: "The Intelligence Cycle",
+        content: "The process of turning raw data into actionable intelligence: Direction, Collection, Processing, Analysis, Dissemination.",
+        duration: "4 mins",
+        objectives: [
+          "Understand the Intel Cycle",
+          "Differentiate data vs intelligence",
+          "Apply intel to defense"
+        ],
+        key_points: [
+          "Direction sets the goals",
+          "Collection gathers raw data",
+          "Processing normalizes data",
+          "Analysis creates meaning",
+          "Dissemination reaches stakeholders"
+        ]
+      },
+      {
+        id: 2,
+        title: "Open Source Intelligence (OSINT)",
+        content: "Using publicly available sources (social media, public records, deep web) to gather intelligence.",
+        duration: "5 mins",
+        objectives: [
+          "Use OSINT frameworks",
+          "Gather passive intel",
+          "Verify source reliability"
+        ],
+        key_points: [
+          "Social media reveals personal detailed",
+          "Public code repos leak secrets",
+          "DNS records show infrastructure",
+          "Shodan indexes connected devices",
+          "Always respect privacy laws"
+        ]
+      },
+      {
+        id: 3,
+        title: "Threat Feeds and STIX/TAXII",
+        content: "Automating the exchange of threat intelligence using standard formats like STIX and TAXII.",
+        duration: "4 mins",
+        objectives: [
+          "Understand IOC formats",
+          "Consume threat feeds",
+          "Automate blocking with taxii"
+        ],
+        key_points: [
+          "STIX defines the threat data structure",
+          "TAXII defines the transport protocol",
+          "Automated blocklists (IPs, Domains)",
+          "Reduces response time to zero",
+          "Quality over quantity of feeds"
+        ]
+      }
+    ],
+    14: [
+      {
+        id: 1,
+        title: "OWASP Top 10",
+        content: "Understanding the ten most critical web application security risks defined by OWASP.",
+        duration: "5 mins",
+        objectives: [
+          "Identify top 10 vulnerabilities",
+          "Understand impact of each risk",
+          "Prioritize mitigation efforts"
+        ],
+        key_points: [
+          "Broken Access Control is often #1",
+          "Injection flaws (SQLi) allow unauthorized data access",
+          "Cryptographic failures expose sensitive data",
+          "Insecure Design refers to architectural flaws",
+          "Vulnerable Components (dependencies) are a growing risk"
+        ]
+      },
+      {
+        id: 2,
+        title: "SQL Injection (SQLi) Prevention",
+        content: "Deep dive into SQL injection attacks and how to prevent them using parameterized queries.",
+        duration: "5 mins",
+        objectives: [
+          "Understand how SQLi works",
+          "Recognize vulnerable code",
+          "Implement parameterized queries"
+        ],
+        key_points: [
+          "Never concatenate user input into SQL strings",
+          "Use Prepared Statements / Parameterized Queries",
+          "Input validation is defense-in-depth, not a cure",
+          "Apply Principle of Least Privilege to DB accounts",
+          "Use ORMs that handle escaping automatically"
+        ]
+      },
+      {
+        id: 3,
+        title: "Cross-Site Scripting (XSS)",
+        content: "Preventing XSS attacks where malicious scripts are injected into trusted websites.",
+        duration: "5 mins",
+        objectives: [
+          "Differentiate Stored vs Reflected XSS",
+          "Understand DOM-based XSS",
+          "Implement Content Security Policy (CSP)"
+        ],
+        key_points: [
+          "Context-aware output encoding is key",
+          "Sanitize HTML input if rich text is required",
+          "Use HTTPOnly flags for cookies",
+          "CSP restricts sources of executable scripts",
+          "Frameworks (React/Vue) escape by default"
+        ]
+      },
+      {
+        id: 4,
+        title: "Secure Software Development Life Cycle (SSDLC)",
+        content: "Integrating security activities into every phase of the SDLC.",
+        duration: "4 mins",
+        objectives: [
+          "Define SSDLC phases",
+          "Perform threat modeling",
+          "Conduct security code reviews"
+        ],
+        key_points: [
+          "Security requirements defined in planning",
+          "Threat modeling in design phase avoids rework",
+          "Secure coding standards guided by training",
+          "Testing includes SAST/DAST/IAST",
+          "Incident response plan for production issues"
+        ]
+      }
+    ],
+    15: [
+      {
+        id: 1,
+        title: "ICS vs IT Security",
+        content: "Differences between Industrial Control Systems (OT) and traditional IT security priorities.",
+        duration: "4 mins",
+        objectives: [
+          "Prioritize Availability over Confidentiality",
+          "Understand OT constraints",
+          "Respect safety requirements"
+        ],
+        key_points: [
+          "CIA Triad is flipped to AIC (Availability first)",
+          "Legacy protocols (Modbus) lack encryption",
+          "Patching is difficult and infrequent",
+          "Safety (physical harm prevention) is paramount",
+          "Air-gapping is common but often breached"
+        ]
+      },
+      {
+        id: 2,
+        title: "Purdue Enterprise Reference Architecture",
+        content: "The standard model for segmenting ICS networks into hierarchical levels.",
+        duration: "5 mins",
+        objectives: [
+          "Define Purdue Levels 0-5",
+          "Implement IDmz (Industrial DMZ)",
+          "Segment IT from OT"
+        ],
+        key_points: [
+          "Level 0/1: Physical Process & Basic Control",
+          "Level 2: Supervisory Control (SCADA)",
+          "Level 3: Site Operations",
+          "Level 3.5: IDmz (Security Buffer)",
+          "Level 4/5: Enterprise IT"
+        ]
+      },
+      {
+        id: 3,
+        title: "SCADA Security Best Practices",
+        content: "Securing Supervisory Control and Data Acquisition systems against cyber attacks.",
+        duration: "4 mins",
+        objectives: [
+          "Harden SCADA hosts",
+          "Monitor proprietary protocols",
+          "Control remote access"
+        ],
+        key_points: [
+          "Disable unused services on HMIs",
+          "Whitelisting applications is effective",
+          "Strict control of USB drives",
+          "Secure remote access (MFA) is critical",
+          "Network monitoring with OT-aware sensors"
+        ]
+      }
+    ],
+    16: [
+      {
+        id: 1,
+        title: "GDPR and Data Subject Rights",
+        content: "Understanding the General Data Protection Regulation and the rights it grants to individuals.",
+        duration: "5 mins",
+        objectives: [
+          "Define PII and Data Subject",
+          "List core GDPR rights",
+          "Understand 'Right to be Forgotten'"
+        ],
+        key_points: [
+          "Consent must be explicit and revocable",
+          "Right to Access and Portability",
+          "Right to Erasure (Right to be Forgotten)",
+          "72-hour breach notification requirement",
+          "Fines up to 4% of global turnover"
+        ]
+      },
+      {
+        id: 2,
+        title: "PCI DSS Compliance",
+        content: "Security standards for organizations that handle branded credit cards.",
+        duration: "4 mins",
+        objectives: [
+          "Understand 12 PCI requirements",
+          "Scope the Cardholder Data Environment (CDE)",
+          "Protect stored card data"
+        ],
+        key_points: [
+          "Build and maintain a secure network",
+          "Protect cardholder data (encryption)",
+          "Maintain a vulnerability management program",
+          "Implement strong access control measures",
+          "Regularly monitor and test networks"
+        ]
+      },
+      {
+        id: 3,
+        title: "Privacy by Design",
+        content: "Embedding privacy into the design and architecture of IT systems and business practices.",
+        duration: "4 mins",
+        objectives: [
+          "Apply Privacy by Design principles",
+          "Minimize data collection",
+          "Anonymize data where possible"
+        ],
+        key_points: [
+          "Proactive not reactive",
+          "Privacy as the default setting",
+          "End-to-end security via encryption",
+          "Transparency and user-centricity",
+          "Data minimization aids compliance"
+        ]
+      }
+    ],
+    17: [
+      {
+        id: 1,
+        title: "Mobile Device Management (MDM)",
+        content: "Managing and securing mobile devices used within an organization.",
+        duration: "4 mins",
+        objectives: [
+          "Enforce security policies",
+          "Remote wipe lost devices",
+          "Manage application inventory"
+        ],
+        key_points: [
+          "Enforce PIN/Biometrics",
+          "Containerization separates work/personal data",
+          "Jailbreak/Root detection",
+          "Remote wipe capabilities",
+          "Encryption of data at rest"
+        ]
+      },
+      {
+        id: 2,
+        title: "IoT Security Challenges",
+        content: "Addressing the unique security challenges posed by Internet of Things devices.",
+        duration: "5 mins",
+        objectives: [
+          "Identify IoT risks",
+          "Change default credentials",
+          "Segment IoT devices"
+        ],
+        key_points: [
+          "Default passwords are a major vector (Mirai)",
+          "Firmware often lacks update mechanisms",
+          "IoT devices should be on isolated VLANs",
+          "Physical security of devices",
+          "Monitor traffic for anomalies"
+        ]
+      },
+      {
+        id: 3,
+        title: "Android vs iOS Security Models",
+        content: "Comparing the security architectures of the two major mobile operating systems.",
+        duration: "4 mins",
+        objectives: [
+          "Understand app sandboxing",
+          "Compare permission models",
+          "Review app store vetting"
+        ],
+        key_points: [
+          "iOS 'Walled Garden' reduces malware",
+          "Android offers more flexibility but higher risk",
+          "Both use app sandboxing",
+          "Permission models have converged (ask on use)",
+          "Sideloading apps bypasses checks"
+        ]
+      }
+    ],
+    18: [
+      {
+        id: 1,
+        title: "Business Impact Analysis (BIA)",
+        content: "Identifying critical business functions and the impact of their disruption.",
+        duration: "5 mins",
+        objectives: [
+          "Identify critical processes",
+          "Determine RTO and RPO",
+          "Quantify financial impact"
+        ],
+        key_points: [
+          "Recovery Time Objective (RTO): Max downtime",
+          "Recovery Point Objective (RPO): Max data loss",
+          "prioritize recovery of critical functions",
+          "Identify dependencies (IT, Personnel, Facilities)",
+          "BIA informs the continuity strategy"
+        ]
+      },
+      {
+        id: 2,
+        title: "Disaster Recovery Planning",
+        content: "Technical plans for restoring IT infrastructure and data after a disaster.",
+        duration: "5 mins",
+        objectives: [
+          "Select recovery sites (Hot/Warm/Cold)",
+          "Implement backup strategies",
+          "Test DR plans"
+        ],
+        key_points: [
+          "Hot Site: Fully mirrored, near-zero RTO",
+          "Warm Site: Equipment ready, data needs restore",
+          "Cold Site: Space available, equipment needed",
+          "3-2-1 Backup Rule (3 copies, 2 media, 1 offsite)",
+          "Regular testing is mandatory"
+        ]
+      },
+      {
+        id: 3,
+        title: "Crisis Communication",
+        content: "Managing communication with stakeholders during a security incident or disaster.",
+        duration: "4 mins",
+        objectives: [
+          "Define communication roles",
+          "Draft holding statements",
+          "Manage public relations"
+        ],
+        key_points: [
+          "Designated spokesperson triggers trust",
+          "Internal comms prevents rumors",
+          "External comms manages reputation",
+          "Legal review of statements",
+          "Timeliness and transparency"
+        ]
+      }
     ]
   }
 
@@ -2115,8 +2765,8 @@ export default function TrainingPage() {
                       <span>{module.duration}</span>
                       <span>{module.lessons} lessons</span>
                     </div>
-                    <Button 
-                      className="w-full" 
+                    <Button
+                      className="w-full"
                       onClick={() => handleStartModule(module.id)}
                     >
                       Start Module
@@ -2150,7 +2800,7 @@ export default function TrainingPage() {
                   <span className="text-sm text-muted-foreground">{currentLessonData.duration}</span>
                 </div>
                 <div className="w-full bg-secondary rounded-full h-2">
-                  <div 
+                  <div
                     className="bg-primary h-2 rounded-full transition-all duration-300"
                     style={{ width: `${((currentLesson + 1) / (modules.find(m => m.id === selectedModule)?.lessons || 1)) * 100}%` }}
                   />
@@ -2189,8 +2839,8 @@ export default function TrainingPage() {
               </div>
 
               <div className="flex justify-between mt-8">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={handlePreviousLesson}
                   disabled={currentLesson === 0}
                 >
@@ -2218,7 +2868,7 @@ export default function TrainingPage() {
                     </span>
                   </div>
                   <div className="w-full bg-secondary rounded-full h-2">
-                    <div 
+                    <div
                       className="bg-primary h-2 rounded-full transition-all duration-300"
                       style={{ width: `${((currentQuiz + (showResult ? 1 : 0)) / quizzes.length) * 100}%` }}
                     />
@@ -2235,15 +2885,14 @@ export default function TrainingPage() {
                         key={index}
                         onClick={() => handleAnswerSelect(index)}
                         disabled={showResult}
-                        className={`w-full text-left p-4 rounded-lg border transition-colors ${
-                          showResult && index === quizzes[currentQuiz].correctAnswer
-                            ? "border-green-500 bg-green-50 text-green-800"
-                            : showResult && index === selectedAnswer && index !== quizzes[currentQuiz].correctAnswer
+                        className={`w-full text-left p-4 rounded-lg border transition-colors ${showResult && index === quizzes[currentQuiz].correctAnswer
+                          ? "border-green-500 bg-green-50 text-green-800"
+                          : showResult && index === selectedAnswer && index !== quizzes[currentQuiz].correctAnswer
                             ? "border-red-500 bg-red-50 text-red-800"
                             : selectedAnswer === index
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border hover:border-primary/50 hover:bg-muted/50"
-                        }`}
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border hover:border-primary/50 hover:bg-muted/50"
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <span>{option}</span>
@@ -2259,11 +2908,10 @@ export default function TrainingPage() {
                   </div>
 
                   {showResult && (
-                    <div className={`p-4 rounded-lg border ${
-                      selectedAnswer === quizzes[currentQuiz].correctAnswer
-                        ? "border-green-500 bg-green-50 text-green-800"
-                        : "border-red-500 bg-red-50 text-red-800"
-                    }`}>
+                    <div className={`p-4 rounded-lg border ${selectedAnswer === quizzes[currentQuiz].correctAnswer
+                      ? "border-green-500 bg-green-50 text-green-800"
+                      : "border-red-500 bg-red-50 text-red-800"
+                      }`}>
                       <p className="text-sm">{quizzes[currentQuiz].explanation}</p>
                     </div>
                   )}
@@ -2309,9 +2957,9 @@ export default function TrainingPage() {
       </Button>
 
       {/* Contact Widget */}
-      <ContactWidget 
-        isOpen={showContactWidget} 
-        onClose={() => setShowContactWidget(false)} 
+      <ContactWidget
+        isOpen={showContactWidget}
+        onClose={() => setShowContactWidget(false)}
       />
     </div>
   )

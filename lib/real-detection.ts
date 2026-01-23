@@ -105,39 +105,39 @@ export class RealPhishingDetector {
       "urgent", "immediate", "critical", "alert", "warning", "suspended", "locked",
       "verify now", "confirm immediately", "act now", "limited time", "expire", "deadline"
     ]
-    
+
     const financialKeywords = [
       "payment", "billing", "invoice", "transaction", "transfer", "wire", "bank",
       "account", "credit card", "debit", "paypal", "venmo", "zelle", "crypto", "bitcoin",
       "wallet", "investment", "refund", "tax", "irs", "stimulus", "grant"
     ]
-    
+
     const securityKeywords = [
       "security alert", "unusual activity", "suspicious login", "password", "signin",
       "authentication", "verification", "update security", "compromised", "breach", "hack"
     ]
-    
+
     const rewardKeywords = [
       "prize", "winner", "congratulations", "claim", "reward", "bonus", "gift",
       "lottery", "sweepstakes", "free", "congrats", "selected", "won"
     ]
 
     const inputLower = input.toLowerCase()
-    
+
     // Count keyword occurrences with higher sensitivity
     const urgentCount = urgentKeywords.filter(k => inputLower.includes(k)).length
     const financialCount = financialKeywords.filter(k => inputLower.includes(k)).length
     const securityCount = securityKeywords.filter(k => inputLower.includes(k)).length
     const rewardCount = rewardKeywords.filter(k => inputLower.includes(k)).length
-    
+
     const totalSuspiciousWords = urgentCount + financialCount + securityCount + rewardCount
-    
+
     // Additional suspicious patterns
     const hasUrgency = urgentCount >= 1
     const hasFinancial = financialCount >= 1
     const hasSecurity = securityCount >= 1
     const hasReward = rewardCount >= 1
-    
+
     // Check for suspicious sender patterns
     const suspiciousSenderPatterns = [
       /noreply@.*\.xyz$/i,
@@ -145,9 +145,9 @@ export class RealPhishingDetector {
       /admin@.*\.ml$/i,
       /security@.*\.ga$/i
     ]
-    
+
     const hasSuspiciousSender = suspiciousSenderPatterns.some(pattern => inputLower.match(pattern))
-    
+
     // Calculate risk score more aggressively
     let riskScore = 0
     if (hasUrgency) riskScore += 25
@@ -155,12 +155,12 @@ export class RealPhishingDetector {
     if (hasSecurity) riskScore += 35
     if (hasReward) riskScore += 20
     if (hasSuspiciousSender) riskScore += 40
-    
+
     // Additional risk factors
     if (totalSuspiciousWords >= 3) riskScore += 20
     if (inputLower.includes("click here") || inputLower.includes("link")) riskScore += 15
     if (inputLower.match(/\d{4}.*\d{4}.*\d{4}.*\d{4}/)) riskScore += 25 // Credit card pattern
-    
+
     const detected = riskScore >= 30 // Lowered threshold for better detection
     const confidence = Math.min(riskScore + (totalSuspiciousWords * 5), 95)
 
@@ -177,78 +177,90 @@ export class RealPhishingDetector {
   async checkBrandImpersonation(url: string): Promise<DetectionSource> {
     const domain = this.extractDomain(url)
     const domainParts = domain.split('.')
-    const mainPart = domainParts.length > 2 ? domainParts[domainParts.length - 2] : domainParts[0]
+    // Handle cases like 'paypal.com.security-check.xy' -> main part is 'security-check' but we need to scan all parts
+    const allParts = domainParts.map(p => p.toLowerCase())
 
     let detected = false
     let reason = "No brand impersonation detected"
     let confidence = 0
     let maxRiskScore = 0
 
-    // Enhanced brand list with more common targets
+    // Enhanced brand list with Crypto & Banking focus
     const brands = [
       ...TOP_DOMAINS,
-      "microsoft", "office365", "outlook", "hotmail", "live",
-      "amazon", "aws", "prime", "kindle",
+      // Tech / SaaS
+      "microsoft", "office365", "outlook", "hotmail", "live", "azure",
+      "google", "gmail", "drive", "docs", "youtube", "blogger",
       "apple", "icloud", "itunes", "appstore",
-      "google", "gmail", "drive", "docs", "youtube",
-      "facebook", "instagram", "whatsapp", "meta",
-      "twitter", "x", "tiktok", "snapchat",
-      "paypal", "venmo", "cashapp", "zelle",
-      "chase", "wellsfargo", "bankofamerica", "citibank",
-      "netflix", "hulu", "disney", "hbo",
-      "linkedin", "indeed", "monster", "glassdoor",
-      "ebay", "craigslist", "etsy", "shopify"
+      "facebook", "instagram", "whatsapp", "meta", "messenger",
+      "twitter", "x", "tiktok", "snapchat", "telegram", "discord",
+      "dropbox", "docusign", "adobe", "salesforce", "zoom", "slack",
+
+      // E-commerce / Payments
+      "amazon", "aws", "prime", "kindle",
+      "paypal", "venmo", "cashapp", "zelle", "stripe", "square",
+      "ebay", "craigslist", "etsy", "shopify", "walmart", "target", "bestbuy",
+
+      // Banking (US/Global)
+      "chase", "wellsfargo", "bankofamerica", "citibank", "capitalone", "pnc",
+      "usbank", "truist", "tdbank", "amex", "americanexpress", "discover",
+      "hsbc", "barclays", "santander", "db", "deutsche-bank", "ubs", "credit-suisse",
+
+      // Crypto Exchanges & Wallets (High Value Targets)
+      "binance", "coinbase", "kraken", "gemini", "kucoin", "bybit", "okx", "htx", "gate",
+      "metamask", "trustwallet", "phantom", "ledger", "trezor", "exodus", "atomic",
+      "blockchain", "etherscan", "bscscan", "opensea", "magicden", "uniswap", "pancakeswap"
     ]
 
     for (const brand of brands) {
       const brandMain = brand.split('.')[0]
-      if (domain.endsWith(brand)) continue
+      if (domain.endsWith(brand) || domain === brand) continue // Exact match is legit (usually)
 
-      // Multiple detection methods
+      // 1. Subdomain Analysis (e.g., binance.verify-action.com)
+      const foundInSubdomain = allParts.some(part => part === brandMain)
+
+      // 2. Typo-squatting Analysis on the main domain part
+      const mainPart = domainParts.length > 2 ? domainParts[domainParts.length - 2] : domainParts[0]
       const distance = levenshteinDistance(mainPart, brandMain)
-      const containsBrand = mainPart.includes(brandMain) || brandMain.includes(mainPart)
+
+      // 3. Brand Composition
+      const containsBrand = mainPart.includes(brandMain)
       const hasBrandPrefix = mainPart.startsWith(brandMain)
       const hasBrandSuffix = mainPart.endsWith(brandMain)
 
-      // Calculate risk score
+      // Scoring Logic
       let riskScore = 0
       let detectionReason = ""
 
-      if (distance > 0 && distance <= 2) {
-        riskScore = 90 - (distance * 10)
-        detectionReason = `Typo-squatting of ${brandMain} (distance: ${distance})`
-      } else if (distance > 2 && distance <= 3) {
-        riskScore = 60 - (distance * 5)
-        detectionReason = `Possible typo-squatting of ${brandMain} (distance: ${distance})`
+      // CRITICAL: Subdomain impersonation is a huge indicator
+      if (foundInSubdomain && !domain.endsWith(brand)) {
+        riskScore = 85
+        detectionReason = `Brand '${brandMain}' found in subdomain (High Risk)`
       }
 
+      // Typo-squatting
+      if (distance > 0 && distance <= 2 && mainPart.length > 4) {
+        riskScore = Math.max(riskScore, 90 - (distance * 10))
+        detectionReason = `Typo-squatting of ${brandMain} detected (distance: ${distance})`
+      }
+
+      // Concatenations
       if (containsBrand && mainPart !== brandMain) {
-        riskScore = Math.max(riskScore, 75)
-        detectionReason = `Brand name embedded in domain: ${brandMain}`
-      }
+        const suspiciousSuffixes = ["support", "verify", "secure", "login", "update", "service", "account", "wallet", "claim", "bonus"]
+        const hasSuspiciousContext = suspiciousSuffixes.some(s => mainPart.includes(s))
 
-      if (hasBrandPrefix && mainPart !== brandMain) {
-        riskScore = Math.max(riskScore, 70)
-        detectionReason = `Brand prefix used: ${brandMain}`
-      }
-
-      if (hasBrandSuffix && mainPart !== brandMain) {
-        riskScore = Math.max(riskScore, 65)
-        detectionReason = `Brand suffix used: ${brandMain}`
-      }
-
-      // Check for suspicious TLD combinations
-      const suspiciousTLDs: string[] = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.site', '.online']
-      const hasSuspiciousTLD = suspiciousTLDs.some((tld: string) => domain.endsWith(tld))
-      
-      if (hasSuspiciousTLD && (containsBrand || hasBrandPrefix || hasBrandSuffix)) {
-        riskScore = Math.max(riskScore, 85)
-        detectionReason += ` with suspicious TLD`
+        if (hasSuspiciousContext) {
+          riskScore = Math.max(riskScore, 80)
+          detectionReason = `Brand '${brandMain}' combined with suspicious keywords in domain`
+        } else {
+          riskScore = Math.max(riskScore, 60)
+          detectionReason = `Brand name '${brandMain}' embedded in domain`
+        }
       }
 
       if (riskScore > maxRiskScore) {
         maxRiskScore = riskScore
-        detected = riskScore >= 60 // Lowered threshold
+        detected = riskScore >= 55
         confidence = riskScore
         reason = detectionReason || `Potential impersonation of ${brand}`
       }
@@ -260,6 +272,53 @@ export class RealPhishingDetector {
       confidence: detected ? confidence : 0,
       reason,
       details: url
+    }
+  }
+
+  async checkCryptoScams(input: string): Promise<DetectionSource> {
+    const text = input.toLowerCase()
+
+    const cryptoKeywords = [
+      "wallet connect", "connect wallet", "verify seed", "validate phrase",
+      "restore wallet", "sync wallet", "rectify issue", "claim airdrop",
+      "gas fees", "bridge assets", "staking reward", "giveaway"
+    ]
+
+    const walletFunctionWords = ["mnemonic", "seed phrase", "private key", "keystore", "secret phrase", "12 words", "24 words"]
+
+    const matchCount = cryptoKeywords.filter(k => text.includes(k)).length
+    const sensitiveRequest = walletFunctionWords.some(w => text.includes(w))
+
+    let detected = false
+    let riskScore = 0
+    let list: string[] = []
+
+    if (matchCount > 0) {
+      riskScore += matchCount * 15
+      list.push("crypto keywords")
+    }
+
+    if (sensitiveRequest) {
+      riskScore += 50
+      list.push("requests for private keys/seed phrases")
+    }
+
+    // Check for fake support handles if it is an email
+    if (text.includes("telegram") && text.includes("support")) {
+      riskScore += 20
+      list.push("telegram support lure")
+    }
+
+    detected = riskScore >= 30
+
+    return {
+      name: "Crypto Scam Detector",
+      detected,
+      confidence: detected ? Math.min(riskScore + 20, 99) : 0,
+      reason: detected
+        ? `Potential Crypto Drainer: Content includes ${list.join(" and ")}.`
+        : "No specific crypto scam indicators found",
+      details: "Content Analysis"
     }
   }
 
@@ -340,11 +399,11 @@ export class RealPhishingDetector {
 
   async checkRandomStringDomain(url: string): Promise<DetectionSource> {
     const domain = this.extractDomain(url)
-    
+
     // Remove common TLDs and analyze the main domain part
     const domainParts = domain.split('.')
     const mainDomain = domainParts[0] || domain
-    
+
     // Check for random string patterns
     const randomPatterns = [
       // Consonant-heavy patterns (common in random domains)
@@ -360,11 +419,11 @@ export class RealPhishingDetector {
       // High entropy random strings
       /^[a-z0-9]{12,}$/i
     ]
-    
+
     let isRandom = false
     let confidence = 0
     let reason = ""
-    
+
     // Check each pattern
     for (const pattern of randomPatterns) {
       if (pattern.test(mainDomain)) {
@@ -374,20 +433,20 @@ export class RealPhishingDetector {
         break
       }
     }
-    
+
     // Additional checks for suspicious characteristics
     const hasNumbers = /\d/.test(mainDomain)
     const hasRepeatedChars = /(.)\1{2,}/.test(mainDomain)
     const isVeryLong = mainDomain.length > 15
     const hasNoVowels = !/[aeiou]/i.test(mainDomain)
-    
+
     // Calculate risk score based on multiple factors
     let riskScore = 0
     if (hasNumbers) riskScore += 20
     if (hasRepeatedChars) riskScore += 25
     if (isVeryLong) riskScore += 30
     if (hasNoVowels) riskScore += 35
-    
+
     // Domain entropy calculation (simplified)
     const uniqueChars = new Set(mainDomain.toLowerCase()).size
     const entropy = uniqueChars / mainDomain.length
@@ -397,24 +456,24 @@ export class RealPhishingDetector {
       confidence = Math.max(confidence, 85)
       reason = `High entropy random domain: ${mainDomain}`
     }
-    
+
     // Check for suspicious TLD combinations
     const suspiciousTLDs: string[] = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.site', '.online', '.info', '.biz']
     const hasSuspiciousTLD = suspiciousTLDs.some((tld: string) => domain.endsWith(tld))
-    
+
     if (hasSuspiciousTLD && (isRandom || riskScore > 30)) {
       riskScore += 25
       confidence = Math.max(confidence, 90)
       reason += ` with suspicious TLD`
     }
-    
+
     const detected = isRandom || riskScore >= 40
-    
+
     return {
       name: "Random Domain Analysis",
       detected,
-      confidence: detected ? Math.min(confidence + riskScore/2, 95) : 5,
-      reason: detected 
+      confidence: detected ? Math.min(confidence + riskScore / 2, 95) : 5,
+      reason: detected
         ? reason || `Suspicious domain pattern detected: ${mainDomain}`
         : "Domain appears legitimate",
       details: url
@@ -432,7 +491,7 @@ export class RealPhishingDetector {
       "from: noreply@", "from: support@", "from: admin@", "from: security@",
       "from: notification@", "from: service@", "from: update@", "from: alert@"
     ]
-    
+
     const hasSuspiciousHeader = suspiciousHeaders.some(header => inputLower.includes(header))
     if (hasSuspiciousHeader) {
       riskScore += 20
@@ -443,12 +502,12 @@ export class RealPhishingDetector {
     const suspiciousEmailDomains = [
       "@gmail.com", "@yahoo.com", "@hotmail.com", "@outlook.com"
     ]
-    
+
     // Look for official-looking emails from free providers (often phishing)
     const officialWords = ["security", "paypal", "amazon", "apple", "microsoft", "google", "facebook", "bank"]
     const hasOfficialWord = officialWords.some(word => inputLower.includes(word))
     const hasFreeDomain = suspiciousEmailDomains.some(domain => inputLower.includes(domain))
-    
+
     if (hasOfficialWord && hasFreeDomain) {
       riskScore += 35
       reasons.push("Official brand name using free email provider")
@@ -458,7 +517,7 @@ export class RealPhishingDetector {
     const linkPatterns = [
       /click here/gi, /link below/gi, /follow this link/gi, /visit our website/gi
     ]
-    
+
     const hasLinkPattern = linkPatterns.some(pattern => pattern.test(inputLower))
     if (hasLinkPattern) {
       riskScore += 25
@@ -478,7 +537,7 @@ export class RealPhishingDetector {
       /\bdear\s+customer\b/i, /\byou\s+have\s+been\s+selected\b/i, /\bcongratulation\b/i,
       /\byour\s+account\s+will\s+be\s+suspended\b/i, /\bverify\s+your\s+account\s+immediately\b/i
     ]
-    
+
     const hasGrammarIssue = grammarIssues.some(pattern => pattern.test(inputLower))
     if (hasGrammarIssue) {
       riskScore += 20
@@ -494,12 +553,12 @@ export class RealPhishingDetector {
     }
 
     detected = riskScore >= 25 // Lower threshold for email detection
-    
+
     return {
       name: "Email Pattern Analysis",
       detected,
       confidence: detected ? Math.min(riskScore + 10, 90) : 5,
-      reason: detected 
+      reason: detected
         ? `Suspicious email patterns detected: ${reasons.join(", ")}`
         : "No suspicious email patterns detected",
     }
@@ -530,11 +589,11 @@ export class RealPhishingDetector {
     for (const source of sources) {
       // Enhanced weight logic for better phishing detection
       let weight = source.confidence / 100
-      
+
       // Boost weight for high-confidence detections
       if (source.detected) {
         weight *= 2.0 // Increased from 1.5 for more sensitivity
-        
+
         // Extra boost for critical detection sources
         if (source.name.includes("NLP") || source.name.includes("Brand") || source.name.includes("Google")) {
           weight *= 1.3
@@ -556,9 +615,9 @@ export class RealPhishingDetector {
     }
 
     if (totalWeight === 0) return 0
-    
+
     let finalScore = Math.min(Math.round(totalRisk / totalWeight), 100)
-    
+
     // Boost score if any single source is high-risk
     if (maxIndividualRisk >= 80) {
       finalScore = Math.max(finalScore, 70)
@@ -566,7 +625,7 @@ export class RealPhishingDetector {
     if (maxIndividualRisk >= 90) {
       finalScore = Math.max(finalScore, 85)
     }
-    
+
     return finalScore
   }
 
@@ -667,6 +726,10 @@ export class RealPhishingDetector {
       const emailResult = await this.checkEmailSpecificPatterns(input)
       sources.push(emailResult)
     }
+
+    // 4. Crypto Scam Analysis (Content bases)
+    const cryptoResult = await this.checkCryptoScams(input)
+    sources.push(cryptoResult)
 
     // Calculate aggregated results
     // If ANY URL is malicious, the whole thing is malicious.

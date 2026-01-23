@@ -30,11 +30,13 @@ import {
   Wallet,
   FileText,
   MessageSquare,
+  Gamepad2,
 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import ContactWidget from "@/components/contact-widget"
+import CyberRangeWidget from "@/components/cyber-range-widget"
 
 // --- Mock Data for Graphs ---
 
@@ -123,7 +125,7 @@ export default function DashboardPage() {
 
         if (scansRes.ok) {
           const scansData = await scansRes.json()
-          setRecentScans(scansData.scans.slice(0, 5))
+          setRecentScans((scansData?.data || []).slice(0, 5))
         }
       } catch (error) {
         console.error("[v0] Error fetching dashboard data:", error)
@@ -167,6 +169,12 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <Link href="/games">
+                <Button variant="outline" size="sm">
+                  <Gamepad2 className="w-4 h-4 mr-2 text-primary" />
+                  Cyber Range
+                </Button>
+              </Link>
               <Button variant="outline" size="sm">
                 <RefreshCcw className="w-4 h-4 mr-2" />
                 Refresh
@@ -199,8 +207,8 @@ export default function DashboardPage() {
                 key={range}
                 onClick={() => setTimeRange(range)}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${timeRange === range
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
                   }`}
               >
                 {range === "24h" ? "24 Hours" : range === "7d" ? "7 Days" : "30 Days"}
@@ -292,22 +300,8 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground mt-2 text-center">Outcome classification of processed scans</p>
           </Card>
 
-          {/* 3. Risk Matrix */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Risk Matrix</h3>
-            <div className="h-[200px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                  <XAxis type="number" dataKey="x" name="Risk Score" unit="%" fontSize={12} />
-                  <YAxis type="number" dataKey="y" name="Confidence" unit="%" fontSize={12} />
-                  <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                  <Scatter name="Scans" data={RISK_MATRIX_DATA} fill="#f59e0b" />
-                </ScatterChart>
-              </ResponsiveContainer>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">X: Risk Score, Y: AI Confidence</p>
-          </Card>
+          {/* 3. Gamification Widget */}
+          <CyberRangeWidget />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -421,9 +415,9 @@ export default function DashboardPage() {
       </Button>
 
       {/* Contact Widget */}
-      <ContactWidget 
-        isOpen={showContactWidget} 
-        onClose={() => setShowContactWidget(false)} 
+      <ContactWidget
+        isOpen={showContactWidget}
+        onClose={() => setShowContactWidget(false)}
       />
     </div>
   )

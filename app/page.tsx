@@ -2,10 +2,12 @@
 
 import Link from "next/link"
 import { useState, useEffect } from "react"
+import LiveThreatTicker from "@/components/live-threat-ticker"
 import useEmblaCarousel from "embla-carousel-react"
 import {
   Shield,
   Zap,
+  Gamepad2,
   Brain,
   TrendingUp,
   AlertTriangle,
@@ -94,6 +96,17 @@ export default function Home() {
       gradient: "from-emerald-600/40 via-teal-600/20 to-background",
     },
     {
+      id: "games",
+      variant: "cta",
+      title: "Cyber Range",
+      desc: "Level up your skills with 15 interactive security games.",
+      icon: Gamepad2,
+      color: "violet",
+      gradient: "from-violet-600/40 via-fuchsia-600/20 to-background",
+      buttonText: "Play Now",
+      link: "/games"
+    },
+    {
       id: "quote1",
       variant: "quote",
       text: "Security is not a product, but a process.",
@@ -150,21 +163,23 @@ export default function Home() {
                   <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-white/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-white/10 transition-colors" />
 
                   {/* Content Container */}
-                  <div className="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center">
+                  <div className={`relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center 
+                      ${(slide.variant === 'quote' || slide.variant === 'cta') ? 'max-w-xl scale-90' : ''}
+                  `}>
 
                     {/* Variant: HERO */}
                     {slide.variant === 'hero' && (
-                      <>
+                      <div className="flex flex-col items-center animate-in fade-in zoom-in-95 duration-700">
                         <div className="relative mb-12">
-                          <div className="absolute inset-0 bg-blue-500/30 blur-2xl rounded-full" />
-                          <slide.icon className="w-24 h-24 text-blue-400 relative z-10 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
+                          <div className="absolute inset-0 bg-primary/40 blur-[60px] rounded-full animate-pulse" />
+                          <slide.icon className="w-28 h-28 text-white relative z-10 drop-shadow-[0_0_20px_rgba(var(--primary),0.5)]" />
                         </div>
-                        <h3 className="text-xl md:text-2xl font-medium text-blue-300 mb-4 tracking-widest uppercase">{slide.subtitle}</h3>
-                        <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-lg">
+                        <h3 className="text-xl md:text-2xl font-bold text-primary mb-4 tracking-[0.2em] uppercase">{slide.subtitle}</h3>
+                        <h1 className="text-6xl md:text-8xl font-black text-white mb-8 tracking-tighter leading-none">
                           {slide.title}
                         </h1>
-                        <p className="text-xl text-blue-100/70 max-w-xl leading-relaxed">{slide.desc}</p>
-                      </>
+                        <p className="text-2xl text-white/60 max-w-2xl leading-relaxed font-medium">{slide.desc}</p>
+                      </div>
                     )}
 
                     {/* Variant: FEATURE */}
@@ -187,13 +202,12 @@ export default function Home() {
 
                     {/* Variant: QUOTE */}
                     {slide.variant === 'quote' && (
-                      <div className="relative">
-                        <Quote className={`w-32 h-32 absolute -top-16 -left-10 text-${slide.color}-500/10 pointer-events-none`} />
-                        <blockquote className="relative z-10 space-y-8">
-                          <p className="text-2xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60 leading-tight">
+                      <div className="relative text-center">
+                        <blockquote className="relative z-10 space-y-6">
+                          <p className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60 leading-tight">
                             "{slide.text}"
                           </p>
-                          <footer className="text-lg md:text-xl text-white/50 font-medium tracking-wide">
+                          <footer className="text-xl md:text-2xl text-white/50 font-medium tracking-wide">
                             — <span className={`text-${slide.color}-400`}>{slide.author}</span>
                           </footer>
                         </blockquote>
@@ -203,45 +217,54 @@ export default function Home() {
                     {/* Variant: CTA */}
                     {slide.variant === 'cta' && (
                       <>
-                        <div className="mb-12 relative">
+                        <div className="mb-6 relative">
                           <div className="absolute inset-0 bg-primary/40 blur-3xl animate-pulse" />
-                          <slide.icon className="w-32 h-32 text-primary relative z-10" />
+                          <slide.icon className="w-24 h-24 text-primary relative z-10" />
                         </div>
-                        <h2 className="text-5xl md:text-7xl font-bold text-white mb-8">{slide.title}</h2>
-                        <p className="text-2xl text-white/60 mb-12">{slide.desc}</p>
+                        <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">{slide.title}</h2>
+                        <p className="text-lg text-white/60 mb-8">{slide.desc}</p>
                         <Button
-                          onClick={completeOnboarding}
+                          onClick={() => slide.link ? window.location.href = slide.link : completeOnboarding()}
                           size="lg"
-                          className="h-16 px-12 text-xl rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_30px_rgba(var(--primary),0.5)] hover:shadow-[0_0_50px_rgba(var(--primary),0.7)] hover:scale-105 transition-all duration-300"
+                          className="h-14 px-10 text-lg rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_30px_rgba(var(--primary),0.5)] hover:shadow-[0_0_50px_rgba(var(--primary),0.7)] hover:scale-105 transition-all duration-300"
                         >
-                          Launch Scanner
-                          <ArrowRight className="ml-3 w-6 h-6" />
+                          {slide.buttonText || "Launch Scanner"}
+                          <ArrowRight className="ml-3 w-5 h-5" />
                         </Button>
                       </>
                     )}
 
-                    {/* Navigation Button for Non-CTA Slides */}
-                    {slide.variant !== 'cta' && (
-                      <div className="mt-16 flex flex-col items-center gap-8">
-                        <div className="flex justify-center gap-3">
-                          {slides.map((_, i) => (
-                            <div
-                              key={i}
-                              className={`h-2 rounded-full transition-all duration-500 ease-out ${i === index ? `w-12 bg-${slide.color}-400 shadow-[0_0_10px_currentColor]` : "w-2 bg-white/10"
-                                }`}
-                            />
-                          ))}
-                        </div>
+                    {/* Navigation Buttons for All Slides */}
+                    <div className="mt-16 flex flex-col items-center gap-8">
+                      <div className="flex justify-center gap-3">
+                        {slides.map((_, i) => (
+                          <div
+                            key={i}
+                            className={`h-2 rounded-full transition-all duration-500 ease-out ${i === index ? `w-12 bg-${slide.color}-400 shadow-[0_0_10px_currentColor]` : "w-2 bg-white/10"
+                              }`}
+                          />
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <Button
+                          onClick={() => emblaApi && emblaApi.scrollPrev()}
+                          variant="outline"
+                          className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/30 rounded-2xl px-10 py-7 text-xl backdrop-blur-md transition-all hover:scale-105 font-bold"
+                          disabled={index === 0}
+                        >
+                          <ArrowLeft className="mr-3 w-6 h-6" />
+                          Back
+                        </Button>
                         <Button
                           onClick={scrollNext}
                           variant="outline"
-                          className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/30 rounded-full px-8 py-6 text-lg backdrop-blur-sm transition-all hover:scale-105"
+                          className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/30 rounded-2xl px-10 py-7 text-xl backdrop-blur-md transition-all hover:scale-105 font-bold shadow-xl shadow-transparent hover:shadow-primary/20"
                         >
-                          Next Step
-                          <ChevronRight className="ml-2 w-5 h-5" />
+                          Next
+                          <ChevronRight className="ml-3 w-6 h-6" />
                         </Button>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -253,9 +276,18 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      <div className="fixed inset-0 bg-grid-pattern opacity-30" />
-      <div className="fixed inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
+    <div className="min-h-screen bg-background relative overflow-hidden selection:bg-primary/30">
+      <LiveThreatTicker />
+
+      {/* Dynamic Background Elements */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 rounded-full blur-[120px] animate-pulse delay-1000" />
+        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-blue-500/10 rounded-full blur-[100px] animate-bounce duration-[10s]" />
+      </div>
+
+      <div className="fixed inset-0 bg-grid-pattern opacity-[0.15] mix-blend-overlay" />
+      <div className="fixed inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5" />
 
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -263,16 +295,16 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Back Arrow Button */}
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => window.history.back()}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
-              
+
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/30">
                 <Shield className="w-6 h-6 text-primary-foreground" />
               </div>
@@ -299,8 +331,12 @@ export default function Home() {
               </Link>
 
               <Link href="/scanner">
-                <Button className="shadow-lg shadow-primary/20">Launch Scanner</Button>
+                <Button className="font-bold shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:shadow-[0_0_30px_rgba(var(--primary),0.5)] transition-all">
+                  Launch Scanner
+                  <Zap className="ml-2 w-4 h-4 fill-current" />
+                </Button>
               </Link>
+              <div className="w-px h-6 bg-border/50 mx-2" />
               <UserNav />
             </nav>
           </div>
@@ -380,30 +416,56 @@ export default function Home() {
                 <Card className="p-8 glassmorphism relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-32 opacity-10 bg-primary blur-[100px] rounded-full pointer-events-none" />
 
-                  <div className="relative z-10">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-6">
-                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                      <span className="text-sm font-medium text-primary">Live Threat Intelligence</span>
+                  <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center">
+                    <div className="flex-1 space-y-6">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                        <span className="text-sm font-medium text-primary">Live Threat Intelligence</span>
+                      </div>
+
+                      <h2 className="text-3xl md:text-5xl font-bold text-foreground text-balance leading-[1.1] tracking-tight">
+                        Advanced AI-Powered <br />
+                        <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-500 to-blue-500 animate-gradient">
+                          Phishing Detection
+                        </span>
+                      </h2>
+                      <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl">
+                        Protect your digital assets with our cutting-edge cybersecurity platform that combines real-time threat intelligence
+                        and transformer-based machine learning to identify phishing, malware, and crypto scams in milliseconds.
+                      </p>
+
+                      <div className="flex flex-wrap gap-4 pt-2">
+                        <Link href="/scanner">
+                          <Button size="lg" className="h-14 px-10 text-lg shadow-xl shadow-primary/25 rounded-2xl group">
+                            Get Started
+                            <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                          </Button>
+                        </Link>
+                        <Button variant="outline" size="lg" className="h-14 px-8 text-lg rounded-2xl glassmorphism">
+                          Case Studies
+                        </Button>
+                      </div>
                     </div>
 
-                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6 text-balance leading-tight">
-                      Advanced AI-Powered <br />
-                      <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">
-                        Phishing Detection
-                      </span>
-                    </h2>
-                    <p className="text-muted-foreground text-lg leading-relaxed mb-8 max-w-2xl">
-                      Protect your digital assets with our cutting-edge cybersecurity platform that combines real-time threat intelligence 
-                      and cutting-edge machine learning to identify phishing, malware, and crypto scams in milliseconds.
-                    </p>
-
-                    <div className="flex gap-4">
-                      <Link href="/scanner">
-                        <Button size="lg" className="h-12 px-8 text-lg shadow-lg shadow-primary/25">
-                          Start Free Scan
-                          <ArrowRight className="ml-2 w-5 h-5" />
-                        </Button>
-                      </Link>
+                    {/* Security Score Widget */}
+                    <div className="w-full md:w-64 flex flex-col items-center justify-center p-6 rounded-[2rem] bg-background/40 border border-white/10 glassmorphism relative group overflow-hidden shrink-0">
+                      <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="relative z-10 text-center">
+                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Security Score</div>
+                        <div className="relative w-32 h-32 flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-full h-full transform -rotate-90">
+                            <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-white/5" />
+                            <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray="364.4" strokeDashoffset="36.4" className="text-green-500 drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-3xl font-bold text-foreground">90</span>
+                            <span className="text-[10px] text-muted-foreground font-bold">/ 100</span>
+                          </div>
+                        </div>
+                        <div className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-[10px] font-bold inline-block">
+                          OPTIMIZED
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </Card>
@@ -569,7 +631,7 @@ export default function Home() {
           </div>
         </div>
       </main>
-      
+
       {/* Footer */}
       <Footer />
     </div>
@@ -582,29 +644,30 @@ function SidebarItem({ active, onClick, icon: Icon, label }: { active: boolean, 
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${active
-        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden ${active
+        ? "bg-primary text-primary-foreground shadow-[0_8px_20px_rgba(var(--primary),0.25)] scale-[1.02]"
+        : "text-muted-foreground hover:text-foreground hover:bg-white/5"
         }`}
     >
-      <Icon className={`w-5 h-5 transition-colors ${active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"}`} />
-      <span className="font-medium">{label}</span>
-      {active && <ChevronRight className="w-4 h-4 ml-auto opacity-50" />}
+      {active && <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />}
+      <Icon className={`w-5 h-5 transition-all duration-300 ${active ? "text-primary-foreground scale-110" : "text-muted-foreground group-hover:text-primary group-hover:scale-110"}`} />
+      <span className="font-bold tracking-tight text-sm">{label}</span>
+      {active && <ChevronRight className="w-4 h-4 ml-auto opacity-70 animate-in slide-in-from-left-2" />}
     </button>
   )
 }
 
 function StatCard({ value, label, sub, trend }: { value: string, label: string, sub: string, trend: "up" | "down" }) {
   return (
-    <Card className="p-6 glassmorphism border-primary/10 hover:border-primary/30 transition-colors">
+    <Card className="p-6 glassmorphism border-white/5 hover:border-primary/30 transition-all duration-500 hover:translate-y-[-4px] group">
       <div className="flex flex-col">
-        <span className="text-2xl font-bold text-foreground mb-1">{value}</span>
-        <span className="text-sm font-medium text-muted-foreground mb-3">{label}</span>
-        <div className="flex items-center gap-2 text-xs">
+        <span className="text-3xl font-black text-foreground mb-1 tracking-tighter group-hover:text-primary transition-colors">{value}</span>
+        <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-widest mb-4">{label}</span>
+        <div className="flex items-center gap-2 text-[10px] font-bold">
           <span className={`px-2 py-0.5 rounded-full ${trend === "up" ? "bg-green-500/10 text-green-500" : "bg-blue-500/10 text-blue-500"}`}>
-            {trend === "up" ? "↑" : "↓"} Positive
+            {trend === "up" ? "↑" : "↓"} {trend === "up" ? "IMPROVING" : "STABLE"}
           </span>
-          <span className="text-muted-foreground/60">{sub}</span>
+          <span className="text-muted-foreground/40">{sub}</span>
         </div>
       </div>
     </Card>
@@ -614,22 +677,22 @@ function StatCard({ value, label, sub, trend }: { value: string, label: string, 
 function PipelineStep({ number, title, desc, icon: Icon, align, isLast }: { number: string, title: string, desc: string, icon: any, align: "left" | "right" | "center", isLast?: boolean }) {
   return (
     <div className={`relative flex items-center md:justify-center ${align === "center" ? "justify-center" : ""}`}>
-      {/* Mobile Icon (Left aligned usually) */}
-      <div className="absolute left-[8px] md:left-1/2 md:-translate-x-1/2 w-11 h-11 rounded-full bg-background border-4 border-muted flex items-center justify-center z-10 shadow-sm">
-        <Icon className="w-5 h-5 text-primary" />
+      {/* Mobile Icon */}
+      <div className="absolute left-[8px] md:left-1/2 md:-translate-x-1/2 w-11 h-11 rounded-full bg-background border-4 border-muted flex items-center justify-center z-10 shadow-sm group">
+        <Icon className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
       </div>
 
       <div className={`
         w-full md:w-5/12 ml-16 md:ml-0
-        ${align === "left" ? "md:mr-auto md:pr-8 md:text-right" : ""}
-        ${align === "right" ? "md:ml-auto md:pl-8" : ""}
+        ${align === "left" ? "md:mr-auto md:pr-10 md:text-right" : ""}
+        ${align === "right" ? "md:ml-auto md:pl-10" : ""}
         ${align === "center" ? "md:w-8/12 text-center pt-8" : ""}
       `}>
-        <Card className="p-6 glassmorphism hover:border-primary/30 transition-all hover:translate-y-[-2px]">
+        <Card className="p-6 glassmorphism border-white/5 hover:border-primary/40 transition-all duration-500 hover:scale-[1.01] shadow-xl shadow-transparent hover:shadow-primary/5">
           <div className={`flex flex-col ${align === "left" ? "md:items-end" : "items-start"} ${align === "center" ? "items-center" : ""}`}>
-            <span className="text-2xl font-black text-foreground/5 mb-2">{number}</span>
-            <h3 className="text-base font-bold text-foreground mb-2">{title}</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+            <span className="text-4xl font-black text-primary/5 mb-[-1.5rem] select-none">{number}</span>
+            <h3 className="text-lg font-bold text-foreground mb-2 tracking-tight">{title}</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed font-medium">{desc}</p>
           </div>
         </Card>
       </div>
@@ -639,12 +702,13 @@ function PipelineStep({ number, title, desc, icon: Icon, align, isLast }: { numb
 
 function TechCard({ icon: Icon, title, desc }: { icon: any, title: string, desc: string }) {
   return (
-    <Card className="p-6 glassmorphism border-border/50 hover:border-primary/50 transition-all group">
-      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-        <Icon className="w-6 h-6 text-primary" />
+    <Card className="p-8 glassmorphism border-white/5 hover:border-primary/40 transition-all duration-500 group relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 ring-1 ring-primary/20 group-hover:ring-primary/40 group-hover:scale-110 transition-all duration-500 shadow-lg shadow-transparent group-hover:shadow-primary/20">
+        <Icon className="w-7 h-7 text-primary" />
       </div>
-      <h3 className="text-base font-bold text-foreground mb-2">{title}</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+      <h3 className="text-xl font-bold text-foreground mb-3 tracking-tight">{title}</h3>
+      <p className="text-sm text-muted-foreground leading-relaxed font-medium relative z-10">{desc}</p>
     </Card>
   )
 }
