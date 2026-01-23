@@ -267,13 +267,13 @@ function SignUpContent() {
       <div className="w-full max-w-md relative z-10">
         <div className="flex flex-col gap-8">
           {/* Header */}
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/30">
-              <V0Logo className="w-8 h-8 text-primary-foreground" />
+          <div className="flex flex-col items-center gap-3 md:gap-4">
+            <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/30">
+              <V0Logo className="w-7 h-7 md:w-8 md:h-8 text-primary-foreground" />
             </div>
-            <div className="text-center">
-              <h1 className="text-3xl font-bold tracking-tight">Create Account</h1>
-              <p className="text-muted-foreground">
+            <div className="text-center px-4">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Create Account</h1>
+              <p className="text-sm md:text-base text-muted-foreground">
                 Start your secure journey with PhishGuard AI
               </p>
             </div>
@@ -281,14 +281,14 @@ function SignUpContent() {
 
           {/* Card */}
           <Card className="glassmorphism border-border/60 shadow-xl">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl">Create Account</CardTitle>
-              <CardDescription>
+            <CardHeader className="space-y-1 p-5 md:p-6">
+              <CardTitle className="text-xl md:text-2xl">Create Account</CardTitle>
+              <CardDescription className="text-xs md:text-sm">
                 Enter your information to create your PhishGuard AI account
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 md:space-y-6 p-5 md:p-6">
               {error && (
                 <Alert variant="destructive">
                   <AlertTriangle className="w-4 h-4" />

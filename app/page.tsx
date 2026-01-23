@@ -39,6 +39,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { UserNav } from "@/components/user-nav"
+import { MobileNav } from "@/components/mobile-nav"
 import Footer from "@/components/footer"
 
 export default function Home() {
@@ -155,8 +156,8 @@ export default function Home() {
         <div className="relative w-full max-w-5xl mx-auto px-4 perspective-1000" ref={emblaRef}>
           <div className="flex touch-pan-y">
             {slides.map((slide, index) => (
-              <div key={index} className="flex-[0_0_100%] min-w-0 pl-4 py-12">
-                <div className={`relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br ${slide.gradient} backdrop-blur-2xl shadow-2xl h-[600px] flex flex-col items-center justify-center text-center p-8 md:p-12 transition-all duration-500 hover:scale-[1.02] hover:shadow-primary/20 group`}>
+              <div key={index} className="flex-[0_0_100%] min-w-0 pl-1 md:pl-4 py-8 md:py-12">
+                <div className={`relative overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] border border-white/10 bg-gradient-to-br ${slide.gradient} backdrop-blur-2xl shadow-2xl h-[500px] md:h-[600px] flex flex-col items-center justify-center text-center p-6 md:p-12 transition-all duration-500 hover:scale-[1.02] hover:shadow-primary/20 group`}>
 
                   {/* Dynamic Background Elements */}
                   <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-white/10 transition-colors" />
@@ -170,15 +171,15 @@ export default function Home() {
                     {/* Variant: HERO */}
                     {slide.variant === 'hero' && (
                       <div className="flex flex-col items-center animate-in fade-in zoom-in-95 duration-700">
-                        <div className="relative mb-12">
+                        <div className="relative mb-6 md:mb-12">
                           <div className="absolute inset-0 bg-primary/40 blur-[60px] rounded-full animate-pulse" />
-                          <slide.icon className="w-28 h-28 text-white relative z-10 drop-shadow-[0_0_20px_rgba(var(--primary),0.5)]" />
+                          <slide.icon className="w-20 h-20 md:w-28 md:h-28 text-white relative z-10 drop-shadow-[0_0_20px_rgba(var(--primary),0.5)]" />
                         </div>
-                        <h3 className="text-xl md:text-2xl font-bold text-primary mb-4 tracking-[0.2em] uppercase">{slide.subtitle}</h3>
-                        <h1 className="text-6xl md:text-8xl font-black text-white mb-8 tracking-tighter leading-none">
+                        <h3 className="text-lg md:text-2xl font-bold text-primary mb-2 md:mb-4 tracking-[0.2em] uppercase">{slide.subtitle}</h3>
+                        <h1 className="text-4xl md:text-8xl font-black text-white mb-4 md:mb-8 tracking-tighter leading-none">
                           {slide.title}
                         </h1>
-                        <p className="text-2xl text-white/60 max-w-2xl leading-relaxed font-medium">{slide.desc}</p>
+                        <p className="text-lg md:text-2xl text-white/60 max-w-2xl leading-relaxed font-medium">{slide.desc}</p>
                       </div>
                     )}
 
@@ -249,19 +250,19 @@ export default function Home() {
                         <Button
                           onClick={() => emblaApi && emblaApi.scrollPrev()}
                           variant="outline"
-                          className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/30 rounded-2xl px-10 py-7 text-xl backdrop-blur-md transition-all hover:scale-105 font-bold"
+                          className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/30 rounded-2xl px-6 md:px-10 py-5 md:py-7 text-lg md:text-xl backdrop-blur-md transition-all hover:scale-105 font-bold"
                           disabled={index === 0}
                         >
-                          <ArrowLeft className="mr-3 w-6 h-6" />
+                          <ArrowLeft className="mr-2 md:mr-3 w-5 h-5 md:w-6 md:h-6" />
                           Back
                         </Button>
                         <Button
                           onClick={scrollNext}
                           variant="outline"
-                          className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/30 rounded-2xl px-10 py-7 text-xl backdrop-blur-md transition-all hover:scale-105 font-bold shadow-xl shadow-transparent hover:shadow-primary/20"
+                          className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/30 rounded-2xl px-6 md:px-10 py-5 md:py-7 text-lg md:text-xl backdrop-blur-md transition-all hover:scale-105 font-bold shadow-xl shadow-transparent hover:shadow-primary/20"
                         >
                           Next
-                          <ChevronRight className="ml-3 w-6 h-6" />
+                          <ChevronRight className="ml-2 md:ml-3 w-5 h-5 md:w-6 md:h-6" />
                         </Button>
                       </div>
                     </div>
@@ -299,10 +300,10 @@ export default function Home() {
                 variant="ghost"
                 size="sm"
                 onClick={() => window.history.back()}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors p-2"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
+                <ArrowLeft className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Back</span>
               </Button>
 
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/30">
@@ -339,15 +340,19 @@ export default function Home() {
               <div className="w-px h-6 bg-border/50 mx-2" />
               <UserNav />
             </nav>
+            <div className="md:hidden flex items-center gap-2">
+              <UserNav />
+              <MobileNav />
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 h-[calc(100vh-80px)] py-6">
-        <div className="flex flex-col lg:flex-row gap-6 h-full">
-          {/* Left Panel - Navigation */}
-          <div className="lg:w-64 shrink-0">
+      <main className="container mx-auto px-4 h-[calc(100vh-80px)] md:py-6">
+        <div className="flex flex-col lg:flex-row gap-6 h-full pb-20 md:pb-6">
+          {/* Left Panel - Navigation (Desktop only, or optional drawer) */}
+          <div className="hidden lg:block lg:w-64 shrink-0">
             <Card className="p-4 h-full glassmorphism flex flex-col">
               <nav className="space-y-2 flex-1">
                 <SidebarItem

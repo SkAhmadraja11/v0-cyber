@@ -37,6 +37,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import ContactWidget from "@/components/contact-widget"
 import CyberRangeWidget from "@/components/cyber-range-widget"
+import { MobileNav } from "@/components/mobile-nav"
+import { UserNav } from "@/components/user-nav"
 
 // --- Mock Data for Graphs ---
 
@@ -156,9 +158,9 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
+                <Button variant="ghost" size="sm" className="p-2">
+                  <ArrowLeft className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Back</span>
                 </Button>
               </Link>
               <div className="flex items-center gap-2">
@@ -175,20 +177,27 @@ export default function DashboardPage() {
                   Cyber Range
                 </Button>
               </Link>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="hidden sm:flex">
                 <RefreshCcw className="w-4 h-4 mr-2" />
                 Refresh
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="hidden sm:flex">
                 <Filter className="w-4 h-4 mr-2" />
                 Filter
               </Button>
               <Link href="/scanner">
-                <Button>
+                <Button className="hidden md:flex">
                   <Shield className="w-4 h-4 mr-2" />
                   New Scan
                 </Button>
               </Link>
+              <div className="flex md:hidden items-center gap-2">
+                <UserNav />
+                <MobileNav />
+              </div>
+              <div className="hidden md:flex">
+                <UserNav />
+              </div>
             </div>
           </div>
         </div>
@@ -196,22 +205,22 @@ export default function DashboardPage() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Time Range Selector */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-1">Security Analytics</h1>
-            <p className="text-muted-foreground">Real-time threat intelligence • Live data from Supabase</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">Security Analytics</h1>
+            <p className="text-xs md:text-sm text-muted-foreground">Real-time threat intelligence • Live data</p>
           </div>
-          <div className="flex gap-2 p-1 bg-muted rounded-lg">
+          <div className="flex gap-2 p-1 bg-muted rounded-lg w-full sm:w-auto">
             {["24h", "7d", "30d"].map((range) => (
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${timeRange === range
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${timeRange === range
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
                   }`}
               >
-                {range === "24h" ? "24 Hours" : range === "7d" ? "7 Days" : "30 Days"}
+                {range === "24h" ? "24h" : range === "7d" ? "7d" : "30d"}
               </button>
             ))}
           </div>

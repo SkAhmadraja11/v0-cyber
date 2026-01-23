@@ -18,9 +18,12 @@ const _geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'PhishGuard AI | Advanced Cyber Defense',
+  description: 'Secure your digital life against evolving crypto & phishing threats with PhishGuard AI.',
   generator: 'v0.app',
+  manifest: '/manifest.json',
+  themeColor: '#3b82f6',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0',
   icons: {
     icon: [
       {
