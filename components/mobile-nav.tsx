@@ -31,7 +31,7 @@ export function MobileNav() {
 
             {isOpen && (
                 <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-xl animate-in fade-in duration-200">
-                    <div className="flex flex-col h-full p-6">
+                    <div className="flex flex-col h-full p-6 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-[calc(1.5rem+env(safe-area-inset-bottom))] pr-[calc(1.5rem+env(safe-area-inset-right))] pl-[calc(1.5rem+env(safe-area-inset-left))]">
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
