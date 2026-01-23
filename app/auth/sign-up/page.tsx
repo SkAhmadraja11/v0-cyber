@@ -38,15 +38,15 @@ function SignUpContent() {
         setError("Profile picture must be less than 5MB")
         return
       }
-      
+
       // Check file type
       if (!file.type.startsWith('image/')) {
         setError("Profile picture must be an image file")
         return
       }
-      
+
       setProfilePicture(file)
-      
+
       // Create preview URL
       const reader = new FileReader()
       reader.onloadend = () => {
@@ -58,15 +58,15 @@ function SignUpContent() {
 
   const uploadProfilePicture = async (file: File, userId: string): Promise<string | null> => {
     if (!file) return null
-    
+
     try {
       const fileExt = file.name.split('.').pop()
       const fileName = `${userId}/profile.${fileExt}`
-      
+
       // First check if bucket exists, if not create it
       const { data: buckets } = await supabase.storage.listBuckets()
       const bucketExists = buckets?.some((bucket: any) => bucket.name === 'profile-pictures')
-      
+
       if (!bucketExists) {
         // Create bucket if it doesn't exist
         const { error: bucketError } = await supabase.storage.createBucket('profile-pictures', {
@@ -74,30 +74,30 @@ function SignUpContent() {
           fileSizeLimit: 5242880, // 5MB
           allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
         })
-        
+
         if (bucketError) {
           console.error('Bucket creation error:', bucketError)
           return null
         }
       }
-      
+
       const { data, error } = await supabase.storage
         .from('profile-pictures')
         .upload(fileName, file, {
           upsert: true,
           contentType: file.type
         })
-      
+
       if (error) {
         console.error('Upload error:', error)
         return null
       }
-      
+
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('profile-pictures')
         .getPublicUrl(fileName)
-      
+
       return publicUrl
     } catch (error) {
       console.error('Profile picture upload failed:', error)
@@ -153,8 +153,10 @@ function SignUpContent() {
         let profilePictureUrl = null
         if (profilePicture) {
           try {
-            profilePictureUrl = await uploadProfilePicture(profilePicture, authData.user.id)
-            if (!profilePictureUrl) {
+            const uploadedUrl = await uploadProfilePicture(profilePicture, authData.user.id)
+            if (uploadedUrl) {
+              profilePictureUrl = uploadedUrl
+            } else {
               console.warn('Profile picture upload failed, but continuing with signup')
             }
           } catch (uploadError) {
@@ -162,7 +164,7 @@ function SignUpContent() {
             // Continue with signup even if upload fails
           }
         }
-        
+
         // Create profile without is_activated column
         try {
           const profileData = {
@@ -173,90 +175,52 @@ function SignUpContent() {
             avatar_url: profilePictureUrl,
             updated_at: new Date().toISOString()
           }
-          
-          console.log('Creating profile with data:', profileData)
-          
-          const profileResponse = await supabase
+
+          console.log('Attempting to create profile...')
+          const { error: profileError } = await supabase
             .from('profiles')
-            .upsert(profileData, {
-              onConflict: 'id' // Handle case where profile already exists
+            .upsert(profileData, { onConflict: 'id' })
+
+          if (profileError) {
+            console.warn('Profile creation error (non-blocking):', {
+              message: profileError.message,
+              code: profileError.code,
+              details: profileError.details,
+              hint: profileError.hint
             })
 
-          console.log('Profile response:', profileResponse)
+            // Try fallback without avatar_url
+            const { error: fallbackError } = await supabase
+              .from('profiles')
+              .upsert({
+                id: authData.user.id,
+                email: email,
+                full_name: fullName,
+                role: 'user',
+                updated_at: new Date().toISOString()
+              }, { onConflict: 'id' })
 
-          if (profileResponse.error) {
-            console.error('Profile creation error:', profileResponse.error)
-            console.error('Error details:', {
-              message: profileResponse.error.message,
-              details: profileResponse.error.details,
-              hint: profileResponse.error.hint,
-              code: profileResponse.error.code
-            })
-            
-            // Try creating profile without avatar_url if there's a column issue
-            if (profileResponse.error.message?.includes('column') || profileResponse.error.code === 'PGRST204') {
-              console.log('Attempting to create profile without avatar_url...')
-              const fallbackResponse = await supabase
-                .from('profiles')
-                .upsert({
-                  id: authData.user.id,
-                  email: email,
-                  full_name: fullName,
-                  role: 'user',
-                  updated_at: new Date().toISOString()
-                }, {
-                  onConflict: 'id'
-                })
-              
-              if (fallbackResponse.error) {
-                console.error('Fallback profile creation also failed:', fallbackResponse.error)
-                setError('Profile creation failed, but your account was created. Please contact support.')
-                setTimeout(() => setError(''), 5000)
-              } else {
-                console.log('Fallback profile created successfully')
-              }
-            } else {
-              // Don't fail signup if profile creation fails
-              // User account is created, just log the error
-              setError('Profile creation failed, but your account was created. You can update your profile later.')
-              setTimeout(() => setError(''), 5000)
+            if (fallbackError) {
+              console.warn('Fallback profile creation fail (non-blocking):', {
+                message: fallbackError.message,
+                code: fallbackError.code,
+                details: fallbackError.details
+              })
             }
           } else {
             console.log('Profile created successfully')
           }
         } catch (profileCatchError) {
-          console.error('Profile creation exception:', profileCatchError)
-          setError('Profile creation failed, but your account was created. You can update your profile later.')
-          setTimeout(() => setError(''), 5000)
+          console.warn('Profile creation exception (non-blocking):', profileCatchError)
         }
 
-        // Set up MFA if enabled
+        // MFA setup should happen in profile settings, not during signup
         if (enableMFA) {
-          try {
-            // Generate MFA setup token
-            const mfaResponse = await supabase
-              .from('user_mfa')
-              .upsert({
-                user_id: authData.user.id,
-                enabled: false, // Will be enabled after setup
-                setup_token: crypto.randomUUID(),
-                created_at: new Date().toISOString()
-              }, {
-                onConflict: 'user_id'
-              })
-
-            if (mfaResponse.error) {
-              console.error('MFA setup error:', mfaResponse.error)
-            } else {
-              console.log('MFA setup initiated for user:', authData.user.id)
-            }
-          } catch (mfaCatchError) {
-            console.error('MFA enrollment error:', mfaCatchError)
-          }
+          console.log('MFA enabled checkbox was checked, but MFA setup should be completed in dashboard settings after login.')
         }
 
-        setSuccess(`Account created successfully!${enableMFA ? ' MFA setup will be available in your profile settings.' : ''} Redirecting to login...`)
-        
+        setSuccess(`Account created successfully! Redirecting to login...`)
+
         // Redirect to login after 2 seconds
         setTimeout(() => {
           router.push('/auth/login')
@@ -264,7 +228,7 @@ function SignUpContent() {
       } else {
         // User might need to confirm email first
         setSuccess("Account created! Please check your email to confirm your account, then you can log in.")
-        
+
         // Redirect to login after 3 seconds
         setTimeout(() => {
           router.push('/auth/login')
@@ -273,7 +237,7 @@ function SignUpContent() {
 
     } catch (error) {
       console.error('Signup error details:', error)
-      
+
       // Provide more specific error messages
       if (error instanceof Error) {
         if (error.message.includes('duplicate')) {
@@ -481,9 +445,9 @@ function SignUpContent() {
                   </p>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full h-11" 
+                <Button
+                  type="submit"
+                  className="w-full h-11"
                   disabled={isLoading || !!success}
                 >
                   {isLoading ? (
