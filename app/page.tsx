@@ -79,12 +79,14 @@ export default function Home() {
     {
       id: "welcome",
       variant: "hero",
-      title: "PhishGuard AI",
+      title: "Next-Gen Verdict",
       subtitle: "Next-Gen Cyber Defense",
       desc: "Secure your digital life against evolving crypto & phishing threats.",
       icon: Shield,
       color: "blue",
       gradient: "from-blue-600/40 via-purple-600/20 to-background",
+      indicatorClass: "bg-blue-400",
+      textClass: "text-blue-400",
     },
     {
       id: "detection",
@@ -95,6 +97,8 @@ export default function Home() {
       icon: Activity,
       color: "emerald",
       gradient: "from-emerald-600/40 via-teal-600/20 to-background",
+      indicatorClass: "bg-emerald-400",
+      textClass: "text-emerald-400",
     },
     {
       id: "games",
@@ -105,7 +109,9 @@ export default function Home() {
       color: "violet",
       gradient: "from-violet-600/40 via-fuchsia-600/20 to-background",
       buttonText: "Play Now",
-      link: "/games"
+      link: "/games",
+      indicatorClass: "bg-violet-400",
+      textClass: "text-violet-400",
     },
     {
       id: "quote1",
@@ -115,6 +121,8 @@ export default function Home() {
       icon: Lock,
       color: "orange",
       gradient: "from-orange-600/40 via-red-600/20 to-background",
+      indicatorClass: "bg-orange-400",
+      textClass: "text-orange-400",
     },
     {
       id: "quote2",
@@ -124,6 +132,8 @@ export default function Home() {
       icon: Zap,
       color: "indigo",
       gradient: "from-indigo-600/40 via-blue-600/20 to-background",
+      indicatorClass: "bg-indigo-400",
+      textClass: "text-indigo-400",
     },
     {
       id: "cta",
@@ -133,6 +143,8 @@ export default function Home() {
       icon: CheckCircle2,
       color: "primary",
       gradient: "from-primary/50 via-primary/20 to-background",
+      indicatorClass: "bg-primary",
+      textClass: "text-primary",
     },
   ]
 
@@ -153,63 +165,68 @@ export default function Home() {
         <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(17,24,39,1),_rgba(0,0,0,1))] -z-20" />
         <div className="fixed inset-0 bg-grid-pattern opacity-20 -z-10 animate-pulse" />
 
-        <div className="relative w-full max-w-5xl mx-auto px-4 perspective-1000" ref={emblaRef}>
-          <div className="flex touch-pan-y">
+        <div className="relative w-full max-w-7xl mx-auto px-4" ref={emblaRef}>
+          <div className="flex touch-pan-y py-10 place-items-center">
             {slides.map((slide, index) => (
-              <div key={index} className="flex-[0_0_100%] min-w-0 pl-1 md:pl-4 py-8 md:py-12">
-                <div className={`relative overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] border border-white/10 bg-gradient-to-br ${slide.gradient} backdrop-blur-2xl shadow-2xl h-[500px] md:h-[600px] flex flex-col items-center justify-center text-center p-6 md:p-12 transition-all duration-500 hover:scale-[1.02] hover:shadow-primary/20 group`}>
-
-                  {/* Dynamic Background Elements */}
-                  <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-white/10 transition-colors" />
-                  <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-white/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-white/10 transition-colors" />
+              <div key={index} className="flex-[0_0_100%] min-w-0 pl-4 md:pl-8 py-4 relative">
+                <div className={`
+                    relative overflow-hidden rounded-[2.5rem] border border-white/10 
+                    bg-gradient-to-br ${slide.gradient} backdrop-blur-xl shadow-2xl
+                    h-[600px] md:h-[700px] flex flex-col items-center justify-center text-center p-8 md:p-14 
+                    transition-all duration-500 ease-out 
+                  `}>
+                  {/* Background Elements */}
+                  <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/5 rounded-full blur-[60px] pointer-events-none" />
+                  <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-primary/10 rounded-full blur-[60px] pointer-events-none" />
 
                   {/* Content Container */}
-                  <div className={`relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center 
-                      ${(slide.variant === 'quote' || slide.variant === 'cta') ? 'max-w-xl scale-90' : ''}
+                  <div className={`relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center
+                      ${(slide.variant === 'quote' || slide.variant === 'cta') ? 'max-w-2xl' : ''}
                   `}>
 
                     {/* Variant: HERO */}
                     {slide.variant === 'hero' && (
                       <div className="flex flex-col items-center animate-in fade-in zoom-in-95 duration-700">
-                        <div className="relative mb-6 md:mb-12">
-                          <div className="absolute inset-0 bg-primary/40 blur-[60px] rounded-full animate-pulse" />
-                          <slide.icon className="w-20 h-20 md:w-28 md:h-28 text-white relative z-10 drop-shadow-[0_0_20px_rgba(var(--primary),0.5)]" />
+                        <div className="relative mb-4 md:mb-6">
+                          <div className="absolute inset-0 bg-primary/30 blur-[40px] rounded-full" />
+                          <slide.icon className="w-16 h-16 md:w-20 md:h-20 text-white relative z-10 drop-shadow-lg" />
                         </div>
-                        <h3 className="text-lg md:text-2xl font-bold text-primary mb-2 md:mb-4 tracking-[0.2em] uppercase">{slide.subtitle}</h3>
-                        <h1 className="text-4xl md:text-8xl font-black text-white mb-4 md:mb-8 tracking-tighter leading-none">
+                        <h3 className="text-xs md:text-sm font-bold text-primary mb-2 md:mb-4 tracking-[0.3em] uppercase opacity-90">{slide.subtitle}</h3>
+                        <h1 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tighter leading-none font-outfit drop-shadow-xl">
                           {slide.title}
                         </h1>
-                        <p className="text-lg md:text-2xl text-white/60 max-w-2xl leading-relaxed font-medium">{slide.desc}</p>
+                        <p className="text-base md:text-lg text-white/80 max-w-xl leading-relaxed font-medium">{slide.desc}</p>
                       </div>
                     )}
 
                     {/* Variant: FEATURE */}
                     {slide.variant === 'feature' && (
-                      <>
-                        <div className="w-20 h-20 rounded-2xl bg-emerald-500/20 flex items-center justify-center mb-10 ring-1 ring-emerald-500/40">
-                          <slide.icon className="w-10 h-10 text-emerald-400" />
+                      <div>
+                        <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 flex items-center justify-center mb-6 ring-1 ring-emerald-500/40 shadow-lg mx-auto">
+                          <slide.icon className="w-8 h-8 text-emerald-400" />
                         </div>
-                        <h2 className="text-4xl md:text-6xl font-bold text-white mb-8">{slide.title}</h2>
-                        <p className="text-2xl text-emerald-100/80 mb-12">{slide.desc}</p>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+                        <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-outfit tracking-tight">{slide.title}</h2>
+                        <p className="text-lg md:text-xl text-emerald-100/90 mb-8 leading-relaxed max-w-xl mx-auto">{slide.desc}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full px-2">
                           {slide.stats?.map((stat, i) => (
-                            <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-md">
-                              <p className="text-emerald-300 font-semibold">{stat}</p>
+                            <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-md shadow-md">
+                              <p className="text-emerald-300 font-bold text-sm md:text-base">{stat}</p>
                             </div>
                           ))}
                         </div>
-                      </>
+                      </div>
                     )}
 
                     {/* Variant: QUOTE */}
                     {slide.variant === 'quote' && (
-                      <div className="relative text-center">
+                      <div className="relative text-center px-2">
+                        <Quote className="absolute -top-10 -left-6 w-20 h-20 text-white/5 -z-10" />
                         <blockquote className="relative z-10 space-y-6">
-                          <p className="text-3xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60 leading-tight">
+                          <p className="text-2xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/60 leading-tight font-outfit tracking-tight italic">
                             "{slide.text}"
                           </p>
-                          <footer className="text-xl md:text-2xl text-white/50 font-medium tracking-wide">
-                            — <span className={`text-${slide.color}-400`}>{slide.author}</span>
+                          <footer className="text-base md:text-lg text-white/60 font-medium tracking-[0.15em] uppercase">
+                            — <span className={`${slide.textClass} font-bold`}>{slide.author}</span>
                           </footer>
                         </blockquote>
                       </div>
@@ -217,52 +234,58 @@ export default function Home() {
 
                     {/* Variant: CTA */}
                     {slide.variant === 'cta' && (
-                      <>
-                        <div className="mb-6 relative">
-                          <div className="absolute inset-0 bg-primary/40 blur-3xl animate-pulse" />
-                          <slide.icon className="w-24 h-24 text-primary relative z-10" />
+                      <div>
+                        <div className="mb-6 relative mx-auto w-max">
+                          <div className="absolute inset-0 bg-primary/30 blur-[40px]" />
+                          <slide.icon className="w-20 h-20 text-white relative z-10 drop-shadow-lg" />
                         </div>
-                        <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">{slide.title}</h2>
-                        <p className="text-lg text-white/60 mb-8">{slide.desc}</p>
+                        <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 font-outfit tracking-tight">{slide.title}</h2>
+                        <p className="text-lg md:text-xl text-white/70 mb-8 max-w-xl mx-auto leading-relaxed">{slide.desc}</p>
                         <Button
                           onClick={() => slide.link ? window.location.href = slide.link : completeOnboarding()}
                           size="lg"
-                          className="h-14 px-10 text-lg rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_30px_rgba(var(--primary),0.5)] hover:shadow-[0_0_50px_rgba(var(--primary),0.7)] hover:scale-105 transition-all duration-300"
+                          className="h-14 px-10 text-lg rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-primary/40 hover:scale-105 transition-all duration-300 border border-white/10"
                         >
                           {slide.buttonText || "Launch Scanner"}
-                          <ArrowRight className="ml-3 w-5 h-5" />
+                          <ArrowRight className="ml-2 w-5 h-5" />
                         </Button>
-                      </>
+                      </div>
                     )}
 
                     {/* Navigation Buttons for All Slides */}
-                    <div className="mt-16 flex flex-col items-center gap-8">
-                      <div className="flex justify-center gap-3">
+                    <div className="mt-8 flex flex-col items-center gap-4">
+                      <div className="flex justify-center gap-2">
                         {slides.map((_, i) => (
                           <div
                             key={i}
-                            className={`h-2 rounded-full transition-all duration-500 ease-out ${i === index ? `w-12 bg-${slide.color}-400 shadow-[0_0_10px_currentColor]` : "w-2 bg-white/10"
+                            className={`h-1.5 rounded-full transition-all duration-500 ease-out ${i === index ? `w-8 ${slide.indicatorClass}` : "w-1.5 bg-white/10"
                               }`}
                           />
                         ))}
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 relative z-50">
                         <Button
                           onClick={() => emblaApi && emblaApi.scrollPrev()}
-                          variant="outline"
-                          className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/30 rounded-2xl px-6 md:px-10 py-5 md:py-7 text-lg md:text-xl backdrop-blur-md transition-all hover:scale-105 font-bold"
+                          variant="ghost"
+                          className="text-white/50 hover:text-white hover:bg-white/10 rounded-lg px-4 py-2 text-base transition-all"
                           disabled={index === 0}
                         >
-                          <ArrowLeft className="mr-2 md:mr-3 w-5 h-5 md:w-6 md:h-6" />
+                          <ArrowLeft className="mr-2 w-4 h-4" />
                           Back
                         </Button>
                         <Button
-                          onClick={scrollNext}
+                          onClick={() => {
+                            if (index === slides.length - 1) {
+                              completeOnboarding()
+                            } else {
+                              scrollNext()
+                            }
+                          }}
                           variant="outline"
-                          className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/30 rounded-2xl px-6 md:px-10 py-5 md:py-7 text-lg md:text-xl backdrop-blur-md transition-all hover:scale-105 font-bold shadow-xl shadow-transparent hover:shadow-primary/20"
+                          className="border-white/20 bg-white/10 text-white hover:bg-white/20 hover:border-white/30 rounded-xl px-6 py-4 text-lg backdrop-blur-md transition-all hover:scale-105 font-bold shadow-lg cursor-pointer"
                         >
-                          Next
-                          <ChevronRight className="ml-2 md:ml-3 w-5 h-5 md:w-6 md:h-6" />
+                          {index === slides.length - 1 ? "Get Started" : "Next"}
+                          <ChevronRight className="ml-2 w-5 h-5" />
                         </Button>
                       </div>
                     </div>
@@ -431,7 +454,7 @@ export default function Home() {
                       <h2 className="text-3xl md:text-5xl font-bold text-foreground text-balance leading-[1.1] tracking-tight">
                         Advanced AI-Powered <br />
                         <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-500 to-blue-500 animate-gradient">
-                          Phishing Detection
+                          Threat Detection
                         </span>
                       </h2>
                       <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl">
@@ -562,7 +585,7 @@ export default function Home() {
                     <PipelineStep
                       number="05"
                       title="Risk Scoring & Verdict"
-                      desc="Aggregated data is weighted to produce a final Risk Score (0-100) and classification (Safe, Suspicious, Phishing)."
+                      desc="Aggregated data is weighted to produce a final Risk Score (0-100) and classification (Safe, Suspicious, Malicious)."
                       icon={Shield}
                       align="center"
                       isLast
@@ -666,8 +689,8 @@ function StatCard({ value, label, sub, trend }: { value: string, label: string, 
   return (
     <Card className="p-6 glassmorphism border-white/5 hover:border-primary/30 transition-all duration-500 hover:translate-y-[-4px] group">
       <div className="flex flex-col">
-        <span className="text-3xl font-black text-foreground mb-1 tracking-tighter group-hover:text-primary transition-colors">{value}</span>
-        <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-widest mb-4">{label}</span>
+        <span className="text-3xl md:text-5xl font-black text-foreground mb-1 tracking-tighter group-hover:text-primary transition-colors font-outfit">{value}</span>
+        <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-[0.2em] mb-4">{label}</span>
         <div className="flex items-center gap-2 text-[10px] font-bold">
           <span className={`px-2 py-0.5 rounded-full ${trend === "up" ? "bg-green-500/10 text-green-500" : "bg-blue-500/10 text-blue-500"}`}>
             {trend === "up" ? "↑" : "↓"} {trend === "up" ? "IMPROVING" : "STABLE"}
@@ -695,9 +718,9 @@ function PipelineStep({ number, title, desc, icon: Icon, align, isLast }: { numb
       `}>
         <Card className="p-6 glassmorphism border-white/5 hover:border-primary/40 transition-all duration-500 hover:scale-[1.01] shadow-xl shadow-transparent hover:shadow-primary/5">
           <div className={`flex flex-col ${align === "left" ? "md:items-end" : "items-start"} ${align === "center" ? "items-center" : ""}`}>
-            <span className="text-4xl font-black text-primary/5 mb-[-1.5rem] select-none">{number}</span>
-            <h3 className="text-lg font-bold text-foreground mb-2 tracking-tight">{title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed font-medium">{desc}</p>
+            <span className="text-4xl font-black text-primary/5 mb-[-1.5rem] select-none font-outfit">{number}</span>
+            <h3 className="text-xl font-bold text-foreground mb-2 tracking-tight font-outfit">{title}</h3>
+            <p className="text-base text-muted-foreground leading-relaxed font-medium">{desc}</p>
           </div>
         </Card>
       </div>
@@ -712,7 +735,7 @@ function TechCard({ icon: Icon, title, desc }: { icon: any, title: string, desc:
       <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 ring-1 ring-primary/20 group-hover:ring-primary/40 group-hover:scale-110 transition-all duration-500 shadow-lg shadow-transparent group-hover:shadow-primary/20">
         <Icon className="w-7 h-7 text-primary" />
       </div>
-      <h3 className="text-xl font-bold text-foreground mb-3 tracking-tight">{title}</h3>
+      <h3 className="text-2xl font-bold text-foreground mb-3 tracking-tight font-outfit">{title}</h3>
       <p className="text-sm text-muted-foreground leading-relaxed font-medium relative z-10">{desc}</p>
     </Card>
   )

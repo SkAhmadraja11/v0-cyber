@@ -1,20 +1,25 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono, Outfit } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 
-// Try to load Google Fonts with fallbacks
-const _geist = Geist({
+const outfit = Outfit({
   subsets: ["latin"],
   display: 'swap',
-  fallback: ['system-ui', 'arial', 'sans-serif']
+  variable: '--font-outfit',
 })
 
-const _geistMono = Geist_Mono({
+const geist = Geist({
   subsets: ["latin"],
   display: 'swap',
-  fallback: ['Consolas', 'Monaco', 'monospace']
+  variable: '--font-geist',
+})
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  display: 'swap',
+  variable: '--font-geist-mono',
 })
 
 export const metadata: Metadata = {
@@ -71,7 +76,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${_geist.className} ${_geistMono.className}`}>
+      <body className={`${outfit.variable} ${geist.variable} ${geistMono.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

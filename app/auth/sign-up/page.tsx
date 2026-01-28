@@ -21,8 +21,7 @@ function SignUpContent() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [profilePicture, setProfilePicture] = useState<File | null>(null)
-  const [profilePictureUrl, setProfilePictureUrl] = useState<string>("")
+
   const [enableMFA, setEnableMFA] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -30,80 +29,7 @@ function SignUpContent() {
   const router = useRouter()
   const supabase = createClient()
 
-  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setError("Profile picture must be less than 5MB")
-        return
-      }
 
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        setError("Profile picture must be an image file")
-        return
-      }
-
-      setProfilePicture(file)
-
-      // Create preview URL
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setProfilePictureUrl(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  const uploadProfilePicture = async (file: File, userId: string): Promise<string | null> => {
-    if (!file) return null
-
-    try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${userId}/profile.${fileExt}`
-
-      // First check if bucket exists, if not create it
-      const { data: buckets } = await supabase.storage.listBuckets()
-      const bucketExists = buckets?.some((bucket: any) => bucket.name === 'profile-pictures')
-
-      if (!bucketExists) {
-        // Create bucket if it doesn't exist
-        const { error: bucketError } = await supabase.storage.createBucket('profile-pictures', {
-          public: true,
-          fileSizeLimit: 5242880, // 5MB
-          allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-        })
-
-        if (bucketError) {
-          console.error('Bucket creation error:', bucketError)
-          return null
-        }
-      }
-
-      const { data, error } = await supabase.storage
-        .from('profile-pictures')
-        .upload(fileName, file, {
-          upsert: true,
-          contentType: file.type
-        })
-
-      if (error) {
-        console.error('Upload error:', error)
-        return null
-      }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile-pictures')
-        .getPublicUrl(fileName)
-
-      return publicUrl
-    } catch (error) {
-      console.error('Profile picture upload failed:', error)
-      return null
-    }
-  }
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -150,20 +76,7 @@ function SignUpContent() {
 
       if (authData.user) {
         // Upload profile picture if provided
-        let profilePictureUrl = null
-        if (profilePicture) {
-          try {
-            const uploadedUrl = await uploadProfilePicture(profilePicture, authData.user.id)
-            if (uploadedUrl) {
-              profilePictureUrl = uploadedUrl
-            } else {
-              console.warn('Profile picture upload failed, but continuing with signup')
-            }
-          } catch (uploadError) {
-            console.error('Profile picture upload error:', uploadError)
-            // Continue with signup even if upload fails
-          }
-        }
+
 
         // Create profile without is_activated column
         try {
@@ -172,7 +85,7 @@ function SignUpContent() {
             email: email,
             full_name: fullName,
             role: 'user',
-            avatar_url: profilePictureUrl,
+            avatar_url: null,
             updated_at: new Date().toISOString()
           }
 
@@ -304,47 +217,7 @@ function SignUpContent() {
               )}
 
               <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="profilePicture" className="text-sm font-medium">
-                    Profile Picture (Optional)
-                  </Label>
-                  <div className="flex items-center space-x-4">
-                    <div className="relative">
-                      {profilePictureUrl ? (
-                        <img
-                          src={profilePictureUrl}
-                          alt="Profile preview"
-                          className="w-20 h-20 rounded-full object-cover border-2 border-primary/20"
-                        />
-                      ) : (
-                        <div className="w-20 h-20 rounded-full bg-muted border-2 border-dashed border-muted-foreground/50 flex items-center justify-center">
-                          <Camera className="w-8 h-8 text-muted-foreground/50" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <input
-                        id="profilePicture"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleProfilePictureChange}
-                        className="hidden"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => document.getElementById('profilePicture')?.click()}
-                        className="w-full"
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        {profilePicture ? 'Change Picture' : 'Upload Picture'}
-                      </Button>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        JPG, PNG or GIF (max. 5MB)
-                      </p>
-                    </div>
-                  </div>
-                </div>
+
 
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Full Name</Label>

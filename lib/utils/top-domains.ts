@@ -48,5 +48,33 @@ export const TOP_DOMAINS = [
     "spotify.com",
     "hulu.com",
     "espn.com",
-    "weather.com"
+    "weather.com",
+    "azurewebsites.net",
+    "googleapis.com",
+    "googleusercontent.com",
+    "amazonaws.com",
+    "github.io",
+    "pages.dev",
+    "gitlab.io",
+    "bitbucket.org"
+];
+
+export const HOSTING_PLATFORMS = [
+    "vercel.app",
+    "netlify.app",
+    "firebaseapp.com",
+    "web.app",
+    "herokuapp.com",
+    "github.io",
+    "pages.dev",
+    "gitlab.io",
+    "bitbucket.io",
+    "azurewebsites.net",
+    "s3.amazonaws.com",
+    "storage.googleapis.com",
+    "wpengine.com",
+    "pantheonsite.io",
+    "cloudwaysapps.com",
+    "000webhostapp.com",
+    "infinityfreeapp.com"
 ];

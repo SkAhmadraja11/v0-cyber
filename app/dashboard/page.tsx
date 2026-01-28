@@ -51,7 +51,7 @@ const SCAN_TYPES = [
 const RISK_SPLIT = [
   { name: "Safe", value: 680, color: "#22c55e" }, // Green
   { name: "Suspicious", value: 240, color: "#eab308" }, // Yellow
-  { name: "Phishing", value: 80, color: "#ef4444" }, // Red
+  { name: "Malicious", value: 80, color: "#ef4444" }, // Red
 ]
 
 // Risk Matrix: x=Risk Score, y=Confidence, z=Volume(size)
@@ -68,7 +68,7 @@ const RISK_MATRIX_DATA = [
 
 const ALERTS_DATA = [
   { name: "Malware", value: 120 },
-  { name: "Phishing", value: 200 },
+  { name: "Malicious", value: 200 },
   { name: "Spam", value: 150 },
   { name: "Spoofing", value: 80 },
   { name: "Data Leak", value: 40 },
@@ -102,40 +102,43 @@ export default function DashboardPage() {
     ],
   })
   const [loading, setLoading] = useState(true)
-  const [timeRange, setTimeRange] = useState("24h") // Assuming a time range state for the API call
-  const [recentScans, setRecentScans] = useState([]) // Assuming a state for recent scans
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [timeRange, setTimeRange] = useState("24h")
+  const [recentScans, setRecentScans] = useState([])
   const [showContactWidget, setShowContactWidget] = useState(false)
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        const [analyticsRes, scansRes] = await Promise.all([
-          fetch(`/api/analytics?range=${timeRange}`),
-          fetch("/api/scans"),
-        ])
+  const fetchAnalytics = async (isManual = false) => {
+    if (isManual) setIsRefreshing(true)
+    try {
+      const [analyticsRes, scansRes] = await Promise.all([
+        fetch(`/api/analytics?range=${timeRange}`),
+        fetch("/api/scans"),
+      ])
 
-        if (analyticsRes.ok) {
-          const analyticsData = await analyticsRes.json()
-          setStats({
-            totalScans: analyticsData.totalScans,
-            threatsBlocked: analyticsData.threatsBlocked,
-            mlAccuracy: analyticsData.mlAccuracy,
-            avgResponseTime: analyticsData.avgResponseTime,
-            scanTypes: analyticsData.scanTypes || [],
-          })
-        }
-
-        if (scansRes.ok) {
-          const scansData = await scansRes.json()
-          setRecentScans((scansData?.data || []).slice(0, 5))
-        }
-      } catch (error) {
-        console.error("[v0] Error fetching dashboard data:", error)
-      } finally {
-        setLoading(false)
+      if (analyticsRes.ok) {
+        const analyticsData = await analyticsRes.json()
+        setStats({
+          totalScans: analyticsData.totalScans,
+          threatsBlocked: analyticsData.threatsBlocked,
+          mlAccuracy: analyticsData.mlAccuracy,
+          avgResponseTime: analyticsData.avgResponseTime,
+          scanTypes: analyticsData.scanTypes || [],
+        })
       }
-    }
 
+      if (scansRes.ok) {
+        const scansData = await scansRes.json()
+        setRecentScans((scansData?.data || []).slice(0, 5))
+      }
+    } catch (error) {
+      console.error("[v0] Error fetching dashboard data:", error)
+    } finally {
+      setLoading(false)
+      setIsRefreshing(false)
+    }
+  }
+
+  useEffect(() => {
     fetchAnalytics()
   }, [timeRange])
 
@@ -177,11 +180,22 @@ export default function DashboardPage() {
                   Cyber Range
                 </Button>
               </Link>
-              <Button variant="outline" size="sm" className="hidden sm:flex">
-                <RefreshCcw className="w-4 h-4 mr-2" />
-                Refresh
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex"
+                onClick={() => fetchAnalytics(true)}
+                disabled={isRefreshing}
+              >
+                <RefreshCcw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? "Refreshing..." : "Refresh"}
               </Button>
-              <Button variant="outline" size="sm" className="hidden sm:flex">
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex"
+                onClick={() => alert("Deep Filter: Feature coming in v3.0")}
+              >
                 <Filter className="w-4 h-4 mr-2" />
                 Filter
               </Button>
@@ -208,7 +222,15 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">Security Analytics</h1>
-            <p className="text-xs md:text-sm text-muted-foreground">Real-time threat intelligence • Live data</p>
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                Real-time threat intelligence • {isRefreshing ? 'Updating...' : 'Live data'}
+              </p>
+            </div>
           </div>
           <div className="flex gap-2 p-1 bg-muted rounded-lg w-full sm:w-auto">
             {["24h", "7d", "30d"].map((range) => (
@@ -269,13 +291,18 @@ export default function DashboardPage() {
                     outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
+                    animationBegin={0}
+                    animationDuration={1500}
                   >
                     {stats.scanTypes.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px', color: '#fff' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Legend iconType="circle" />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -296,17 +323,22 @@ export default function DashboardPage() {
                     outerRadius={80}
                     paddingAngle={2}
                     dataKey="value"
+                    animationBegin={200}
+                    animationDuration={1500}
                   >
                     {RISK_SPLIT.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px', color: '#fff' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Legend iconType="circle" />
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <p className="text-xs text-muted-foreground mt-2 text-center">Outcome classification of processed scans</p>
+            <p className="text-xs text-muted-foreground mt-2 text-center italic">Advanced Risk Logic Enabled</p>
           </Card>
 
           {/* 3. Gamification Widget */}
@@ -320,11 +352,24 @@ export default function DashboardPage() {
             <div className="h-[250px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={ALERTS_DATA} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                  <XAxis dataKey="name" fontSize={12} />
-                  <YAxis fontSize={12} />
-                  <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px' }} />
-                  <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} stroke="#fff" />
+                  <XAxis dataKey="name" fontSize={12} axisLine={false} tickLine={false} />
+                  <YAxis fontSize={12} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px', color: '#fff' }}
+                  />
+                  <Bar
+                    dataKey="value"
+                    fill="#3b82f6"
+                    radius={[6, 6, 0, 0]}
+                    barSize={40}
+                    animationDuration={1500}
+                  >
+                    {ALERTS_DATA.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index === 1 ? '#ef4444' : '#3b82f6'} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -345,9 +390,11 @@ export default function DashboardPage() {
                   <XAxis dataKey="name" fontSize={12} />
                   <YAxis fontSize={12} />
                   <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="incoming" stroke="#3b82f6" fillOpacity={1} fill="url(#colorIncoming)" />
-                  <Area type="monotone" dataKey="blocked" stroke="#ef4444" fill="#ef4444" fillOpacity={0.3} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px', color: '#fff' }}
+                  />
+                  <Area type="monotone" dataKey="incoming" stroke="#3b82f6" fillOpacity={1} fill="url(#colorIncoming)" animationDuration={2000} />
+                  <Area type="monotone" dataKey="blocked" stroke="#ef4444" fill="#ef4444" fillOpacity={0.3} animationDuration={2500} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -386,8 +433,8 @@ export default function DashboardPage() {
             </div>
             <div className="space-y-3">
               {[
-                { id: "LOG-001", type: "Phishing", target: "login-secure-update.com", time: "2m ago", status: "Blocked" },
-                { id: "LOG-002", type: "Malware", target: "invoice_2024.pdf", time: "5m ago", status: "Quarantined" },
+                { id: "LOG-001", type: "Identity Spoofing", target: "paypal-security-update.com", time: "2m ago", status: "Blocked" },
+                { id: "LOG-002", type: "Virus Payload", target: "tax_statement_2024.exe", time: "5m ago", status: "Quarantined" },
                 { id: "LOG-003", type: "Clean", target: "google.com", time: "8m ago", status: "Allowed" },
               ].map((log, i) => (
                 <div key={i} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg text-sm border border-border/50">

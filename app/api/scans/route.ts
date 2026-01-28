@@ -5,7 +5,7 @@ import { NextResponse } from "next/server"
 export async function GET() {
   try {
     const supabase = createClient()
-    
+
     // Try to fetch recent scan results from database
     const { data: scans, error } = await supabase
       .from("scan_results")
@@ -33,13 +33,13 @@ export async function GET() {
             url: "https://example-phishing-site.com",
             scan_type: "url",
             risk_score: 85,
-            classification: "PHISHING",
+            classification: "MALICIOUS",
             confidence: 92.5,
             created_at: new Date().toISOString(),
             reasons: ["Suspicious domain pattern detected", "Brand impersonation detected"]
           },
           {
-            id: "2", 
+            id: "2",
             url: "https://legitimate-site.com",
             scan_type: "url",
             risk_score: 15,
@@ -60,9 +60,9 @@ export async function GET() {
   } catch (error) {
     console.error("[scans API] Error:", error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: "Failed to fetch scan results" 
+      {
+        success: false,
+        error: "Failed to fetch scan results"
       },
       { status: 500 }
     )
@@ -78,16 +78,16 @@ export async function POST(request: Request) {
     // Validate required fields
     if (!url || !scan_type || risk_score === undefined || !classification || confidence === undefined) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: "Missing required fields: url, scan_type, risk_score, classification, confidence" 
+        {
+          success: false,
+          error: "Missing required fields: url, scan_type, risk_score, classification, confidence"
         },
         { status: 400 }
       )
     }
 
     const supabase = createClient()
-    
+
     // Try to save to database
     const { data, error } = await supabase
       .from("scan_results")
@@ -131,9 +131,9 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[scans API] Error:", error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: "Failed to create scan record" 
+      {
+        success: false,
+        error: "Failed to create scan record"
       },
       { status: 500 }
     )

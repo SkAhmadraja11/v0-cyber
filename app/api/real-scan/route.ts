@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { input, mode } = body
+    const { input, mode, refresh } = body
 
     if (!input || !mode) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     await new Promise((resolve) => setTimeout(resolve, 1200))
 
     // Perform real multi-source detection
-    const result = await detector.detect(input, mode)
+    const result = await detector.detect(input, mode, !!refresh)
 
     // Save scan results to database (with error handling for missing tables)
     try {
@@ -60,14 +60,22 @@ export async function POST(request: NextRequest) {
       // Continue even if database save fails - don't block scan result
     }
 
-    if (result.classification === "PHISHING") {
+    if (result.classification === "MALICIOUS") {
       try {
-        const domain = new URL(input.startsWith("http") ? input : `https://localhost:3000`).hostname
+        let hostname = "localhost"
+        try {
+          // Robust URL parsing for potentially messy phishing links or email content
+          const urlToParse = input.trim().split(/\s+/)[0] // Take first word if it's a mix of content
+          const safeUrl = urlToParse.startsWith("http") ? urlToParse : `https://${urlToParse}`
+          hostname = new URL(safeUrl).hostname
+        } catch (e) {
+          console.log("[v0] Could not parse hostname for threat intel, using default")
+        }
 
         await supabase.from("threat_intel").upsert(
           {
-            url: input,
-            domain,
+            url: input.slice(0, 500), // Truncate if email is huge
+            domain: hostname,
             threat_type: result.classification,
             sources: result.sources.filter((s) => s.detected).map((s) => s.name),
             metadata: { confidence: result.confidence, riskScore: result.riskScore },

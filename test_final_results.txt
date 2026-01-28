@@ -1,0 +1,90 @@
+﻿=== Forensic Website Threat Assessment Engine Verification ===
+
+Testing [Malformed URL]: not-a-url
+Final Classification: SAFE
+Score: 10/100, Confidence: 80%
+Verdict Report Summary:
+  - URL Examined: https://not-a-url/
+  - Primary Determinant: Composite indicator alignment
+  - Case ID: VEC-X1UQ2JU2-2026
+  - Recommended Action: Allow
+Reasons: WHOIS / DNS: Domain 'not-a-url' is unusually new (5 days) (not-a-url)
+--------------------------------------------------
+
+Testing [Safe Reliable Domain]: https://www.google.com
+Final Classification: SAFE
+Score: 0/100, Confidence: 35%
+Verdict Report Summary:
+  - URL Examined: https://www.google.com/
+  - Primary Determinant: Composite indicator alignment
+  - Case ID: VEC-NCWA0G82-2026
+  - Recommended Action: Allow
+Reasons: Random Domain Analysis: Suspicious domain pattern detected: www (https://www.google.com/)
+--------------------------------------------------
+
+Testing [Deceptive Brand Impersonation]: https://paypal-verify-account.secure-login.tk
+Final Classification: SUSPICIOUS
+Score: 65/100, Confidence: 50%
+Verdict Report Summary:
+  - URL Examined: https://paypal-verify-account.secure-login.tk/
+  - Primary Determinant: Composite indicator alignment
+  - Case ID: VEC-HG2U395Q-2026
+  - Recommended Action: Monitor
+Reasons: Google Safe Browsing: URL matches known phishing patterns (Heuristic Match) (https://paypal-verify-accou...), Domain Parking Check: Domain is hosted on a high-risk TLD often used for parking/staging (paypal-verify-account.secur...)
+--------------------------------------------------
+
+Testing [Suspicious Misspelled Brand]: https://paypa1-support.com
+Final Classification: SUSPICIOUS
+Score: 55/100, Confidence: 85%
+Verdict Report Summary:
+  - URL Examined: https://paypa1-support.com/
+  - Primary Determinant: Brand 'paypal' used deceptively with suspicious keyword 'support'
+  - Case ID: VEC-VNQWS2Z6-2026
+  - Recommended Action: Monitor
+Reasons: Brand Analysis (Technical): Brand 'paypal' used deceptively with suspicious keyword 'support' (https://paypa1-support.com/)
+--------------------------------------------------
+
+Testing [Homoglyph Attack]: https://╨░╤Ç╤Ç╙Å╨╡.com
+Final Classification: MALICIOUS
+Score: 92/100, Confidence: 99.9%
+Verdict Report Summary:
+  - URL Examined: https://xn--80ak6aa92e.com/
+  - Primary Determinant: Ultra-Strict Match: Domain uses Punycode/homoglyphs for brand impersonation
+  - Case ID: VEC-8BYD1W83-2026
+  - Recommended Action: Block
+Reasons: Homoglyph Attack Detection: Ultra-Strict Match: Domain uses Punycode/homoglyphs for brand impersonation (https://xn--80ak6aa92e.com/)
+--------------------------------------------------
+
+Testing [New Crypto Scam Domain]: https://connect-metamask-wallet.xyz
+Final Classification: MALICIOUS
+Score: 88/100, Confidence: 90%
+Verdict Report Summary:
+  - URL Examined: https://connect-metamask-wallet.xyz/
+  - Primary Determinant: Brand 'facebook' used deceptively with suspicious keyword 'wallet'
+  - Case ID: VEC-507MKM2F-2026
+  - Recommended Action: Block
+Reasons: Brand Analysis (Technical): Brand 'facebook' used deceptively with suspicious keyword 'wallet' (https://connect-metamask-wa...), Domain Parking Check: Domain is hosted on a high-risk TLD often used for parking/staging (connect-metamask-wallet.xyz)
+--------------------------------------------------
+
+Testing [Legitimate Subdomain]: https://support.microsoft.com
+Final Classification: SAFE
+Score: 0/100, Confidence: 10%
+Verdict Report Summary:
+  - URL Examined: https://support.microsoft.com/
+  - Primary Determinant: Composite indicator alignment
+  - Case ID: VEC-VNHFMVG1-2026
+  - Recommended Action: Allow
+Reasons: No threats detected across multiple security databases, Content passed all security checks
+--------------------------------------------------
+
+Testing [Urgent Phishing Email content]: URGENT: Your account has been suspended! Click the button below to verify your identity.
+Final Classification: SAFE
+Score: 10/100, Confidence: 80%
+Verdict Report Summary:
+  - URL Examined: Email Analysis
+  - Primary Determinant: Composite indicator alignment
+  - Case ID: VEC-KYW9X72M-2026
+  - Recommended Action: Allow
+Reasons: Enhanced NLP Analysis: High-risk content detected: 3 suspicious keywords found (Urgency: 2, Financial: 1, Security: 0, Reward: 0)
+--------------------------------------------------
+

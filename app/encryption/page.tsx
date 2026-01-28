@@ -35,14 +35,14 @@ import { Label } from "@/components/ui/label"
 
 // Simple encryption simulator for educational purposes
 function LiveEncryptionSimulator() {
-    const [plaintext, setPlaintext] = useState("")
+    const [mode, setMode] = useState<"encrypt" | "decrypt">("encrypt")
+    const [input, setInput] = useState("")
     const [secretKey, setSecretKey] = useState("SECRET123")
-    const [ciphertext, setCiphertext] = useState("")
+    const [output, setOutput] = useState("")
     const [copied, setCopied] = useState(false)
 
     const simulateEncryption = (text: string, key: string) => {
         if (!text) return ""
-        // Simple Caesar cipher-like transformation for demo
         let result = ""
         for (let i = 0; i < text.length; i++) {
             const charCode = text.charCodeAt(i)
@@ -53,13 +53,40 @@ function LiveEncryptionSimulator() {
         return result.toUpperCase()
     }
 
-    const handleEncrypt = () => {
-        const encrypted = simulateEncryption(plaintext, secretKey)
-        setCiphertext(encrypted)
+    const simulateDecryption = (hex: string, key: string) => {
+        if (!hex) return ""
+        try {
+            let result = ""
+            // Remove spaces or colons if the user pasted formatted hex
+            const cleanHex = hex.replace(/[\s:]/g, "")
+            if (cleanHex.length % 2 !== 0) throw new Error("Invalid hex length")
+
+            for (let i = 0; i < cleanHex.length; i += 2) {
+                const hexPair = cleanHex.substring(i, i + 2)
+                const charCode = parseInt(hexPair, 16)
+                if (isNaN(charCode)) throw new Error("Invalid hex character")
+                const keyChar = key.charCodeAt((i / 2) % key.length)
+                const decrypted = String.fromCharCode((charCode - keyChar + 256) % 256)
+                result += decrypted
+            }
+            return result
+        } catch (e) {
+            return "Error: Invalid hexadecimal ciphertext. Please check your input."
+        }
+    }
+
+    const handleProcess = () => {
+        if (mode === "encrypt") {
+            const encrypted = simulateEncryption(input, secretKey)
+            setOutput(encrypted)
+        } else {
+            const decrypted = simulateDecryption(input, secretKey)
+            setOutput(decrypted)
+        }
     }
 
     const copyToClipboard = () => {
-        navigator.clipboard.writeText(ciphertext)
+        navigator.clipboard.writeText(output)
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
     }
@@ -71,18 +98,40 @@ function LiveEncryptionSimulator() {
                     <Zap className="w-5 h-5 text-primary" />
                     Live Encryption Simulator
                 </CardTitle>
-                <CardDescription>See how data is transformed from readable text to ciphertext</CardDescription>
+                <CardDescription>
+                    {mode === "encrypt"
+                        ? "See how data is transformed from readable text to ciphertext"
+                        : "Reverse the process to recover the original message from hex"}
+                </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
+                {/* Mode Selector */}
+                <Tabs defaultValue="encrypt" onValueChange={(v) => {
+                    setMode(v as "encrypt" | "decrypt")
+                    setInput("")
+                    setOutput("")
+                }} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 bg-black/20">
+                        <TabsTrigger value="encrypt" className="flex items-center gap-2">
+                            <Lock className="w-4 h-4" />
+                            Encrypt
+                        </TabsTrigger>
+                        <TabsTrigger value="decrypt" className="flex items-center gap-2">
+                            <Unlock className="w-4 h-4" />
+                            Decrypt
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
+
                 <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="plaintext">Your Message (Plaintext)</Label>
+                        <Label htmlFor="input">{mode === "encrypt" ? "Your Message (Plaintext)" : "Encrypted Text (Hex Ciphertext)"}</Label>
                         <Input
-                            id="plaintext"
-                            placeholder="Hello World!"
-                            value={plaintext}
-                            onChange={(e) => setPlaintext(e.target.value)}
-                            className="font-mono"
+                            id="input"
+                            placeholder={mode === "encrypt" ? "Hello World!" : "5F6A7B..."}
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            className="font-mono bg-black/20 border-primary/10"
                         />
                     </div>
                     <div className="space-y-2">
@@ -92,39 +141,57 @@ function LiveEncryptionSimulator() {
                             placeholder="SECRET123"
                             value={secretKey}
                             onChange={(e) => setSecretKey(e.target.value)}
-                            className="font-mono"
+                            className="font-mono bg-black/20 border-primary/10"
                         />
                     </div>
                 </div>
 
-                <Button onClick={handleEncrypt} className="w-full" disabled={!plaintext}>
-                    <Lock className="w-4 h-4 mr-2" />
-                    Encrypt Message
+                <Button onClick={handleProcess} className="w-full shadow-lg shadow-primary/20" disabled={!input}>
+                    {mode === "encrypt" ? (
+                        <>
+                            <Lock className="w-4 h-4 mr-2" />
+                            Encrypt Message
+                        </>
+                    ) : (
+                        <>
+                            <Unlock className="w-4 h-4 mr-2" />
+                            Decrypt Ciphertext
+                        </>
+                    )}
                 </Button>
 
-                {ciphertext && (
-                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-500">
-                        <Label>Encrypted Output (Ciphertext)</Label>
+                {output && (
+                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
+                        <Label className="text-primary/70">{mode === "encrypt" ? "Encrypted Output (Hex Ciphertext)" : "Decrypted Original (Plaintext)"}</Label>
                         <div className="relative">
-                            <div className="p-4 bg-black/40 rounded-lg border border-primary/20 font-mono text-sm break-all text-primary">
-                                {ciphertext}
+                            <div className={`p-4 bg-black/40 rounded-lg border border-primary/20 font-mono text-sm break-all ${output.startsWith("Error:") ? "text-destructive" : "text-primary"}`}>
+                                {output}
                             </div>
-                            <Button
-                                size="sm"
-                                variant="ghost"
-                                className="absolute top-2 right-2"
-                                onClick={copyToClipboard}
-                            >
-                                {copied ? <CheckCheck className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                            </Button>
+                            {!output.startsWith("Error:") && (
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="absolute top-2 right-2 hover:bg-primary/10"
+                                    onClick={copyToClipboard}
+                                >
+                                    {copied ? <CheckCheck className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                </Button>
+                            )}
                         </div>
                         <p className="text-xs text-muted-foreground flex items-center gap-2">
                             <Lightbulb className="w-4 h-4 text-yellow-500" />
-                            This is a simplified demo. Real encryption like AES-256 is much more complex!
+                            {mode === "encrypt"
+                                ? "This transformation is reversible only if you have the correct Secret Key!"
+                                : "The Secret Key must match exactly what was used during encryption."}
                         </p>
                     </div>
                 )}
             </CardContent>
+            <CardFooter className="bg-primary/5 py-4 border-t border-primary/10">
+                <p className="text-xs text-muted-foreground italic">
+                    Note: This uses a custom modular polyalphabetic substitution for educational clarity.
+                </p>
+            </CardFooter>
         </Card>
     )
 }
@@ -577,7 +644,7 @@ export default function EncryptionPage() {
                     </Card>
                 </div>
             </main>
-            
+
             {/* Footer */}
             <Footer />
         </div>

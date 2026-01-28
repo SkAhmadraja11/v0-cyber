@@ -80,8 +80,9 @@
 }
 
 @theme inline {
-  --font-sans: "Geist", "Geist Fallback";
-  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --font-sans: var(--font-geist);
+  --font-mono: var(--font-geist-mono);
+  --font-outfit: var(--font-outfit);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -167,5 +168,75 @@
     background: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* 3D Transform Utilities */
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .perspective-2000 {
+    perspective: 2000px;
+  }
+
+  .translate-z-neg-50 {
+    transform: translateZ(-50px);
+  }
+
+  .translate-z-neg-20 {
+    transform: translateZ(-20px);
+  }
+
+  .translate-z-10 {
+    transform: translateZ(10px);
+  }
+
+  .translate-z-20 {
+    transform: translateZ(20px);
+  }
+
+  .translate-z-30 {
+    transform: translateZ(30px);
+  }
+
+  .translate-z-40 {
+    transform: translateZ(40px);
+  }
+
+  .translate-z-50 {
+    transform: translateZ(50px);
+  }
+
+  .translate-z-60 {
+    transform: translateZ(60px);
+  }
+
+  .rotate-x-2 {
+    transform: rotateX(2deg);
+  }
+
+  .rotate-y-2 {
+    transform: rotateY(2deg);
+  }
+
+  /* Hover variants for 3D effects */
+  .hover\:rotate-x-2:hover {
+    transform: rotateX(2deg);
+  }
+
+  .hover\:rotate-y-2:hover {
+    transform: rotateY(2deg);
+  }
+
+  .hover\:translate-z-10:hover {
+    transform: translateZ(10px);
+  }
+
+  .group:hover .group-hover\:translate-z-10 {
+    transform: translateZ(10px);
   }
 }

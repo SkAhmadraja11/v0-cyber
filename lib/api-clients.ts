@@ -36,8 +36,8 @@ export class GoogleSafeBrowsingClient {
     this.apiKey = process.env.GOOGLE_SAFE_BROWSING_API_KEY
   }
 
-  async checkUrl(url: string): Promise<{ detected: boolean; confidence: number; reason: string }> {
-    // If no API key, return simulated result
+  async checkUrl(url: string): Promise<{ detected: boolean; confidence: number; reason: string; isReal: boolean }> {
+    // [Mock Simulation] If no API key, return simulated result
     if (!this.apiKey) {
       return this.simulateCheck(url)
     }
@@ -68,13 +68,15 @@ export class GoogleSafeBrowsingClient {
           detected: true,
           confidence: 95,
           reason: `Flagged as ${data.matches[0].threatType} by Google Safe Browsing`,
+          isReal: true,
         }
       }
 
       return {
         detected: false,
-        confidence: 10,
+        confidence: 0,
         reason: "No threats found in Google Safe Browsing database",
+        isReal: true,
       }
     } catch (error) {
       console.error("[v0] Google Safe Browsing API error:", error)
@@ -82,16 +84,20 @@ export class GoogleSafeBrowsingClient {
     }
   }
 
-  private simulateCheck(url: string): { detected: boolean; confidence: number; reason: string } {
+  /**
+   * [Mock Simulation] Heuristic fallback when Google API is unavailable
+   */
+  private simulateCheck(url: string): { detected: boolean; confidence: number; reason: string; isReal: boolean } {
     const maliciousPatterns = ["verify-account", "urgent-login", "suspended-account", "prize-winner", "security-alert"]
     const detected = maliciousPatterns.some((pattern) => url.toLowerCase().includes(pattern))
 
     return {
       detected,
-      confidence: detected ? 95 : 10,
+      confidence: detected ? 40 : 5, // Downgraded confidence for simulated results
       reason: detected
-        ? "URL matches known phishing patterns (simulated check - add API key for real detection)"
-        : "No threats detected (simulated check - add API key for real detection)",
+        ? "URL matches known phishing patterns (Heuristic Match)"
+        : "No heuristic patterns detected",
+      isReal: false,
     }
   }
 }
@@ -103,7 +109,8 @@ export class PhishTankClient {
     this.apiKey = process.env.PHISHTANK_API_KEY
   }
 
-  async checkUrl(url: string): Promise<{ detected: boolean; confidence: number; reason: string }> {
+  async checkUrl(url: string): Promise<{ detected: boolean; confidence: number; reason: string; isReal: boolean }> {
+    // [Mock Simulation] If no API key, return simulated result
     if (!this.apiKey) {
       return this.simulateCheck(url)
     }
@@ -131,13 +138,15 @@ export class PhishTankClient {
           detected: true,
           confidence: 98,
           reason: "URL verified as phishing in PhishTank community database",
+          isReal: true,
         }
       }
 
       return {
         detected: false,
-        confidence: 8,
-        reason: "URL not found in PhishTank phishing reports",
+        confidence: 0,
+        reason: "URL not flagged in PhishTank global community repository",
+        isReal: true,
       }
     } catch (error) {
       console.error("[v0] PhishTank API error:", error)
@@ -145,7 +154,10 @@ export class PhishTankClient {
     }
   }
 
-  private simulateCheck(url: string): { detected: boolean; confidence: number; reason: string } {
+  /**
+   * [Mock Simulation] Heuristic fallback for PhishTank identification
+   */
+  private simulateCheck(url: string): { detected: boolean; confidence: number; reason: string; isReal: boolean } {
     const knownPhishing = [
       "verify-account-secure.com",
       "login-update-now.net",
@@ -156,10 +168,11 @@ export class PhishTankClient {
 
     return {
       detected,
-      confidence: detected ? 98 : 8,
+      confidence: detected ? 50 : 5,
       reason: detected
-        ? "URL found in known phishing database (simulated - add API key for real detection)"
-        : "URL not in phishing database (simulated - add API key for real detection)",
+        ? "Technical match found in local heuristic database"
+        : "No community flags detected in current environment",
+      isReal: false,
     }
   }
 }
@@ -171,13 +184,14 @@ export class VirusTotalClient {
     this.apiKey = process.env.VIRUSTOTAL_API_KEY
   }
 
-  async checkUrl(url: string): Promise<{ detected: boolean; confidence: number; reason: string }> {
+  async checkUrl(url: string): Promise<{ detected: boolean; confidence: number; reason: string; isReal: boolean }> {
+    // [Mock Simulation] If no API key, return simulated result
     if (!this.apiKey) {
       return this.simulateCheck(url)
     }
 
     try {
-      // First, submit the URL for analysis
+      // Submission and check against VT v3 API
       const urlId = btoa(url).replace(/=/g, "")
 
       const response = await fetch(`https://www.virustotal.com/api/v3/urls/${urlId}`, {
@@ -204,14 +218,16 @@ export class VirusTotalClient {
         return {
           detected: true,
           confidence: Math.round(confidence),
-          reason: `${maliciousCount}/${totalCount} security vendors flagged this URL as malicious`,
+          reason: `${maliciousCount}/${totalCount} professional security vendors flagged this indicator`,
+          isReal: true,
         }
       }
 
       return {
         detected: false,
-        confidence: 15,
-        reason: "No security vendor flags detected",
+        confidence: 0,
+        reason: "Indicator analyzed by VirusTotal: No vendor detections found",
+        isReal: true,
       }
     } catch (error) {
       console.error("[v0] VirusTotal API error:", error)
@@ -219,16 +235,20 @@ export class VirusTotalClient {
     }
   }
 
-  private simulateCheck(url: string): { detected: boolean; confidence: number; reason: string } {
+  /**
+   * [Mock Simulation] Heuristic fallback for multi-vendor analysis simulation
+   */
+  private simulateCheck(url: string): { detected: boolean; confidence: number; reason: string; isReal: boolean } {
     const suspiciousIndicators =
       url.match(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/) || url.includes("@") || (url.match(/\./g) || []).length > 4
 
     return {
       detected: !!suspiciousIndicators,
-      confidence: suspiciousIndicators ? 75 : 15,
+      confidence: suspiciousIndicators ? 45 : 5,
       reason: suspiciousIndicators
-        ? "Suspicious patterns detected (simulated - add API key for real detection)"
-        : "No suspicious patterns found (simulated - add API key for real detection)",
+        ? "Structural anomalies detected in URL syntax (Local Analysis)"
+        : "Standard URL structure observed",
+      isReal: false,
     }
   }
 }
@@ -240,7 +260,7 @@ export class WHOISClient {
     this.apiKey = process.env.WHOIS_API_KEY
   }
 
-  async getDomainAge(domain: string): Promise<{ age: number; isNew: boolean }> {
+  async getDomainAge(domain: string): Promise<{ age: number; isNew: boolean; isReal: boolean }> {
     if (!this.apiKey) {
       return this.simulateCheck(domain)
     }
@@ -266,6 +286,7 @@ export class WHOISClient {
       return {
         age,
         isNew: age < 30,
+        isReal: true,
       }
     } catch (error) {
       console.error("[v0] WHOIS API error:", error)
@@ -273,7 +294,7 @@ export class WHOISClient {
     }
   }
 
-  private simulateCheck(domain: string): { age: number; isNew: boolean } {
+  private simulateCheck(domain: string): { age: number; isNew: boolean; isReal: boolean } {
     const trustedDomains = ["google.com", "microsoft.com", "apple.com", "amazon.com", "github.com"]
     const isTrusted = trustedDomains.some((d) => domain.includes(d))
     const age = isTrusted ? 5000 : Math.floor(Math.random() * 100)
@@ -281,6 +302,7 @@ export class WHOISClient {
     return {
       age,
       isNew: age < 30,
+      isReal: false,
     }
   }
 }

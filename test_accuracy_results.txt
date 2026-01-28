@@ -1,0 +1,123 @@
+﻿=== Forensic Website Threat Assessment Engine Verification ===
+
+Testing [Malformed URL]: not-a-url
+Final Classification: SAFE
+Score: 10/100, Confidence: 10%
+Verdict Report Summary:
+  - URL Examined: https://not-a-url/
+  - Primary Determinant: Composite indicator alignment
+  - Case ID: VEC-OGRC9LL0-2026
+  - Recommended Action: Allow
+Reasons: No threats detected across multiple security databases, Content passed all security checks
+--------------------------------------------------
+
+Testing [Safe Reliable Domain]: https://www.google.com
+Final Classification: SAFE
+Score: 0/100, Confidence: 10%
+Verdict Report Summary:
+  - URL Examined: https://www.google.com/
+  - Primary Determinant: Composite indicator alignment
+  - Case ID: VEC-H3GPNEWP-2026
+  - Recommended Action: Allow
+Reasons: No threats detected across multiple security databases, Content passed all security checks
+--------------------------------------------------
+
+Testing [Deceptive Brand Impersonation]: https://paypal-verify-account.secure-login.tk
+Final Classification: SUSPICIOUS
+Score: 70/100, Confidence: 50%
+Verdict Report Summary:
+  - URL Examined: https://paypal-verify-account.secure-login.tk/
+  - Primary Determinant: Composite indicator alignment
+  - Case ID: VEC-C16WZOZE-2026
+  - Recommended Action: Monitor
+Reasons: Google Safe Browsing: URL matches known phishing patterns (Heuristic Match) (https://paypal-verify-accou...), Domain Parking Check: Domain is hosted on a high-risk TLD often used for parking/staging (paypal-verify-account.secur...)
+--------------------------------------------------
+
+Testing [Suspicious Misspelled Brand]: https://paypa1-support.com
+Final Classification: SUSPICIOUS
+Score: 70/100, Confidence: 90%
+Verdict Report Summary:
+  - URL Examined: https://paypa1-support.com/
+  - Primary Determinant: Brand 'paypal' used deceptively with suspicious keyword 'support'
+  - Case ID: VEC-GWADE7GR-2026
+  - Recommended Action: Monitor
+Reasons: WHOIS / DNS: Domain 'paypa1-support.com' is unusually new (10 days) (paypa1-support.com), Brand Analysis (Technical): Brand 'paypal' used deceptively with suspicious keyword 'support' (https://paypa1-support.com/)
+--------------------------------------------------
+
+Testing [Homoglyph Attack]: https://╨░╤Ç╤Ç╙Å╨╡.com
+Final Classification: MALICIOUS
+Score: 92/100, Confidence: 99.9%
+Verdict Report Summary:
+  - URL Examined: https://xn--80ak6aa92e.com/
+  - Primary Determinant: Ultra-Strict Match: Domain uses Punycode/homoglyphs for brand impersonation
+  - Case ID: VEC-6GGWPMQ0-2026
+  - Recommended Action: Block
+Reasons: Homoglyph Attack Detection: Ultra-Strict Match: Domain uses Punycode/homoglyphs for brand impersonation (https://xn--80ak6aa92e.com/), Random Domain Analysis: Excessive numeric characters in domain: xn--80ak6aa92e (https://xn--80ak6aa92e.com/)
+--------------------------------------------------
+
+Testing [New Crypto Scam Domain]: https://connect-metamask-wallet.xyz
+Final Classification: MALICIOUS
+Score: 88/100, Confidence: 99.9%
+Verdict Report Summary:
+  - URL Examined: https://connect-metamask-wallet.xyz/
+  - Primary Determinant: Brand 'facebook' used deceptively with suspicious keyword 'wallet'
+  - Case ID: VEC-OT623O9Q-2026
+  - Recommended Action: Block
+Reasons: WHOIS / DNS: Domain 'connect-metamask-wallet.xyz' is unusually new (20 days) (connect-metamask-wallet.xyz), Brand Analysis (Technical): Brand 'facebook' used deceptively with suspicious keyword 'wallet' (https://connect-metamask-wa...), Random Domain Analysis: Suspicious TLD usage with long domain part (https://connect-metamask-wa...), Domain Parking Check: Domain is hosted on a high-risk TLD often used for parking/staging (connect-metamask-wallet.xyz)
+--------------------------------------------------
+
+Testing [Legitimate Subdomain]: https://support.microsoft.com
+Final Classification: SAFE
+Score: 0/100, Confidence: 10%
+Verdict Report Summary:
+  - URL Examined: https://support.microsoft.com/
+  - Primary Determinant: Composite indicator alignment
+  - Case ID: VEC-DIDRJC9P-2026
+  - Recommended Action: Allow
+Reasons: No threats detected across multiple security databases, Content passed all security checks
+--------------------------------------------------
+
+Testing [Hosting Platform (Potentially Suspicious)]: https://my-paypal-login.vercel.app
+Final Classification: SAFE
+Score: 10/100, Confidence: 35%
+Verdict Report Summary:
+  - URL Examined: https://my-paypal-login.vercel.app/
+  - Primary Determinant: Composite indicator alignment
+  - Case ID: VEC-QBMQOW15-2026
+  - Recommended Action: Allow
+Reasons: No threats detected across multiple security databases, Content passed all security checks
+--------------------------------------------------
+
+Testing [Legitimate Enterprise Subdomain]: https://azure.microsoft.com
+Final Classification: SAFE
+Score: 0/100, Confidence: 10%
+Verdict Report Summary:
+  - URL Examined: https://azure.microsoft.com/
+  - Primary Determinant: Composite indicator alignment
+  - Case ID: VEC-CV6VEFI4-2026
+  - Recommended Action: Allow
+Reasons: No threats detected across multiple security databases, Content passed all security checks
+--------------------------------------------------
+
+Testing [Cloud Hosting with Random Subdomain]: https://a1b2c3d4e5f6.storage.googleapis.com
+Final Classification: SUSPICIOUS
+Score: 45/100, Confidence: 80%
+Verdict Report Summary:
+  - URL Examined: https://a1b2c3d4e5f6.storage.googleapis.com/
+  - Primary Determinant: Composite indicator alignment
+  - Case ID: VEC-SMUER827-2026
+  - Recommended Action: Monitor
+Reasons: WHOIS / DNS: Domain 'a1b2c3d4e5f6.storage.googleapis.com' is unusually new (14 days) (a1b2c3d4e5f6.storage.google...)
+--------------------------------------------------
+
+Testing [Urgent Phishing Email content]: URGENT: Your account has been suspended! Click the button below to verify your identity.
+Final Classification: SUSPICIOUS
+Score: 45/100, Confidence: 80%
+Verdict Report Summary:
+  - URL Examined: Email Analysis
+  - Primary Determinant: Composite indicator alignment
+  - Case ID: VEC-AJU3Y2F8-2026
+  - Recommended Action: Monitor
+Reasons: Enhanced NLP Analysis: High-risk content detected: 3 suspicious keywords found (Urgency: 2, Financial: 1, Security: 0, Reward: 0)
+--------------------------------------------------
+

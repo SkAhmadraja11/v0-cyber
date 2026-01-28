@@ -3,187 +3,277 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Lightbulb, ArrowRight, Star, ShieldCheck, Lock, AlertTriangle, Zap } from "lucide-react"
+import { Lightbulb, ArrowRight, Star, ShieldCheck, Lock, AlertTriangle, Zap, HelpCircle, Users, Scale, MessageSquare } from "lucide-react"
 
 export default function CyberQuizGame({ onComplete }: { onComplete: (score: number) => void }) {
     const questions = [
-        // Security Awareness
+        // Easy
         {
             q: "What is the best way to secure your WiFi?",
             a: ["No Password", "WEP (Old Standard)", "WPA3 (Latest Standard)", "Hidden SSID"],
             c: 2,
-            icon: WifiIcon,
-            info: "WPA3 (Wi-Fi Protected Access 3) is currently the most secure protocol. WEP is obsolete and easily hacked. Hiding your SSID does not stop hackers from finding your network."
+            prize: 100,
+            info: "WPA3 (Wi-Fi Protected Access 3) is currently the most secure protocol."
         },
         {
             q: "A lock icon in the browser means...",
             a: ["The site is 100% safe", "Connection is Encrypted", "No Viruses", "Government Approved"],
             c: 1,
-            icon: Lock,
-            info: "The lock means your connection to the server is encrypted (HTTPS). However, a phishing site can still have a lock icon! It protects privacy, not legitimacy."
+            prize: 200,
+            info: "The lock means your connection is encrypted (HTTPS), but the site could still be phishing!"
         },
+        // Medium
         {
             q: "Which is a weak password?",
             a: ["Tr0ub4dour&3", "correct-horse-battery-staple", "P@ssw0rd1", "Xy9#m2!pL"],
             c: 2,
-            icon: ShieldCheck,
-            info: "'P@ssw0rd1' is extremely common. Attackers use 'dictionary attacks' to guess these instantly. Length is more important than complexity – 'correct-horse-battery-staple' is actually very strong due to length!"
+            prize: 500,
+            info: "'P@ssw0rd1' is extremely common and instantly guessed by tools."
         },
         {
             q: "You find a USB drive in the parking lot. What should you do?",
             a: ["Plug it in to find the owner", "Throw it in the trash", "Give it to IT Security", "Format it and keep it"],
             c: 2,
-            icon: AlertTriangle,
-            info: "Never plug in unknown drives! They can contain 'BadUSB' malware that acts as a keyboard and hacks your computer in seconds. Hand it to security professionals."
+            prize: 1000,
+            info: "Unknown drives can contain 'Rubber Ducky' malware that runs effectively as a keyboard."
         },
-        // Cryptography Focus
+        // Hard
         {
             q: "What does 'End-to-End Encryption' (E2EE) mean?",
-            a: ["Data is encrypted only on the server", "Only the sender and receiver can read the message", "The government has a backup key", "It protects against screen recording"],
+            a: ["Data is encrypted in transit only", "Only sender & receiver have keys", "Service provider has a backup key", "Prevents screen recording"],
             c: 1,
-            icon: Lock,
-            info: "E2EE ensures that no one in the middle (including the app company, ISPs, or hackers) can read the message. Only the endpoints (your device and the recipient's) have the keys."
+            prize: 5000,
+            info: "E2EE ensures not even the service provider can read the messages."
         },
         {
-            q: "Which of these is a 'Symmetric' encryption algorithm?",
-            a: ["RSA", "AES", "ECC", "Diffie-Hellman"],
+            q: "Which algorithm is Asymmetric?",
+            a: ["AES", "RSA", "Blowfish", "DES"],
             c: 1,
-            icon: KeyIcon,
-            info: "AES (Advanced Encryption Standard) is Symmetric, meaning the SAME key is used to encrypt and decrypt. RSA is Asymmetric (uses a Public and Private key pair)."
+            prize: 20000,
+            info: "RSA uses a public/private key pair (Asymmetric). AES is Symmetric."
+        },
+        // Expert
+        {
+            q: "What is a 'Hash' collision?",
+            a: ["Two inputs producing the same hash", "A database crash", "Two IPs fighting for one address", "Decrypting a password"],
+            c: 0,
+            prize: 100000,
+            info: "A collision occurs when two different inputs result in the exact same hash output."
         },
         {
-            q: "What is a 'Hash' function (like SHA-256) used for?",
-            a: ["To compress files", "To encrypt passwords so they can be decrypted later", "To verify data integrity (fingerprinting)", "To hide IP addresses"],
+            q: "What is a 'Zero-Day' vulnerability?",
+            a: ["A virus that lasts 0 days", "A flaw known to vendor but not patched", "A flaw unknown to the vendor", "A bug in date parsing"],
             c: 2,
-            icon: FingerprintIcon,
-            info: "Hashes are one-way fingerprints. You cannot 'decrypt' a hash. They are used to verify that a file or password hasn't been altered. If one bit changes, the hash changes completely."
-        },
-        {
-            q: "What is the danger of using the same password everywhere?",
-            a: ["It's hard to remember", "Credential Stuffing Attacks", "The internet will run out of passwords", "It slows down login times"],
-            c: 1,
-            icon: ShieldCheck,
-            info: "If one site gets hacked and leaks your password, attackers use botnets to try that same email/password combo on thousands of other sites (Credential Stuffing)."
+            prize: 1000000,
+            info: "Zero-Day means the developers have 'zero days' to fix it because it's already actively exploited or unknown."
         }
     ]
 
     const [idx, setIdx] = useState(0)
-    const [score, setScore] = useState(0)
-    const [streak, setStreak] = useState(0)
-    const [showInfo, setShowInfo] = useState(false)
-    const [lastCorrect, setLastCorrect] = useState(false)
-
-    // Icons
-    function WifiIcon(props: any) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h.01" /><path d="M2 8.82a15 15 0 0 1 20 0" /><path d="M5 12.859a10 10 0 0 1 14 0" /><path d="M8.5 16.429a5 5 0 0 1 7 0" /></svg> }
-    function KeyIcon(props: any) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="7.5" cy="15.5" r="5.5" /><path d="m21 2-9.6 9.6" /><path d="m15.5 7.5 3 3L22 7l-3-3" /></svg> }
-    function FingerprintIcon(props: any) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" /><path d="M21.1 10.1c.15.5.21 1.02.21 1.54 0 5.4-3.69 10.36-9.1 10.36-4.95 0-8.52-4.13-9.12-9.11A8.99 8.99 0 0 1 6.55 3.06" /><path d="M14.28 7.37c1.37.5 2.5 1.5 3.32 2.72" /><path d="M12.98 5.62c1.78-.65 3.73-.55 5.43.3" /></svg> }
+    const [score, setScore] = useState(0) // Safe score
+    const [currentMoney, setCurrentMoney] = useState(0)
+    const [gameState, setGameState] = useState<"playing" | "gameover" | "won">("playing")
+    const [lifelines, setLifelines] = useState({ fifty: true, poll: true, ai: true })
+    const [hiddenAnswers, setHiddenAnswers] = useState<number[]>([]) // Indices of hidden
+    const [feedback, setFeedback] = useState<string | null>(null)
+    const [aiHint, setAiHint] = useState<string | null>(null)
+    const [pollResults, setPollResults] = useState<number[] | null>(null)
 
     const handleAns = (i: number) => {
-        const isCorrect = i === questions[idx].c
-        setLastCorrect(isCorrect)
-        if (isCorrect) {
-            setStreak(s => s + 1)
-            setScore(s => s + 100 + (streak * 20)) // Streak bonus
+        if (gameState !== "playing") return
+
+        const q = questions[idx]
+        if (i === q.c) {
+            // Correct
+            setTimeout(() => {
+                setFeedback("CORRECT")
+                const newMoney = q.prize
+                setCurrentMoney(newMoney)
+
+                // Checkpoints (Bank the money)
+                if (newMoney >= 1000) setScore(Math.max(score, 1000))
+                if (newMoney >= 20000) setScore(Math.max(score, 20000))
+
+                setTimeout(() => {
+                    setFeedback(null)
+                    setAiHint(null)
+                    setPollResults(null)
+                    setHiddenAnswers([])
+                    if (idx + 1 < questions.length) {
+                        setIdx(idx + 1)
+                    } else {
+                        setScore(1000000)
+                        setGameState("won")
+                    }
+                }, 1500)
+            }, 500)
         } else {
-            setStreak(0)
+            // Wrong
+            setFeedback("WRONG")
+            setTimeout(() => {
+                setGameState("gameover")
+            }, 1500)
         }
-        setShowInfo(true)
     }
 
-    const nextQ = () => {
-        setShowInfo(false)
-        if (idx + 1 < questions.length) {
-            setIdx(n => n + 1)
-        } else {
-            onComplete(score + (lastCorrect ? 100 : 0))
-        }
+    const useFifty = () => {
+        if (!lifelines.fifty) return
+        const q = questions[idx]
+        const wrongIndices = q.a.map((_, i) => i).filter(i => i !== q.c)
+        // Remove 2 wrong answers
+        const toHide = wrongIndices.sort(() => 0.5 - Math.random()).slice(0, 2)
+        setHiddenAnswers(toHide)
+        setLifelines(l => ({ ...l, fifty: false }))
     }
 
-    const CurrentIcon = questions[idx].icon
-    const progress = ((idx + 1) / questions.length) * 100
+    const useAi = () => {
+        if (!lifelines.ai) return
+        setAiHint(`AI Analysis: I am ${90 - (idx * 5)}% sure the answer is: "${questions[idx].a[questions[idx].c]}"`)
+        setLifelines(l => ({ ...l, ai: false }))
+    }
+
+    const usePoll = () => {
+        if (!lifelines.poll) return
+        const q = questions[idx]
+        const results = q.a.map((_, i) => i === q.c ? 60 + Math.random() * 20 : Math.random() * 20)
+        // Normalize roughly to 100
+        const infoS = results.reduce((a, b) => a + b, 0)
+        setPollResults(results.map(r => Math.round((r / infoS) * 100)))
+        setLifelines(l => ({ ...l, poll: false }))
+    }
+
+    if (gameState === "won") {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[500px] text-center bg-gradient-to-br from-yellow-500 to-yellow-700 text-white rounded-xl shadow-2xl animate-in zoom-in">
+                <Star className="w-32 h-32 mb-6 fill-white animate-spin-slow" />
+                <h1 className="text-6xl font-black mb-4 tracking-tighter shadow-black/50 drop-shadow-lg">MILLIONAIRE!</h1>
+                <p className="text-2xl font-mono mb-8">Score: 1,000,000</p>
+                <Button onClick={() => onComplete(1000000)} size="lg" className="bg-white text-yellow-700 hover:bg-slate-100 font-bold text-xl px-12 py-8 rounded-full shadow-xl">
+                    Collect Prize
+                </Button>
+            </div>
+        )
+    }
+
+    if (gameState === "gameover") {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[500px] text-center bg-slate-900 text-white rounded-xl shadow-2xl animate-in zoom-in">
+                <AlertTriangle className="w-24 h-24 mb-6 text-red-500 animate-pulse" />
+                <h1 className="text-4xl font-bold mb-2">GAME OVER</h1>
+                <p className="text-xl text-slate-400 mb-8">You walk away with: <span className="text-green-400 font-mono font-bold">${score}</span></p>
+                <Button onClick={() => onComplete(score)} size="lg" className="bg-slate-800 hover:bg-slate-700">Try Again</Button>
+            </div>
+        )
+    }
+
+    const q = questions[idx]
 
     return (
-        <Card className="max-w-2xl mx-auto p-0 border-4 border-primary/20 bg-background shadow-2xl relative overflow-hidden group">
-            {/* Background Decoration */}
-            <div className={`absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10 transition-colors duration-1000 ${streak > 2 ? 'bg-yellow-500/10' : ''}`} />
+        <div className="max-w-4xl mx-auto rounded-xl overflow-hidden shadow-2xl bg-slate-900 flex flex-col h-[650px] relative border-4 border-indigo-900/50">
+            {/* Background Effects */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(50,50,150,0.2),rgba(0,0,0,0.8))] pointer-events-none" />
 
-            {/* Header / Progress */}
-            <div className="bg-muted p-4 border-b flex justify-between items-center relative overflow-hidden">
-                <div className="absolute bottom-0 left-0 h-1 bg-primary/20 w-full">
-                    <div
-                        className="h-full bg-primary transition-all duration-500 ease-out"
-                        style={{ width: `${progress}%` }}
-                    />
+            {/* Top Bar - Lifelines */}
+            <div className="flex justify-between items-start p-6 z-10">
+                <div className="flex gap-4">
+                    <LifelineButton icon={Scale} label="50:50" active={lifelines.fifty} onClick={useFifty} />
+                    <LifelineButton icon={Users} label="POLL" active={lifelines.poll} onClick={usePoll} />
+                    <LifelineButton icon={MessageSquare} label="ASK AI" active={lifelines.ai} onClick={useAi} />
                 </div>
-
-                <div className="flex items-center gap-3">
-                    <div className="bg-background p-2 rounded-lg shadow-sm">
-                        <Star className={`w-5 h-5 ${streak > 2 ? 'text-yellow-500 fill-yellow-500 animate-spin-slow' : 'text-slate-400'}`} />
+                <div className="text-right">
+                    <div className="text-xs text-indigo-300 uppercase tracking-widest mb-1">Current Prize</div>
+                    <div className="text-3xl font-mono text-yellow-400 font-bold shadow-yellow-500/20 drop-shadow-lg">
+                        ${currentMoney.toLocaleString()}
                     </div>
-                    <div>
-                        <div className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Score</div>
-                        <div className="font-bold text-xl leading-none">{score}</div>
-                    </div>
-                </div>
-
-                <div className="flex flex-col items-end">
-                    <div className="flex items-center gap-1 text-orange-500 font-bold">
-                        <Zap className={`w-4 h-4 ${streak > 0 ? 'fill-current' : ''}`} />
-                        <span>{streak} Streak</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground font-mono">Q.{idx + 1}/{questions.length}</div>
                 </div>
             </div>
 
-            <div className="p-8">
-                <div className="mb-8 text-center">
-                    <div className="inline-block p-4 rounded-full bg-primary/10 mb-4 animate-in zoom-in ring-4 ring-primary/5 shadow-lg">
-                        <CurrentIcon className="w-12 h-12 text-primary" />
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col items-center justify-center p-8 z-10 relative">
+                {/* Feedback Overlays */}
+                {feedback === "CORRECT" && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-green-500/20 backdrop-blur-sm z-50 animate-in fade-in duration-200">
+                        <div className="text-6xl font-black text-green-400 drop-shadow-lg tracking-widest scale-150 animate-in zoom-in spin-in-3">CORRECT!</div>
                     </div>
-                    <h2 className="text-2xl font-bold mb-4 leading-relaxed">{questions[idx].q}</h2>
+                )}
+                {feedback === "WRONG" && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-red-500/20 backdrop-blur-sm z-50 animate-in fade-in duration-200">
+                        <div className="text-6xl font-black text-red-500 drop-shadow-lg tracking-widest animate-in zoom-in">WRONG!</div>
+                    </div>
+                )}
+
+                {/* Question Container */}
+                <div className="bg-gradient-to-b from-indigo-900 via-slate-900 to-indigo-950 border-y-4 border-indigo-500 w-full p-8 mb-8 relative shadow-[0_0_50px_rgba(79,70,229,0.3)]">
+                    <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-8 h-1 bg-indigo-500" />
+                    <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-1 bg-indigo-500" />
+                    <h2 className="text-2xl md:text-3xl text-center text-white font-bold leading-relaxed">
+                        {q.q}
+                    </h2>
                 </div>
 
-                {!showInfo ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {questions[idx].a.map((ans, i) => (
-                            <Button
-                                key={i}
-                                onClick={() => handleAns(i)}
-                                className="h-auto py-6 text-lg bg-card hover:bg-primary hover:text-primary-foreground border-2 border-primary/10 hover:border-primary transition-all duration-200 transform hover:scale-[1.02] shadow-sm hover:shadow-xl active:scale-95 text-wrap"
-                                variant="outline"
-                            >
-                                {ans}
-                            </Button>
-                        ))}
-                    </div>
-                ) : (
-                    <div className={`p-6 rounded-xl animate-in fade-in slide-in-from-bottom-4 shadow-inner ${lastCorrect ? "bg-green-500/10 border-2 border-green-500/50" : "bg-red-500/10 border-2 border-red-500/50"}`}>
-                        <div className="flex items-center gap-3 mb-4">
-                            {lastCorrect ? (
-                                <ShieldCheck className="w-8 h-8 text-green-500 drop-shadow-sm" />
-                            ) : (
-                                <AlertTriangle className="w-8 h-8 text-red-500 drop-shadow-sm" />
-                            )}
-                            <h3 className={`text-xl font-bold ${lastCorrect ? "text-green-500" : "text-red-500"}`}>
-                                {lastCorrect ? "Correct!" : "Incorrect"}
-                            </h3>
-                        </div>
-
-                        <div className="bg-background/80 backdrop-blur p-4 rounded-lg border mb-6 shadow-sm">
-                            <div className="flex items-start gap-3">
-                                <Lightbulb className="w-5 h-5 text-yellow-500 shrink-0 mt-1" />
-                                <p className="text-foreground/90 leading-relaxed">
-                                    {questions[idx].info}
-                                </p>
+                {/* Answer Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl">
+                    {q.a.map((ans, i) => (
+                        <button
+                            key={i}
+                            disabled={hiddenAnswers.includes(i) || feedback !== null}
+                            onClick={() => handleAns(i)}
+                            className={`
+                                relative p-4 rounded-lg border-2 text-left transition-all duration-200 group overflow-hidden
+                                ${hiddenAnswers.includes(i) ? "opacity-0 pointer-events-none" : "opacity-100"}
+                                ${feedback && i === q.c ? "bg-green-600 border-green-400 animate-pulse text-white" : "bg-slate-800 border-slate-600 text-slate-200 hover:bg-indigo-900 hover:border-indigo-400 hover:text-white hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(99,102,241,0.4)]"}
+                            `}
+                        >
+                            <div className="flex items-center gap-4">
+                                <span className="text-amber-500 font-bold text-xl w-8">{String.fromCharCode(65 + i)}:</span>
+                                <span className="text-lg md:text-xl font-medium">{ans}</span>
                             </div>
-                        </div>
 
-                        <Button onClick={nextQ} size="lg" className="w-full text-lg font-bold shadow-lg hover:shadow-primary/50 transition-all">
-                            Next Question <ArrowRight className="ml-2 w-5 h-5" />
-                        </Button>
+                            {/* Poll Bar Overlay */}
+                            {pollResults && (
+                                <div className="absolute top-0 right-0 bottom-0 bg-white/10" style={{ width: `${pollResults[i]}%` }} />
+                            )}
+                            {pollResults && (
+                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold opacity-60">{pollResults[i]}%</span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Assistant / Info Helper */}
+                {aiHint && (
+                    <div className="mt-8 bg-blue-900/50 text-blue-200 p-4 rounded-xl border border-blue-500/30 w-full max-w-2xl animate-in fade-in slide-in-from-bottom">
+                        <div className="flex items-center gap-3">
+                            <Zap className="w-5 h-5 text-yellow-400" />
+                            <span className="font-mono">{aiHint}</span>
+                        </div>
+                    </div>
+                )}
+
+                {q.prize > 1000 && !feedback && (
+                    <div className="absolute bottom-4 text-slate-500 text-xs uppercase tracking-widest animate-pulse">
+                        High Stakes Question
                     </div>
                 )}
             </div>
-        </Card>
+        </div>
+    )
+}
+
+function LifelineButton({ icon: Icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) {
+    return (
+        <button
+            onClick={onClick}
+            disabled={!active}
+            className={`
+                flex flex-col items-center gap-1 group transition-all duration-300
+                ${active ? "opacity-100 hover:scale-110 cursor-pointer" : "opacity-30 grayscale cursor-not-allowed"}
+            `}
+        >
+            <div className={`p-3 rounded-full border-2 ${active ? "bg-indigo-900/50 border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.5)] group-hover:bg-indigo-600 group-hover:shadow-[0_0_25px_rgba(99,102,241,0.8)]" : "bg-slate-800 border-slate-600"}`}>
+                <Icon className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider">{label}</span>
+        </button>
     )
 }
