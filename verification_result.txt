@@ -1,0 +1,8 @@
+Running Standalone Verification:
+PASS: https://www.amazon.in -> Score: 0 (Expected: 0)
+PASS: https://amazon.co.uk -> Score: 0 (Expected: 0)
+PASS: https://amazon-login.com -> Score: 1 (Expected: 1)
+PASS: https://pay.amazon.in -> Score: 0 (Expected: 0)
+PASS: https://google.com -> Score: 0 (Expected: 0)
+PASS: https://google.co.jp -> Score: 0 (Expected: 0)
+PASS: https://my-google.net -> Score: 1 (Expected: 1)

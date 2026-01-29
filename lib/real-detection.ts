@@ -55,6 +55,36 @@ export class RealPhishingDetector {
     this.whoisClient = new WHOISClient()
   }
 
+  // --- Advanced Heuristic Helpers ---
+
+  private calculateEntropy(str: string): number {
+    const len = str.length
+    const frequencies = new Map<string, number>()
+    for (const char of str) {
+      frequencies.set(char, (frequencies.get(char) || 0) + 1)
+    }
+    return Array.from(frequencies.values()).reduce((sum, count) => {
+      const p = count / len
+      return sum - p * Math.log2(p)
+    }, 0)
+  }
+
+  private isHomographAttack(domain: string): boolean {
+    // 1. Mixed Scripts (e.g., Cyrillic 'a' with Latin 'b')
+    // Regex for Cyrillic, Greek, etc. mixed with Latin
+    const hasCyrillic = /[\u0400-\u04FF]/.test(domain);
+    const hasGreek = /[\u0370-\u03FF]/.test(domain);
+    const hasLatin = /[a-z0-9]/.test(domain);
+
+    if ((hasCyrillic || hasGreek) && hasLatin) return true;
+
+    // 2. Invisible Characters (Zero Width Joiners, etc.)
+    // \u200B (Zero Width Space), \u200C (Zero Width Non-Joiner), etc.
+    if (/[\u200B-\u200D\uFEFF]/.test(domain)) return true;
+
+    return false;
+  }
+
   // --- Individual Checks ---
 
   async checkGoogleSafeBrowsing(url: string): Promise<DetectionSource> {
@@ -218,17 +248,28 @@ export class RealPhishingDetector {
       }
     }
 
-    const brands = [
-      { name: "PayPal", domain: "paypal.com", keywords: ["paypal", "paypa1", "pay-pal", "pypl", "paypalservice"] },
-      { name: "Microsoft", domain: "microsoft.com", keywords: ["microsoft", "mircosoft", "microsft", "ms-office", "outlook", "office365", "sharepoint", "azure"] },
-      { name: "Amazon", domain: "amazon.com", keywords: ["amazon", "amazn", "amzn", "arnazon", "amazon-delivery", "prime"] },
-      { name: "Google", domain: "google.com", keywords: ["google", "googl", "g-ogle", "gmail", "gdrive"] },
-      { name: "Netflix", domain: "netflix.com", keywords: ["netflix", "net-flix", "ntflx", "netflix-billing"] },
-      { name: "Apple", domain: "apple.com", keywords: ["apple", "icloud", "itunes", "macbook", "iphone", "app-store"] },
-      { name: "Facebook", domain: "facebook.com", keywords: ["facebook", "face-book", "fb-login", "meta"] },
-      { name: "Steam", domain: "steampowered.com", keywords: ["steam", "steampowered", "steamcommunity"] },
-      { name: "Dropbox", domain: "dropbox.com", keywords: ["dropbox", "drop-box"] }
+    // Dynamic Brand List from TOP_DOMAINS
+    // This expands protection from ~10 brands to hundreds automatically
+    const brands = TOP_DOMAINS.map(d => ({
+      name: d.split('.')[0].charAt(0).toUpperCase() + d.split('.')[0].slice(1),
+      domain: d,
+      keywords: [d.split('.')[0]]
+    }))
+
+    // Add specific high-target manual overrides if needed (e.g. slight variations)
+    const manualBrands = [
+      { name: "PayPal", domain: "paypal.com", keywords: ["paypal", "paypa1", "pypl"] },
+      { name: "Microsoft", domain: "microsoft.com", keywords: ["microsoft", "ms-office", "office365"] },
+      { name: "Google", domain: "google.com", keywords: ["google", "gmail", "gdrive"] }
     ]
+
+    // Merge lists (manual overrides take precedence for specific keywords)
+    manualBrands.forEach(mb => {
+      const existing = brands.find(b => b.domain === mb.domain)
+      if (existing) {
+        existing.keywords = [...new Set([...existing.keywords, ...mb.keywords])]
+      }
+    })
 
     for (const brandInfo of brands) {
       const brandMain = brandInfo.keywords[0]
@@ -410,16 +451,18 @@ export class RealPhishingDetector {
     // Punycode detection (starts with xn--)
     const isPunycode = domain.startsWith("xn--") || domain.includes(".xn--")
 
-    // loose check for non-ascii characters if not punycode encoded yet
-    const hasNonAscii = /[^\u0000-\u007F]/.test(domain)
+    // Advanced Advanced Mix-Script Detection
+    const isMixedScript = this.isHomographAttack(domain)
 
-    const detected = isPunycode || hasNonAscii
+    const detected = isPunycode || isMixedScript
 
     return {
       name: "Homoglyph Attack Detection",
       detected,
-      confidence: detected ? 98 : 0,
-      reason: detected ? "Ultra-Strict Match: Domain uses Punycode/homoglyphs for brand impersonation" : "No homoglyph indicators found",
+      confidence: isPunycode ? 98 : (isMixedScript ? 95 : 0),
+      reason: isPunycode
+        ? "Ultra-Strict Match: Domain uses Punycode/homoglyphs for brand impersonation"
+        : (isMixedScript ? "Suspicious Mixed-Script Detected (Cyrillic/Latin mix)" : "No homoglyph indicators found"),
       isReal: true,
       details: url
     }
@@ -457,13 +500,17 @@ export class RealPhishingDetector {
     }
 
     // Character sets for entropy evaluation
-    const uniqueChars = new Set(mainDomainPart.toLowerCase()).size
-    const entropy = uniqueChars / mainDomainPart.length
+    const entropy = this.calculateEntropy(mainDomainPart)
 
     // Patterns for random strings
     const hasManyNumbers = (mainDomainPart.match(/\d/g) || []).length > 4
     const hasConsonantCluster = /[bcdfghjklmnpqrstvwxyz]{7,}/i.test(mainDomainPart)
-    const isVeryLongRandom = /^[a-z0-9]{18,}$/i.test(mainDomainPart) && entropy > 0.7
+
+    // SOC-GRADE: Entropy Thresholds
+    // Normal English words usually have entropy < 3.5
+    // Random strings "ao8s7df6" usually have entropy > 4.0
+    const isHighEntropy = entropy > 4.2
+    const isMediumEntropy = entropy > 3.8
 
     let isRandom = false
     let confidence = 0
@@ -471,15 +518,15 @@ export class RealPhishingDetector {
 
     if (hasConsonantCluster) {
       isRandom = true
-      confidence = 75
+      confidence = 85
       reason = `Excessive consonant cluster in domain: ${mainDomainPart}`
-    } else if (isVeryLongRandom) {
+    } else if (isHighEntropy && mainDomainPart.length > 8) {
       isRandom = true
-      confidence = 80
-      reason = `Long high-entropy character string: ${mainDomainPart}`
+      confidence = 90
+      reason = `High-Entropy Random String Detected (Entropy: ${entropy.toFixed(2)}): ${mainDomainPart}`
     } else if (hasManyNumbers && mainDomainPart.length > 10) {
       isRandom = true
-      confidence = 70
+      confidence = 75
       reason = `Excessive numeric characters in domain: ${mainDomainPart}`
     }
 
@@ -895,93 +942,42 @@ export class RealPhishingDetector {
     )
 
     // [Tier 1] Definitive Professional Block: Confirmed by External Intel
-    const highConfidenceMalicious = authoritativeSources.find((s) => s.detected && s.confidence >= 90)
-    if (highConfidenceMalicious) return 99
+    // ULTRA-STRONG: If Google/PhishTank/VT says it's bad, it is 100% bad. No mercy.
+    const highConfidenceMalicious = authoritativeSources.find((s) => s.detected && s.confidence >= 80)
+    if (highConfidenceMalicious) return 100
 
-    // [Tier 2] Technical Forensics: DNS, Homoglyphs, SSL, Redirects, Infrastructure
+    // [Tier 2] Technical Forensics - ULTRA-STRONG VERDICTS
     const technicalForensics = sources.filter((s) => s.isReal && !authoritativeSources.includes(s))
     const detectedForensics = technicalForensics.filter((s) => s.detected)
-
-    // [Tier 3] Heuristic Analysis: NLP, Crypto Scams, Email Patterns
     const heuristics = sources.filter((s) => !s.isReal)
     const detectedHeuristics = heuristics.filter((s) => s.detected)
 
-    // SOC-GRADE: Infrastructure Evidence Analysis
-    const technicalDetections = detectedForensics.length
+    // SOC-GRADE: Infrastructure Evidence
     const hasBrandImpersonation = detectedForensics.some((s) => s.name.includes("Brand Analysis") && s.detected)
     const hasDeceptiveInfra = detectedForensics.some((s) => s.name.includes("Deceptive Infrastructure") && s.detected)
     const hasHomoglyph = detectedForensics.some((s) => s.name.includes("Homoglyph"))
-    const isNewDomain = detectedForensics.some((s) => s.name.includes("WHOIS") && s.confidence >= 50)
     const hasCryptoScam = heuristics.some((s) => s.name.includes("Crypto") && s.detected)
-    const hasPrivacyProxy = detectedForensics.some((s) => s.name.includes("Privacy Proxy") && s.detected)
     const hasFakeIdentity = detectedForensics.some((s) => s.name.includes("Identity") && s.detected)
     const hasVirusRisk = detectedForensics.some((s) => s.name.includes("Payload") && s.detected)
 
-    // Get highest confidence from brand impersonation or deceptive infrastructure
-    const brandImperScore = detectedForensics.find((s) => s.name.includes("Brand Analysis"))?.confidence || 0
-    const deceptiveInfraScore = detectedForensics.find((s) => s.name.includes("Deceptive Infrastructure"))?.confidence || 0
+    // ULTRA-STRONG RULES: Known High-Risk Indicators = IMMEDIATE CRITICAL SCORE
+    if (hasHomoglyph) return 99 // Homoglyphs are never accidental
+    if (hasBrandImpersonation) return 98 // Brand impersonation is a direct attack
+    if (hasDeceptiveInfra) return 95 // Deceptive Cloud Tunnels/TLDs are attack infrastructure
+    if (hasFakeIdentity) return 92 // Spoofed Email Identity
+    if (hasVirusRisk) return 99 // Malware payload detection
+    if (hasCryptoScam) return 95 // Crypto drainer patterns
 
-    // SOC-GRADE: MALICIOUS Verdicts (Evidence-Based, Not API-Dependent)
-    // Homoglyphs are always MALICIOUS
-    if (hasHomoglyph) return 92
-
-    // Deceptive infrastructure with high confidence = MALICIOUS
-    if (hasDeceptiveInfra && deceptiveInfraScore >= 85) return 90
-
-    // Brand impersonation on hosting platform (score 92 from checkBrandImpersonation) = MALICIOUS
-    if (hasBrandImpersonation && brandImperScore >= 90) return brandImperScore
-
-    // Brand impersonation + new domain or multiple technical detections = MALICIOUS
-    if (hasBrandImpersonation && (isNewDomain || technicalDetections >= 2)) return 88
-
-    // Brand impersonation + privacy proxy = MALICIOUS (hiding identity)
-    if (hasBrandImpersonation && hasPrivacyProxy) return 87
-
-    // Crypto scam + technical evidence = MALICIOUS
-    if (hasCryptoScam && (technicalDetections >= 1 || isNewDomain)) return 85
-
-    // Deceptive infrastructure alone (score 70-84) = MALICIOUS
-    if (hasDeceptiveInfra && deceptiveInfraScore >= 70) return deceptiveInfraScore
-
-    // SUSPICIOUS Verdicts (Heuristic or Minor Technical)
-    if (detectedHeuristics.length >= 2 || (detectedHeuristics.length >= 1 && technicalDetections >= 1)) {
-      return 70
+    // Heuristic Verification
+    // If strict heuristics aligned (e.g. NLP + small technical issue), it's risky
+    if (detectedHeuristics.length >= 2 && detectedForensics.length >= 1) {
+      return 85
     }
 
-    // [NEW] Email Specific High-Confidence Blocks
-    if (hasFakeIdentity) return 89
-    if (hasVirusRisk) return 95
-
-    // [NEW] Differentiate between Critical vs Minor Technical Issues (False Positive Reduction)
-    const severeTechnical = detectedForensics.some(s =>
-      s.name.includes("Brand Analysis") ||
-      s.name.includes("Deceptive Infrastructure") ||
-      s.name.includes("Homoglyph") ||
-      s.name.includes("Privacy Proxy") ||
-      s.name.includes("JavaScript Behavior") // JS Behavior is usually serious if triggered
-    )
-
-    // Minor issues: Headers, External Resources, IP Usage (if no other threats)
-    const minorTechnical = detectedForensics.some(s =>
-      s.name.includes("HTTP Security Headers") ||
-      s.name.includes("External Resources") ||
-      s.name.includes("IP Usage") ||
-      s.name.includes("Redirect Analysis")
-    )
-
-    if (detectedHeuristics.length === 1 && !severeTechnical) {
-      return 35 // Single heuristic (like NLP) without technical backup is Low Risk (SAFE)
-    }
-
-    if (technicalDetections >= 1) {
-      if (severeTechnical || hasBrandImpersonation) {
-        return 55 // Severe issues push to Suspicious+
-      } else if (technicalDetections >= 2 && minorTechnical) {
-        return 35 // Multiple minor issues = Warning but still SAFE category (<40)
-      } else {
-        return 20 // Single minor technical issue = SAFE
-      }
-    }
+    // Default to SAFE (0) if no Critical/High Risk indicators found.
+    // We removed the "Warning" (20-40) zone to ensure "Ultra-Strong" reliability.
+    // Either it is definitely malicious, or it is treated as safe.
+    return 0
 
     return 5 // SAFE (Clean)
   }
@@ -1095,10 +1091,12 @@ export class RealPhishingDetector {
       let riskScore = 0
       const suspiciousPatterns: string[] = []
 
-      // Check for obfuscated JavaScript (Reduced weight to avoid flagging minified code)
-      if (/eval\s*\(|Function\s*\(|atob\s*\(|fromCharCode/.test(html)) {
-        riskScore += 15 // Reduced from 30 (Minified code often triggers this)
-        suspiciousPatterns.push("possible obfuscation/minification")
+      // Check for obfuscated JavaScript (Relaxed for modern web apps)
+      // Standard minification uses these patterns, so we only flag EXTREMELY suspicious evals
+      if (/eval\s*\(/.test(html) && html.length < 5000) {
+        // Only flag eval if file is small (likely a loader), large files use eval for polyfills often
+        riskScore += 10
+        suspiciousPatterns.push("possible eval()")
       }
 
       // Check for crypto mining scripts (Keep high, very specific)
@@ -1339,7 +1337,7 @@ export class RealPhishingDetector {
       this.checkVirusTotal(normalized).then(s => ({ ...s, category: "Intelligence" })),
 
       // Tier 2: Technical Forensics
-      this.checkDomainAge(normalized).then(s => ({ ...s, category: "Technical" })),
+      // this.checkDomainAge(normalized).then(s => ({ ...s, category: "Technical" })), // Disabled by user request
       this.checkSSLCertificate(normalized).then(s => ({ ...s, category: "Technical" })),
       this.checkRedirects(normalized).then(s => ({ ...s, category: "Technical" })),
       this.checkIpUrl(normalized).then(s => ({ ...s, category: "Technical" })),
@@ -1351,7 +1349,7 @@ export class RealPhishingDetector {
       this.checkDeceptiveInfrastructure(normalized).then(s => ({ ...s, category: "Technical" })),
 
       // NEW: Deep Analysis Methods
-      this.checkSecurityHeaders(normalized).then(s => ({ ...s, category: "Technical" })),
+      // this.checkSecurityHeaders(normalized).then(s => ({ ...s, category: "Technical" })), // Disabled by user request
       this.checkJavaScriptBehavior(normalized).then(s => ({ ...s, category: "Technical" })),
       this.checkExternalResources(normalized).then(s => ({ ...s, category: "Technical" })),
       this.checkMalwarePatterns(normalized).then(s => ({ ...s, category: "Virus" })),

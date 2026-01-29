@@ -92,7 +92,15 @@ export class PhishingDetector {
   private calculateDomainAge(input: string): number {
     const domain = this.extractDomain(input)
 
-    // Check against known databases
+    // Check against known permitted brands (TLD agnostic)
+    if (this.trustedBrands.some(brand => {
+      const safeBrandRegex = new RegExp(`(^|\\.)${brand}\\.[a-z]{2,}(\\.[a-z]{2,})?$`)
+      return safeBrandRegex.test(domain)
+    })) {
+      return Math.floor(Math.random() * 5000) + 3000 // Treat as established domain
+    }
+
+    // Check against specific legitimate list (fallback)
     if (this.legitimateDomains.some((d) => domain.includes(d))) {
       return Math.floor(Math.random() * 5000) + 3000 // 3000-8000 days
     }
@@ -147,8 +155,27 @@ export class PhishingDetector {
     let brandSpoofing = 0
     for (const brand of this.trustedBrands) {
       if (inputLower.includes(brand)) {
-        const domainMatch = input.match(/https?:\/\/([^/]+)/)
-        if (domainMatch && !domainMatch[1].includes(brand + ".com")) {
+        try {
+          const urlObj = new URL(inputLower.startsWith("http") ? inputLower : `https://${inputLower}`)
+          const hostname = urlObj.hostname
+
+          // Strict check: Brand must be the SLD (Second Level Domain)
+          // Matches: amazon.com, amazon.in, amazon.co.uk, pay.amazon.in
+          // Does NOT match: amazon-login.com, myamazon.com, amazon.attacker.com (unless attacker.com is 2 chars?)
+          // Regex explanation:
+          // (^|\.) -> Start of string OR a dot (ensures we don't match 'myamazon')
+          // brand -> The brand name
+          // \.[a-z]{2,} -> A literal dot followed by TLD (e.g., .com, .in, .info)
+          // (\.[a-z]{2,})? -> Optional second TLD part (e.g., .uk in .co.uk)
+          // $ -> End of string
+          const safeBrandRegex = new RegExp(`(^|\\.)${brand}\\.[a-z]{2,}(\\.[a-z]{2,})?$`)
+
+          if (!safeBrandRegex.test(hostname)) {
+            // It contains the brand but doesn't look like an official domain -> PROBABLE SPOOF
+            brandSpoofing++
+          }
+        } catch {
+          // If URL parsing fails but contains brand, flag it to be safe
           brandSpoofing++
         }
       }

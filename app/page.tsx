@@ -343,6 +343,12 @@ export default function Home() {
                   Documentation
                 </Button>
               </Link>
+              <Link href="/games">
+                <Button variant="ghost" size="sm" className="text-violet-400 hover:text-violet-300 hover:bg-violet-500/10">
+                  <Gamepad2 className="w-4 h-4 mr-2" />
+                  Cyber Range
+                </Button>
+              </Link>
               <Link href="/awareness">
                 <Button variant="ghost" size="sm">
                   Security Awareness

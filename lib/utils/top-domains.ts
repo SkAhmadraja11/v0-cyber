@@ -56,7 +56,42 @@ export const TOP_DOMAINS = [
     "github.io",
     "pages.dev",
     "gitlab.io",
-    "bitbucket.org"
+    "bitbucket.org",
+    // --- TECH & CLOUD ---
+    "ibm.com", "oracle.com", "salesforce.com", "intel.com", "amd.com", "nvidia.com",
+    "cisco.com", "dell.com", "hp.com", "lenovo.com", "samsung.com", "sony.com",
+    "lg.com", "panasonic.com", "toshiba.com", "canon.com", "nikon.com",
+    "digitalocean.com", "linode.com", "vultr.com", "cloudflare.com", "akamai.com",
+    "fastly.com", "heroku.com", "vercel.com", "netlify.com", "gitlab.com",
+    // --- FINANCE & PAYMENTS ---
+    "paypal.com", "stripe.com", "square.com", "visa.com", "mastercard.com", "amex.com",
+    "discover.com", "chase.com", "bankofamerica.com", "wellsfargo.com", "citi.com",
+    "hsbc.com", "barclays.com", "lloydsbank.com", "santander.com", "deutsche-bank.com",
+    "ubs.com", "creditsuisse.com", "goldmansachs.com", "jpmorgan.com", "morganstanley.com",
+    "fidelity.com", "vanguard.com", "schwab.com", "td.com", "rbc.com", "scotiabank.com",
+    "bmo.com", "icicibank.com", "hdfcbank.com", "sbi.co.in", "axisbank.com",
+    // --- E-COMMERCE & RETAIL ---
+    "amazon.com", "ebay.com", "walmart.com", "target.com", "bestbuy.com", "costco.com",
+    "homedepot.com", "lowes.com", "ikea.com", "nike.com", "adidas.com", "shopify.com",
+    "etsy.com", "wayfair.com", "aliexpress.com", "alibaba.com", "flipkart.com",
+    "rakuten.com", "zalando.com", "asos.com", "shein.com",
+    // --- SOCIAL & MEDIA ---
+    "facebook.com", "twitter.com", "instagram.com", "linkedin.com", "pinterest.com",
+    "snapchat.com", "tiktok.com", "reddit.com", "tumblr.com", "flickr.com", "whatsapp.com",
+    "telegram.org", "discord.com", "slack.com", "zoom.us", "teams.microsoft.com",
+    "youtube.com", "netflix.com", "hulu.com", "disneyplus.com", "spotify.com",
+    "twitch.tv", "vimeo.com", "dailymotion.com", "soundcloud.com",
+    // --- NEWS & INFO ---
+    "cnn.com", "bbc.com", "nytimes.com", "washingtonpost.com", "forbes.com",
+    "bloomberg.com", "reuters.com", "wsj.com", "cnbc.com", "foxnews.com",
+    "theguardian.com", "dailymail.co.uk", "usatoday.com", "wikipedia.org",
+    "imdb.com", "weather.com", "britannica.com", "quora.com", "stackoverflow.com",
+    // --- REGIONAL & GOV ---
+    "gov.uk", "usa.gov", "irs.gov", "europa.eu", "nih.gov", "cdc.gov", "who.int",
+    "un.org", "nasa.gov", "ca.gov", "ny.gov", "india.gov.in",
+    "amazon.in", "amazon.co.uk", "amazon.de", "amazon.co.jp",
+    "google.co.in", "google.co.uk", "google.de", "google.co.jp",
+    "yahoo.co.jp", "baidu.com", "qq.com", "taobao.com", "yandex.ru"
 ];
 
 export const HOSTING_PLATFORMS = [

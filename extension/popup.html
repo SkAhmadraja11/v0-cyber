@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div class="app-container">
+
+    <!-- Header -->
+    <header class="main-header">
+      <div class="logo-area">
+        <span class="logo-icon">🛡️</span>
+        <span class="logo-text">Phishing Detective</span>
+      </div>
+      <div class="status-badge" id="statusBadge">Ready</div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="content-area">
+
+      <!-- Credit Card -->
+      <div class="card credit-card">
+        <div class="card-header">
+          <span>DAILY CREDITS</span>
+          <span id="creditCount">10/10</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="creditFill" style="width: 100%;"></div>
+        </div>
+        <div id="limitMsg" class="limit-msg" style="display: none;">Limit reached. Resets in 24h.</div>
+      </div>
+
+      <!-- Target URL -->
+      <div class="url-card">
+        <div class="url-label">TARGET URL</div>
+        <div class="url-value" id="urlDisplay">No URL targeted</div>
+      </div>
+
+      <!-- Scan Action -->
+      <div class="action-area">
+        <button id="scanBtn" class="primary-btn">
+          <span class="btn-icon">🔍</span>
+          <span class="btn-text">SCAN PAGE</span>
+        </button>
+      </div>
+
+      <!-- Loader -->
+      <div class="loader-container" id="loader" style="display: none;">
+        <div class="spinner"></div>
+        <div class="loader-text">Analyzing Deep Layers...</div>
+      </div>
+
+      <!-- Results Area -->
+      <div id="resultsArea" style="display: none;">
+
+        <!-- Verdict Card -->
+        <div class="card verdict-card">
+          <div class="risk-score-area">
+            <div class="risk-label">RISK SCORE</div>
+            <div class="risk-value" id="riskScore">--</div>
+          </div>
+          <div class="verdict-divider"></div>
+          <div class="verdict-detail">
+            <div class="verdict-label">VERDICT</div>
+            <div class="verdict-value" id="verdict">--</div>
+          </div>
+        </div>
+
+        <!-- Confidence -->
+        <div class="mini-stat">
+          <span class="label">Confidence</span>
+          <span class="value" id="confidence">--</span>
+        </div>
+
+        <!-- Findings List -->
+        <div class="findings-section">
+          <div class="section-title">KEY FINDINGS</div>
+          <ul id="findingsList" class="findings-list"></ul>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+  <script src="popup.js"></script>
+</body>
+
+</html>

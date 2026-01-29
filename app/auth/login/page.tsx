@@ -57,10 +57,12 @@ export default function LoginPage() {
       if (data.user) {
         // Successful login - redirect to dashboard
         setSuccess('Login successful! Redirecting...')
-        
+
+        router.refresh()
+
         // Redirect to dashboard after 1 second
         setTimeout(() => {
-          router.push('/dashboard')
+          router.replace('/dashboard')
         }, 1000)
       }
     } catch (error) {
