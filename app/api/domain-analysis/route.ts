@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
 
 // WHOIS API configuration
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Call WHOIS API for accurate data
     const whoisUrl = `${WHOIS_API_URL}?apiKey=${WHOIS_API_KEY}&domainName=${domainOnly}&outputFormat=JSON`
-    
+
     const response = await fetch(whoisUrl)
     const data: WhoisResponse = await response.json()
 
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     const domainInfo = data.DomainInfo
-    
+
     // Calculate age in days
     const createdDate = new Date(domainInfo.createdDate)
     const now = new Date()
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save to database
-    const supabase = createClient()
+    const supabase = await createClient()
     await supabase
       .from('domain_analyses')
       .insert({
@@ -109,9 +109,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Domain analysis error:', error)
-    
+
     return NextResponse.json(
-      { 
+      {
         error: error instanceof Error ? error.message : 'Domain analysis failed',
         details: process.env.NODE_ENV === 'development' ? String(error) : undefined
       },
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
 async function getFallbackAnalysis(domain: string) {
   // Use basic domain patterns as fallback
   const domainOnly = domain.replace(/^https?:\/\//, '').split('/')[0].toLowerCase()
-  
+
   // Check for suspicious patterns
   const suspiciousPatterns = [
     /[0-9]{4,}/, // Numbers in domain
@@ -134,10 +134,10 @@ async function getFallbackAnalysis(domain: string) {
   ]
 
   const hasSuspiciousPattern = suspiciousPatterns.some(pattern => pattern.test(domainOnly))
-  
+
   // Generate fake but realistic data for demo
   const fakeAge = hasSuspiciousPattern ? Math.floor(Math.random() * 30) : Math.floor(Math.random() * 365) + 365
-  
+
   return {
     domain: domainOnly,
     age_days: fakeAge,

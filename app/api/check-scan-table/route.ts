@@ -1,17 +1,17 @@
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 
 export async function GET() {
   try {
-    const supabase = createClient()
-    
+    const supabase = await createClient()
+
     // Check if scan_results table exists
     const { data: tableCheck, error: tableError } = await supabase
       .rpc('check_table_exists', { table_name: 'scan_results' })
-    
+
     let tableExists = false
     let tableInfo = null
-    
+
     if (tableError) {
       // Fallback: Try to query the table directly
       try {
@@ -19,7 +19,7 @@ export async function GET() {
           .from('scan_results')
           .select('count')
           .limit(1)
-        
+
         tableExists = !error
         if (error) {
           tableInfo = { error: error.message, code: error.code }
@@ -33,7 +33,7 @@ export async function GET() {
       tableExists = tableCheck
       tableInfo = { status: 'checked via rpc', exists: tableCheck }
     }
-    
+
     // Check schema information
     let schemaInfo = null
     try {
@@ -43,30 +43,30 @@ export async function GET() {
         .eq('table_schema', 'public')
         .eq('table_name', 'scan_results')
         .order('ordinal_position')
-      
+
       schemaInfo = schemaData || []
     } catch (e: any) {
       schemaInfo = { error: e.message }
     }
-    
+
     // Test basic operations
     const testResults = {
       select: false,
       insert: false,
       update: false
     }
-    
+
     try {
       const { data, error } = await supabase
         .from('scan_results')
         .select('*')
         .limit(1)
-      
+
       testResults.select = !error
     } catch (e) {
       testResults.select = false
     }
-    
+
     return NextResponse.json({
       success: true,
       scan_results: {
@@ -84,7 +84,7 @@ export async function GET() {
         "Verify RLS policies are correctly set"
       ]
     })
-    
+
   } catch (error: any) {
     return NextResponse.json({
       success: false,

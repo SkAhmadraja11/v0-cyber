@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 
 // Named export for GET method
 export async function GET() {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Try to fetch recent scan results from database
     const { data: scans, error } = await supabase
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // Try to save to database
     const { data, error } = await supabase

@@ -1,28 +1,28 @@
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 
 export async function GET() {
   try {
-    const supabase = createClient()
-    
+    const supabase = await createClient()
+
     // Test basic connection
     const { data: connectionTest, error: connectionError } = await supabase
       .from('profiles')
       .select('count')
       .limit(1)
-    
+
     // Test table structure
     const { data: tableInfo, error: tableError } = await supabase
       .from('profiles')
       .select('*')
       .limit(0)
-    
+
     // Check if avatar_url column exists by trying to select it
     const { data: avatarTest, error: avatarError } = await supabase
       .from('profiles')
       .select('avatar_url')
       .limit(1)
-    
+
     return NextResponse.json({
       success: true,
       connection: {
@@ -39,7 +39,7 @@ export async function GET() {
       },
       timestamp: new Date().toISOString()
     })
-    
+
   } catch (error) {
     return NextResponse.json({
       success: false,

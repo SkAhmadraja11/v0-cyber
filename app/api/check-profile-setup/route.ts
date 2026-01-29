@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
 export async function GET() {
   try {
-    const { createClient } = await import('@/lib/supabase/server')
     const supabase = await createClient()
-    
+
     // Test if avatar_url column exists in profiles table
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, email, full_name, avatar_url')
       .limit(1)
-    
+
     // Test if profile-pictures bucket exists
     const { data: buckets, error: bucketError } = await supabase.storage.listBuckets()
     const bucketExists = buckets?.some((bucket: any) => bucket.name === 'profile-pictures')
-    
+
     return NextResponse.json({
       success: true,
       database: {
@@ -31,7 +31,7 @@ export async function GET() {
       },
       message: 'Profile picture setup check completed'
     })
-    
+
   } catch (error) {
     return NextResponse.json({
       success: false,
