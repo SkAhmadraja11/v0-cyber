@@ -20,6 +20,13 @@ export default function FirewallGame({ onComplete }: { onComplete: (score: numbe
         return () => clearInterval(diffInterval)
     }, [])
 
+    // Powerup charging
+    useEffect(() => {
+        if (score >= 500 && !powerUpReady) {
+            setPowerUpReady(true)
+        }
+    }, [score, powerUpReady])
+
     // Game Loop
     useEffect(() => {
         if (gameOver) return
@@ -74,14 +81,11 @@ export default function FirewallGame({ onComplete }: { onComplete: (score: numbe
             })
         }, 1000)
 
-        // Charge Powerup
-        if (score >= 500 && !powerUpReady) setPowerUpReady(true)
-
         return () => {
             clearInterval(interval)
             clearInterval(timer)
         }
-    }, [gameOver, score, powerUpReady])
+    }, [gameOver])
 
     const handlePacketClick = (id: number, type: 'safe' | 'malicious' | 'trojan') => {
         if (gameOver) return

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
   PieChart,
   Pie,
@@ -107,7 +107,7 @@ export default function DashboardPage() {
   const [recentScans, setRecentScans] = useState([])
   const [showContactWidget, setShowContactWidget] = useState(false)
 
-  const fetchAnalytics = async (isManual = false) => {
+  const fetchAnalytics = useCallback(async (isManual = false) => {
     if (isManual) setIsRefreshing(true)
     try {
       const [analyticsRes, scansRes] = await Promise.all([
@@ -136,11 +136,11 @@ export default function DashboardPage() {
       setLoading(false)
       setIsRefreshing(false)
     }
-  }
+  }, [timeRange])
 
   useEffect(() => {
     fetchAnalytics()
-  }, [timeRange])
+  }, [fetchAnalytics])
 
   if (loading) {
     return (

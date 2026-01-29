@@ -952,15 +952,38 @@ export class RealPhishingDetector {
     if (hasFakeIdentity) return 89
     if (hasVirusRisk) return 95
 
-    if (detectedHeuristics.length === 1) {
-      return 45 // Single strong heuristic match is suspicious
+    // [NEW] Differentiate between Critical vs Minor Technical Issues (False Positive Reduction)
+    const severeTechnical = detectedForensics.some(s =>
+      s.name.includes("Brand Analysis") ||
+      s.name.includes("Deceptive Infrastructure") ||
+      s.name.includes("Homoglyph") ||
+      s.name.includes("Privacy Proxy") ||
+      s.name.includes("JavaScript Behavior") // JS Behavior is usually serious if triggered
+    )
+
+    // Minor issues: Headers, External Resources, IP Usage (if no other threats)
+    const minorTechnical = detectedForensics.some(s =>
+      s.name.includes("HTTP Security Headers") ||
+      s.name.includes("External Resources") ||
+      s.name.includes("IP Usage") ||
+      s.name.includes("Redirect Analysis")
+    )
+
+    if (detectedHeuristics.length === 1 && !severeTechnical) {
+      return 35 // Single heuristic (like NLP) without technical backup is Low Risk (SAFE)
     }
 
-    if (technicalDetections >= 1 || hasBrandImpersonation) {
-      return 55
+    if (technicalDetections >= 1) {
+      if (severeTechnical || hasBrandImpersonation) {
+        return 55 // Severe issues push to Suspicious+
+      } else if (technicalDetections >= 2 && minorTechnical) {
+        return 35 // Multiple minor issues = Warning but still SAFE category (<40)
+      } else {
+        return 20 // Single minor technical issue = SAFE
+      }
     }
 
-    return 10 // SAFE
+    return 5 // SAFE (Clean)
   }
 
   private classifyRisk(riskScore: number): "SAFE" | "SUSPICIOUS" | "MALICIOUS" {
@@ -999,13 +1022,323 @@ export class RealPhishingDetector {
     return reasons
   }
 
+  // --- NEW DEEP ANALYSIS METHODS ---
+
+  async checkSecurityHeaders(url: string): Promise<DetectionSource> {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+      const response = await fetch(url, {
+        method: "HEAD",
+        signal: controller.signal
+      })
+      clearTimeout(timeoutId)
+
+      const headers = response.headers
+      let riskScore = 0
+      const missingHeaders: string[] = []
+
+      // Check for critical security headers (Lowered weights for false positive reduction)
+      if (!headers.get("content-security-policy")) {
+        riskScore += 5 // Reduced from 15
+        missingHeaders.push("CSP")
+      }
+      if (!headers.get("x-frame-options")) {
+        riskScore += 5 // Reduced from 15
+        missingHeaders.push("X-Frame-Options")
+      }
+      if (!headers.get("strict-transport-security") && url.startsWith("https")) {
+        riskScore += 5 // Reduced from 10
+        missingHeaders.push("HSTS")
+      }
+      if (!headers.get("x-content-type-options")) {
+        riskScore += 5 // Reduced from 10
+        missingHeaders.push("X-Content-Type-Options")
+      }
+
+      // Only flag as "detected" if multiple critical headers are missing
+      const detected = riskScore >= 15
+      return {
+        name: "HTTP Security Headers",
+        detected,
+        confidence: detected ? riskScore : 5,
+        reason: detected
+          ? `Security Best Practices: Missing headers (${missingHeaders.join(", ")})`
+          : "Security headers properly configured",
+        isReal: true,
+        category: "Technical"
+      }
+    } catch (error) {
+      return {
+        name: "HTTP Security Headers",
+        detected: false,
+        confidence: 0,
+        reason: "Could not analyze security headers",
+        isReal: false,
+        category: "Technical"
+      }
+    }
+  }
+
+  async checkJavaScriptBehavior(url: string): Promise<DetectionSource> {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+      const response = await fetch(url, {
+        signal: controller.signal
+      })
+      clearTimeout(timeoutId)
+
+      const html = await response.text()
+      let riskScore = 0
+      const suspiciousPatterns: string[] = []
+
+      // Check for obfuscated JavaScript (Reduced weight to avoid flagging minified code)
+      if (/eval\s*\(|Function\s*\(|atob\s*\(|fromCharCode/.test(html)) {
+        riskScore += 15 // Reduced from 30 (Minified code often triggers this)
+        suspiciousPatterns.push("possible obfuscation/minification")
+      }
+
+      // Check for crypto mining scripts (Keep high, very specific)
+      if (/coinhive|crypto-loot|minero\.cc|webmining|cryptonight/i.test(html)) {
+        riskScore += 50
+        suspiciousPatterns.push("crypto miner")
+      }
+
+      // Check for suspicious redirects
+      if (/window\.location\s*=|document\.location\s*=|location\.replace/.test(html)) {
+        riskScore += 10 // Reduced from 20
+        suspiciousPatterns.push("client-side redirect")
+      }
+
+      // Check for data exfiltration patterns
+      if (/XMLHttpRequest.*password|fetch.*credentials|navigator\.credentials/i.test(html)) {
+        riskScore += 25
+        suspiciousPatterns.push("credential accessing code")
+      }
+
+      const detected = riskScore >= 35 // Threshold adjusted
+      return {
+        name: "JavaScript Behavior Analysis",
+        detected,
+        confidence: detected ? Math.min(riskScore, 95) : 5,
+        reason: detected
+          ? `Suspicious JavaScript detected: ${suspiciousPatterns.join(", ")}`
+          : "No malicious JavaScript patterns found",
+        isReal: true,
+        category: "Technical"
+      }
+    } catch (error) {
+      return {
+        name: "JavaScript Behavior Analysis",
+        detected: false,
+        confidence: 0,
+        reason: "Could not analyze JavaScript behavior",
+        isReal: false,
+        category: "Technical"
+      }
+    }
+  }
+
+  async checkExternalResources(url: string): Promise<DetectionSource> {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+      const response = await fetch(url, {
+        signal: controller.signal
+      })
+      clearTimeout(timeoutId)
+
+      const html = await response.text()
+      const domain = this.extractDomain(url)
+      let riskScore = 0
+      const suspiciousResources: string[] = []
+
+      // Whitelist common Trusted CDNs and Analytics
+      const trustedDomains = [
+        'google-analytics.com', 'googletagmanager.com', 'fonts.googleapis.com',
+        'facebook.net', 'twitter.com', 'linkedin.com', 'doubleclick.net',
+        'cloudflare.com', 'bootstrapcdn.com', 'code.jquery.com', 'jsdelivr.net',
+        'unpkg.com', 'aws.amazon.com', 'azure.microsoft.com', 'gstatic.com'
+      ]
+
+      // Extract external scripts
+      const scriptMatches = html.match(/<script[^>]+src=["']([^"']+)["']/gi) || []
+      const externalScripts = scriptMatches
+        .map(s => s.match(/src=["']([^"']+)["']/)?.[1])
+        .filter(s => s && !s.includes(domain) && !trustedDomains.some(t => s.includes(t)))
+
+      // Check for suspicious external domains
+      const suspiciousDomains = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top']
+      externalScripts.forEach(script => {
+        if (script && suspiciousDomains.some(d => script.includes(d))) {
+          riskScore += 25
+          suspiciousResources.push("high-risk TLD script")
+        }
+      })
+
+      // Check for iframes from different domains (ignoring trusted)
+      const iframeMatches = html.match(/<iframe[^>]+src=["']([^"']+)["']/gi) || []
+      const externalIframes = iframeMatches
+        .map(i => i.match(/src=["']([^"']+)["']/)?.[1])
+        .filter(i => i && !i.includes(domain) && !trustedDomains.some(t => i.includes(t)))
+
+      if (externalIframes.length > 5) { // Increased threshold from 3 to 5
+        riskScore += 15 // Reduced weight
+        suspiciousResources.push(`${externalIframes.length} external iframes`)
+      }
+
+      // Check for tracking pixels or hidden images
+      if (/<img[^>]+style=["'][^"']*display:\s*none/i.test(html)) {
+        riskScore += 10 // Reduced weight
+        suspiciousResources.push("hidden tracking pixels")
+      }
+
+      const detected = riskScore >= 30
+      return {
+        name: "External Resources Scan",
+        detected,
+        confidence: detected ? Math.min(riskScore, 90) : 5,
+        reason: detected
+          ? `Suspicious external resources: ${suspiciousResources.join(", ")}`
+          : `${externalScripts.length + externalIframes.length} unverified external resources`,
+        isReal: true,
+        category: "Technical"
+      }
+    } catch (error) {
+      return {
+        name: "External Resources Scan",
+        detected: false,
+        confidence: 0,
+        reason: "Could not analyze external resources",
+        isReal: false,
+        category: "Technical"
+      }
+    }
+  }
+
+  async checkMalwarePatterns(url: string): Promise<DetectionSource> {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+      const response = await fetch(url, {
+        signal: controller.signal
+      })
+      clearTimeout(timeoutId)
+
+      const html = await response.text()
+      let riskScore = 0
+      const malwareIndicators: string[] = []
+
+      // Check for known malware patterns
+      const malwarePatterns = [
+        { pattern: /powershell\s+-enc|-encodedcommand/i, name: "PowerShell obfuscation", score: 50 },
+        { pattern: /cmd\.exe|wscript\.exe|cscript\.exe/i, name: "system command execution", score: 45 },
+        { pattern: /base64_decode|gzinflate|str_rot13/i, name: "PHP obfuscation", score: 40 },
+        { pattern: /document\.write\(unescape/i, name: "JavaScript unescape", score: 35 },
+        { pattern: /<script[^>]*>[\s\S]*?eval\(/i, name: "eval injection", score: 40 },
+        { pattern: /\$_POST\[.*?\].*?eval/i, name: "PHP backdoor", score: 50 },
+        { pattern: /shell_exec|system|passthru|exec/i, name: "command injection", score: 45 }
+      ]
+
+      malwarePatterns.forEach(({ pattern, name, score }) => {
+        if (pattern.test(html)) {
+          riskScore += score
+          malwareIndicators.push(name)
+        }
+      })
+
+      // Check for suspicious file downloads
+      if (/<a[^>]+download[^>]*\.(?:exe|bat|scr|vbs|js)/i.test(html)) {
+        riskScore += 40
+        malwareIndicators.push("executable download link")
+      }
+
+      const detected = riskScore >= 35
+      return {
+        name: "Malware Pattern Detection",
+        detected,
+        confidence: detected ? Math.min(riskScore, 98) : 5,
+        reason: detected
+          ? `Malware patterns detected: ${malwareIndicators.join(", ")}`
+          : "No known malware patterns found",
+        isReal: true,
+        category: "Virus"
+      }
+    } catch (error) {
+      return {
+        name: "Malware Pattern Detection",
+        detected: false,
+        confidence: 0,
+        reason: "Could not analyze for malware patterns",
+        isReal: false,
+        category: "Virus"
+      }
+    }
+  }
+
+  async checkHistoricalThreatIntel(url: string): Promise<DetectionSource> {
+    const domain = this.extractDomain(url)
+    let riskScore = 0
+    const indicators: string[] = []
+
+    // Check against known malicious patterns from threat intelligence
+    const knownMaliciousPatterns = [
+      { pattern: /login.*verify/i, name: "login verification lure", score: 25 },
+      { pattern: /account.*suspend/i, name: "account suspension threat", score: 25 },
+      { pattern: /security.*update/i, name: "fake security update", score: 20 },
+      { pattern: /prize.*claim/i, name: "prize claim scam", score: 30 },
+      { pattern: /wallet.*connect/i, name: "wallet connection phishing", score: 35 },
+      { pattern: /tax.*refund/i, name: "tax refund scam", score: 30 }
+    ]
+
+    knownMaliciousPatterns.forEach(({ pattern, name, score }) => {
+      if (pattern.test(url)) {
+        riskScore += score
+        indicators.push(name)
+      }
+    })
+
+    // Check for URL shorteners (often used to hide malicious links)
+    const urlShorteners = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'ow.ly', 'is.gd', 'buff.ly']
+    if (urlShorteners.some(s => domain.includes(s))) {
+      riskScore += 20
+      indicators.push("URL shortener (hides destination)")
+    }
+
+    // Check for suspicious port numbers
+    if (/:\d{4,5}/.test(url) && !/:(80|443|8080|8443)/.test(url)) {
+      riskScore += 15
+      indicators.push("non-standard port")
+    }
+
+    const detected = riskScore >= 25
+    return {
+      name: "Historical Threat Intelligence",
+      detected,
+      confidence: detected ? Math.min(riskScore, 85) : 5,
+      reason: detected
+        ? `Threat indicators found: ${indicators.join(", ")}`
+        : "No historical threat patterns detected",
+      isReal: true,
+      category: "Intelligence"
+    }
+  }
+
   async scanUrl(url: string, isRefresh: boolean = false): Promise<DetectionSource[]> {
     const normalized = this.normalizeUrl(url)
     if (!normalized) return []
     const sources = await Promise.all([
+      // Tier 1: External Intelligence APIs
       this.checkGoogleSafeBrowsing(normalized).then(s => ({ ...s, category: "Intelligence" })),
       this.checkPhishTank(normalized).then(s => ({ ...s, category: "Intelligence" })),
       this.checkVirusTotal(normalized).then(s => ({ ...s, category: "Intelligence" })),
+
+      // Tier 2: Technical Forensics
       this.checkDomainAge(normalized).then(s => ({ ...s, category: "Technical" })),
       this.checkSSLCertificate(normalized).then(s => ({ ...s, category: "Technical" })),
       this.checkRedirects(normalized).then(s => ({ ...s, category: "Technical" })),
@@ -1015,7 +1348,14 @@ export class RealPhishingDetector {
       this.checkRandomStringDomain(normalized).then(s => ({ ...s, category: "Technical" })),
       this.checkPrivacyProxy(normalized).then(s => ({ ...s, category: "Technical" })),
       this.checkParkedDomain(normalized).then(s => ({ ...s, category: "Technical" })),
-      this.checkDeceptiveInfrastructure(normalized).then(s => ({ ...s, category: "Technical" }))
+      this.checkDeceptiveInfrastructure(normalized).then(s => ({ ...s, category: "Technical" })),
+
+      // NEW: Deep Analysis Methods
+      this.checkSecurityHeaders(normalized).then(s => ({ ...s, category: "Technical" })),
+      this.checkJavaScriptBehavior(normalized).then(s => ({ ...s, category: "Technical" })),
+      this.checkExternalResources(normalized).then(s => ({ ...s, category: "Technical" })),
+      this.checkMalwarePatterns(normalized).then(s => ({ ...s, category: "Virus" })),
+      this.checkHistoricalThreatIntel(normalized).then(s => ({ ...s, category: "Intelligence" }))
     ]) as any
     if (isRefresh) {
       return sources.map((s: any) => (!s.isReal && s.name.includes("API")) ? { ...s, reason: "Not Available (Live Refresh)" } : s)
