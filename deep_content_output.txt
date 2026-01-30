@@ -1,0 +1,26 @@
+--- Starting Deep Content Analysis & Validation Tests ---
+
+Running: Invalid URL Validation
+Score: 0
+Verdict: DANGEROUS
+Reasons: Invalid URL format or Unreachable Domain
+✅ PASS
+-----------------------------------
+Running: Phishing Keyword Detection
+Score: 35
+Verdict: SAFE
+Reasons: WHOIS / DNS: Domain 'phishing-keyword.com' is unusually new (6 days) (phishing-keyword.com), SSL / TLS: No SSL encryption (http://phishing-keyword.com/), Page Content Analysis: Content Analysis: Suspicious keywords found: verify your account, update payment
+❌ FAIL
+-----------------------------------
+Running: Sensitive Form on HTTP
+Score: 0
+Verdict: SAFE
+Reasons: SSL / TLS: No SSL encryption (http://sensitive-form-http....)
+❌ FAIL
+-----------------------------------
+Running: Brand Title Mismatch
+Score: 0
+Verdict: SAFE
+Reasons: SSL / TLS: No SSL encryption (http://brand-mismatch.com/), Page Content Analysis: Content Analysis: Title claims 'paypal' but domain is unconnected
+❌ FAIL
+-----------------------------------

@@ -1,0 +1,46 @@
+[
+  {
+    "url": "https://xn--pypal-4ve.com",
+    "description": "Punycode (Paypal Homograph)",
+    "riskScore": 100,
+    "classification": "MALICIOUS",
+    "reasons": [
+      "Homoglyph Attack Detection: Ultra-Strict Match: Domain uses Punycode/homoglyphs for brand impersonation (https://xn--pypal-4ve.com/)",
+      "Punycode Detection: HIGH RISK: Punycode (IDN Homograph) domain detected: xn--pypal-4ve.com"
+    ],
+    "status": "PASS"
+  },
+  {
+    "url": "https://login.security-verify-0x39a1f2b.tk/update?id=0x123abc456",
+    "description": "Suspicious TLD + Random Subdomain + Encoded Params",
+    "riskScore": 30,
+    "classification": "SUSPICIOUS",
+    "reasons": [
+      "Domain Parking Check: Domain is hosted on a high-risk TLD often used for parking/staging (login.security-verify-0x39a...)",
+      "Historical Threat Intelligence: Threat indicators found: login verification lure, fake security update"
+    ],
+    "status": "FAIL"
+  },
+  {
+    "url": "https://coresume.in",
+    "description": "Legitimate Resume Site (Safe Marker)",
+    "riskScore": 0,
+    "classification": "SAFE",
+    "reasons": [
+      "No threats detected across multiple security databases",
+      "Content passed all security checks"
+    ],
+    "status": "PASS"
+  },
+  {
+    "url": "https://www.google.com",
+    "description": "Whitelisted Top Domain",
+    "riskScore": 0,
+    "classification": "SAFE",
+    "reasons": [
+      "No threats detected across multiple security databases",
+      "Content passed all security checks"
+    ],
+    "status": "PASS"
+  }
+]

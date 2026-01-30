@@ -30,7 +30,11 @@ export async function POST(request: NextRequest) {
     // Call WHOIS API for accurate data
     const whoisUrl = `${WHOIS_API_URL}?apiKey=${WHOIS_API_KEY}&domainName=${domainOnly}&outputFormat=JSON`
 
-    const response = await fetch(whoisUrl)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+    const response = await fetch(whoisUrl, { signal: controller.signal })
+    clearTimeout(timeoutId)
     const data: WhoisResponse = await response.json()
 
     if (data.ErrorMessage) {

@@ -1,0 +1,8 @@
+Scanning URL: https://coresume.in/
+--- Result ---
+Risk Score: 0
+Classification: SAFE
+--- Detected Sources ---
+
+Scanning Malicious URL: https://192.168.1.1/urgent-security-update.php
+Risk Score: 10 (SAFE)

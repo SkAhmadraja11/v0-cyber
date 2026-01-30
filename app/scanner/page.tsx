@@ -127,8 +127,7 @@ export default function ScannerPage() {
   }
 
   const getClassificationColor = (classification: string) => {
-    if (classification === "MALICIOUS") return "text-destructive border-destructive/50 bg-destructive/10"
-    if (classification === "SUSPICIOUS") return "text-yellow-600 border-yellow-500/50 bg-yellow-500/10"
+    if (classification === "DANGEROUS") return "text-destructive border-destructive/50 bg-destructive/10"
     return "text-green-600 border-green-500/50 bg-green-500/10"
   }
 
@@ -329,28 +328,22 @@ export default function ScannerPage() {
             <div className="space-y-6">
               {/* Main Result Card */}
               <Card
-                className={`p-8 border-2 relative overflow-hidden ${result.classification === "MALICIOUS"
+                className={`p-8 border-2 relative overflow-hidden ${result.classification === "DANGEROUS"
                   ? "border-destructive/50 bg-destructive/5"
-                  : result.classification === "SUSPICIOUS"
-                    ? "border-yellow-500/50 bg-yellow-500/5"
-                    : "border-green-500/50 bg-green-500/5"
+                  : "border-green-500/50 bg-green-500/5"
                   }`}
               >
                 <div className="absolute inset-0 bg-grid-pattern opacity-[0.03]" />
                 <div className="relative">
                   <div className="flex items-start gap-6 mb-6">
                     <div
-                      className={`w-20 h-20 rounded-2xl flex items-center justify-center shrink-0 ${result.classification === "MALICIOUS"
+                      className={`w-20 h-20 rounded-2xl flex items-center justify-center shrink-0 ${result.classification === "DANGEROUS"
                         ? "bg-destructive/20 shadow-lg shadow-destructive/20"
-                        : result.classification === "SUSPICIOUS"
-                          ? "bg-yellow-500/20 shadow-lg shadow-yellow-500/20"
-                          : "bg-green-500/20 shadow-lg shadow-green-500/20"
+                        : "bg-green-500/20 shadow-lg shadow-green-500/20"
                         }`}
                     >
-                      {result.classification === "MALICIOUS" ? (
+                      {result.classification === "DANGEROUS" ? (
                         <AlertTriangle className="w-10 h-10 text-destructive" />
-                      ) : result.classification === "SUSPICIOUS" ? (
-                        <AlertTriangle className="w-10 h-10 text-yellow-600" />
                       ) : (
                         <CheckCircle2 className="w-10 h-10 text-green-500" />
                       )}
@@ -389,11 +382,9 @@ export default function ScannerPage() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground font-medium">Risk Score Analysis</span>
                       <span
-                        className={`font-bold text-xl ${result.classification === "MALICIOUS"
+                        className={`font-bold text-xl ${result.classification === "DANGEROUS"
                           ? "text-destructive"
-                          : result.classification === "SUSPICIOUS"
-                            ? "text-yellow-600"
-                            : "text-green-500"
+                          : "text-green-500"
                           }`}
                       >
                         {result.riskScore}/100
@@ -401,11 +392,9 @@ export default function ScannerPage() {
                     </div>
                     <div className="h-4 bg-secondary rounded-full overflow-hidden shadow-inner">
                       <div
-                        className={`h-full rounded-full transition-all shadow-lg ${result.classification === "MALICIOUS"
+                        className={`h-full rounded-full transition-all shadow-lg ${result.classification === "DANGEROUS"
                           ? "bg-gradient-to-r from-destructive to-destructive/70"
-                          : result.classification === "SUSPICIOUS"
-                            ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
-                            : "bg-gradient-to-r from-green-500 to-green-600"
+                          : "bg-gradient-to-r from-green-500 to-green-600"
                           }`}
                         style={{ width: `${result.riskScore}%` }}
                       />
@@ -539,8 +528,8 @@ export default function ScannerPage() {
                       </div>
                       <div>
                         <label className="text-xs font-extra-bold text-muted-foreground uppercase tracking-widest">Final Verdict</label>
-                        <p className={`text-2xl font-black mt-1 ${result!.classification === "MALICIOUS" ? "text-destructive" :
-                          result!.classification === "SUSPICIOUS" ? "text-yellow-600" : "text-green-600"
+                        <p className={`text-2xl font-black mt-1 ${result!.classification === "DANGEROUS" ? "text-destructive" :
+                          "text-green-600"
                           }`}>{result!.verdictReport.finalVerdict}</p>
                       </div>
                       <div>
@@ -559,7 +548,7 @@ export default function ScannerPage() {
                       <div>
                         <label className="text-xs font-extra-bold text-muted-foreground uppercase tracking-widest">Recommended Action</label>
                         <div className={`inline-flex items-center px-4 py-1.5 rounded-lg text-sm font-black border mt-1 ${result!.verdictReport.recommendedAction === "Block" ? "bg-destructive text-destructive-foreground" :
-                          result!.verdictReport.recommendedAction === "Monitor" ? "bg-yellow-500 text-yellow-950" : "bg-green-500 text-green-950"
+                          "bg-green-500 text-green-950"
                           }`}>
                           {result!.verdictReport.recommendedAction}
                         </div>

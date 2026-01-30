@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Shield, Brain, Zap, Database, ArrowRight, CheckCircle2, AlertTriangle } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import CyberRangeWidget from "@/components/cyber-range-widget"
 
 export default function DocsPage() {
   return (
@@ -418,6 +419,13 @@ export default function DocsPage() {
               </div>
             </Card>
           </div>
+        </div>
+      </section>
+
+      {/* Cyber Range Widget Integration */}
+      <section className="container mx-auto px-4 py-8">
+        <div className="max-w-xl mx-auto">
+          <CyberRangeWidget />
         </div>
       </section>
 

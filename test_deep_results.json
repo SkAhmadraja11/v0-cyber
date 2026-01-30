@@ -1,0 +1,45 @@
+[
+  {
+    "name": "Invalid URL Validation",
+    "input": "abc",
+    "score": 0,
+    "verdict": "DANGEROUS",
+    "reasons": [
+      "Invalid URL format or Unreachable Domain"
+    ],
+    "passed": true
+  },
+  {
+    "name": "Phishing Keyword Detection",
+    "input": "http://phishing-keyword.com",
+    "score": 24,
+    "verdict": "SAFE",
+    "reasons": [
+      "SSL / TLS: No SSL encryption (http://phishing-keyword.com/)",
+      "Page Content Analysis: Content Analysis: Suspicious keywords found: verify your account, update payment"
+    ],
+    "passed": false
+  },
+  {
+    "name": "Sensitive Form on HTTP",
+    "input": "http://sensitive-form-http.com",
+    "score": 85,
+    "verdict": "DANGEROUS",
+    "reasons": [
+      "SSL / TLS: No SSL encryption (http://sensitive-form-http....)",
+      "Page Content Analysis: Content Analysis: Sensitive input fields on non-secure (HTTP) page"
+    ],
+    "passed": true
+  },
+  {
+    "name": "Brand Title Mismatch",
+    "input": "http://brand-mismatch.com",
+    "score": 90,
+    "verdict": "DANGEROUS",
+    "reasons": [
+      "SSL / TLS: No SSL encryption (http://brand-mismatch.com/)",
+      "Page Content Analysis: Content Analysis: Title claims 'paypal' but domain is unconnected"
+    ],
+    "passed": true
+  }
+]

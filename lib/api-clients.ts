@@ -43,9 +43,13 @@ export class GoogleSafeBrowsingClient {
     }
 
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+
       const response = await fetch(`https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${this.apiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           client: { clientId: "phishguard-ai", clientVersion: "1.0.0" },
           threatInfo: {
@@ -56,6 +60,7 @@ export class GoogleSafeBrowsingClient {
           },
         }),
       })
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         throw new Error(`Google Safe Browsing API error: ${response.status} ${response.statusText}`)
@@ -116,12 +121,16 @@ export class PhishTankClient {
     }
 
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
       const encodedUrl = encodeURIComponent(url)
       const response = await fetch(`https://checkurl.phishtank.com/checkurl/`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        signal: controller.signal,
         body: `url=${encodedUrl}&format=json&app_key=${this.apiKey}`,
       })
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         throw new Error(`PhishTank API error: ${response.status} ${response.statusText}`)
@@ -191,12 +200,17 @@ export class VirusTotalClient {
     }
 
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+
       // Submission and check against VT v3 API
       const urlId = btoa(url).replace(/=/g, "")
 
       const response = await fetch(`https://www.virustotal.com/api/v3/urls/${urlId}`, {
         headers: { "x-apikey": this.apiKey },
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         throw new Error(`VirusTotal API error: ${response.status} ${response.statusText}`)
@@ -266,9 +280,14 @@ export class WHOISClient {
     }
 
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+
       const response = await fetch(
         `https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=${this.apiKey}&domainName=${domain}&outputFormat=JSON`,
+        { signal: controller.signal }
       )
+      clearTimeout(timeoutId)
 
       if (!response.ok) {
         throw new Error(`WHOIS API error: ${response.status} ${response.statusText}`)

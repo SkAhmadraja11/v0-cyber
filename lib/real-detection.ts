@@ -17,7 +17,7 @@ export interface DetectionSource {
 
 export interface RealDetectionResult {
   riskScore: number // 0-100
-  classification: "SAFE" | "SUSPICIOUS" | "MALICIOUS"
+  classification: "SAFE" | "DANGEROUS"
   confidence: number // 0-100
   reasons: string[]
   sources: DetectionSource[]
@@ -25,12 +25,12 @@ export interface RealDetectionResult {
   processingTime: number
   verdictReport?: {
     url: string
-    finalVerdict: "SAFE" | "SUSPICIOUS" | "MALICIOUS"
+    finalVerdict: "SAFE" | "DANGEROUS"
     evidenceSourcesUsed: string[]
     confirmedFindings: string[]
     confidenceLevel: "High" | "Medium" | "Low"
     limitations: string[]
-    recommendedAction: "Allow" | "Monitor" | "Block"
+    recommendedAction: "Allow" | "Block"
   }
   officialReport?: {
     caseId: string
@@ -397,29 +397,42 @@ export class RealPhishingDetector {
   async checkRedirects(url: string): Promise<DetectionSource> {
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 3000) // 3s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5s timeout for consistency
 
       const response = await fetch(url, {
         method: "HEAD",
-        redirect: "manual", // Don't follow automatically so we can count them or inspect headers
+        redirect: "manual",
         signal: controller.signal
       })
       clearTimeout(timeoutId)
 
+      let riskScore = 0
+      const indicators: string[] = []
+
       if (response.status >= 300 && response.status < 400) {
         const location = response.headers.get("location")
-        // Redirects are NOT malicious unless:
-        // - Final destination is hidden, obfuscated, or malicious
-        // - Redirect chain evades inspection (too many hops - not checked here)
-        // - Redirect leads to known malicious infrastructure (checked by GSB/VT)
 
-        const isSuspicious = !!(location?.includes("data:") || location?.includes("javascript:"))
+        // urlscan.io style: Behavior matters more than appearance
+        if (location?.includes("data:") || location?.includes("javascript:")) {
+          riskScore += 90
+          indicators.push("malicious protocol in redirect")
+        }
+
+        // Check for cross-domain redirects (Potential stealth tactic)
+        const targetDomain = location ? this.extractDomain(location) : null
+        const currentDomain = this.extractDomain(url)
+        if (targetDomain && targetDomain !== currentDomain) {
+          riskScore += 25
+          indicators.push(`cross-domain redirect to ${targetDomain}`)
+        }
 
         return {
           name: "Redirect Analysis",
-          detected: isSuspicious,
-          confidence: isSuspicious ? 90 : 10,
-          reason: isSuspicious ? `Malicious protocol found in redirect: ${location}` : `Redirect observed to ${location}`,
+          detected: riskScore >= 40,
+          confidence: riskScore,
+          reason: riskScore >= 40
+            ? `Suspicious redirect behavior: ${indicators.join(", ")}`
+            : `Redirect observed to ${location}`,
           isReal: true,
           details: url
         }
@@ -485,59 +498,59 @@ export class RealPhishingDetector {
 
   async checkRandomStringDomain(url: string): Promise<DetectionSource> {
     const domain = this.extractDomain(url)
-    const { sld: mainDomainPart } = this.extractDomainParts(domain)
-
-    // Skip common standardized subdomains
-    if (["www", "mail", "remote", "blog", "webmail", "server", "ns1", "ns2", "smtp", "vpn", "api", "dev", "test", "staging", "cdn", "static", "assets"].includes(mainDomainPart.toLowerCase())) {
-      return {
-        name: "Random Domain Analysis",
-        detected: false,
-        confidence: 0,
-        reason: "Domain part is a common standardized term",
-        isReal: true,
-        details: url
-      }
-    }
-
-    // Character sets for entropy evaluation
-    const entropy = this.calculateEntropy(mainDomainPart)
-
-    // Patterns for random strings
-    const hasManyNumbers = (mainDomainPart.match(/\d/g) || []).length > 4
-    const hasConsonantCluster = /[bcdfghjklmnpqrstvwxyz]{7,}/i.test(mainDomainPart)
-
-    // SOC-GRADE: Entropy Thresholds
-    // Normal English words usually have entropy < 3.5
-    // Random strings "ao8s7df6" usually have entropy > 4.0
-    const isHighEntropy = entropy > 4.2
-    const isMediumEntropy = entropy > 3.8
+    const domainParts = domain.split('.')
 
     let isRandom = false
-    let confidence = 0
-    let reason = ""
+    let maxConfidence = 0
+    let worstReason = ""
 
-    if (hasConsonantCluster) {
-      isRandom = true
-      confidence = 85
-      reason = `Excessive consonant cluster in domain: ${mainDomainPart}`
-    } else if (isHighEntropy && mainDomainPart.length > 8) {
-      isRandom = true
-      confidence = 90
-      reason = `High-Entropy Random String Detected (Entropy: ${entropy.toFixed(2)}): ${mainDomainPart}`
-    } else if (hasManyNumbers && mainDomainPart.length > 10) {
-      isRandom = true
-      confidence = 75
-      reason = `Excessive numeric characters in domain: ${mainDomainPart}`
-    }
+    // Check each part of the domain (subdomains + SLD)
+    for (const mainDomainPart of domainParts) {
+      if (mainDomainPart.length < 5) continue
+      if (["www", "mail", "remote", "blog", "webmail", "server", "ns1", "ns2", "smtp", "vpn", "api", "dev", "test", "staging", "cdn", "static", "assets"].includes(mainDomainPart.toLowerCase())) continue
 
-    // Check for suspicious TLDs often used with DGA/random domains
-    const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.site', '.online', '.info', '.biz']
-    const hasSuspiciousTLD = suspiciousTLDs.some(tld => domain.endsWith(tld))
+      // Character sets for entropy evaluation
+      const entropy = this.calculateEntropy(mainDomainPart)
 
-    if (hasSuspiciousTLD && (isRandom || mainDomainPart.length > 15)) {
-      isRandom = true
-      confidence = Math.max(confidence, 90)
-      reason = reason ? `${reason} on suspicious TLD` : `Suspicious TLD usage with long domain part`
+      // Patterns for random strings
+      const hasManyNumbers = (mainDomainPart.match(/\d/g) || []).length > 4
+      const hasConsonantCluster = /[bcdfghjklmnpqrstvwxyz]{7,}/i.test(mainDomainPart)
+
+      // SOC-GRADE: Entropy Thresholds
+      // Normal English words usually have entropy < 3.5
+      // Random strings "ao8s7df6" usually have entropy > 4.0
+      const isHighEntropy = entropy > 4.2
+      const isMediumEntropy = entropy > 3.8
+
+      let isRandom = false
+      let confidence = 0
+      let reason = ""
+
+      if (hasConsonantCluster) {
+        isRandom = true
+        maxConfidence = Math.max(maxConfidence, 85)
+        worstReason = `Excessive consonant cluster in part: ${mainDomainPart}`
+      } else if (isHighEntropy && mainDomainPart.length > 8) {
+        isRandom = true
+        maxConfidence = Math.max(maxConfidence, 90)
+        worstReason = `High-Entropy Random String Detected: ${mainDomainPart}`
+      } else if (hasManyNumbers && mainDomainPart.length > 10) {
+        isRandom = true
+        maxConfidence = Math.max(maxConfidence, 75)
+        worstReason = `Excessive numeric characters in part: ${mainDomainPart}`
+      }
+
+      // Check for suspicious TLDs often used with DGA/random domains
+      const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.site', '.online', '.info', '.biz']
+      const hasSuspiciousTLD = suspiciousTLDs.some(tld => domain.endsWith(tld))
+
+      if (hasSuspiciousTLD && (isRandom || mainDomainPart.length > 15)) {
+        isRandom = true
+        maxConfidence = Math.max(maxConfidence, 90)
+        worstReason = worstReason ? `${worstReason} on suspicious TLD` : `Suspicious TLD usage with long domain part`
+      }
+
+      if (isRandom) break // Found a random part
     }
 
     // Final verdict: only detect if NOT a known top domain
@@ -546,8 +559,8 @@ export class RealPhishingDetector {
     return {
       name: "Random Domain Analysis",
       detected,
-      confidence: detected ? confidence : 5,
-      reason: detected ? reason : "Domain structure appears legitimate",
+      confidence: detected ? maxConfidence : 5,
+      reason: detected ? worstReason : "Domain structure appears legitimate",
       isReal: true,
       details: url
     }
@@ -570,7 +583,7 @@ export class RealPhishingDetector {
 
   async checkParkedDomain(url: string): Promise<DetectionSource> {
     const domain = this.extractDomain(url)
-    const isSuspiciousTLD = [".xyz", ".tk", ".ml", ".ga", ".cf", ".top"].some(tld => domain.endsWith(tld))
+    const isSuspiciousTLD = [".xyz", ".tk", ".ml", ".ga", ".cf", ".top", ".icu", ".pw"].some(tld => domain.endsWith(tld))
 
     return {
       name: "Domain Parking Check",
@@ -582,21 +595,36 @@ export class RealPhishingDetector {
     }
   }
 
+  async checkPunycode(url: string): Promise<DetectionSource> {
+    const domain = this.extractDomain(url)
+    const isPunycode = domain.includes("xn--")
+
+    return {
+      name: "Punycode Detection",
+      detected: isPunycode,
+      confidence: isPunycode ? 95 : 0,
+      reason: isPunycode
+        ? `HIGH RISK: Punycode (IDN Homograph) domain detected: ${domain}`
+        : "Standard non-ASCII characters not detected",
+      isReal: true,
+      category: "Technical"
+    }
+  }
+
   async checkDeceptiveInfrastructure(url: string): Promise<DetectionSource> {
     const domain = this.extractDomain(url)
-    const { sld, tld } = this.extractDomainParts(domain)
+    const { sld, tld, subdomains } = this.extractDomainParts(domain)
 
     let riskScore = 0
-    let detectionReason = ""
+    const indicators: string[] = []
 
     // 1. Suspicious TLDs commonly used for phishing
-    const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.site', '.online', '.click', '.monster', '.pw']
     const highRiskTLDs = [
       ".xyz", ".top", ".icu", ".pw", ".bid", ".date", ".win", ".loan",
       ".men", ".live", ".guru", ".click", ".buzz", ".work", ".shop",
       ".space", ".online", ".site", ".tk", ".ml", ".ga", ".cf", ".gq"
     ]
-    const hasSuspiciousTLD = highRiskTLDs.some(tld => domain.toLowerCase().endsWith(tld))
+    const hasSuspiciousTLD = highRiskTLDs.some(t => domain.toLowerCase().endsWith(t))
 
     // 2. Check for brand keywords in domain
     const brandKeywords = [
@@ -612,33 +640,51 @@ export class RealPhishingDetector {
 
     // 3. SOC-GRADE: Suspicious TLD + Brand = IMMEDIATE THREAT
     if (hasSuspiciousTLD && hasBrandKeyword) {
-      riskScore = 90
-      detectionReason = `DECEPTIVE INFRASTRUCTURE: Brand keyword detected on high-risk TLD (${domain}) - Common phishing tactic`
+      riskScore = Math.max(riskScore, 90)
+      indicators.push(`Brand keyword on high-risk TLD (${domain})`)
     }
 
-    // 4. Check for ephemeral/temporary hosting indicators
+    // 4. Censys style: Relationship Mapping (Subdomain hijack / Free hosting)
+    const freeHostingProviders = ["github.io", "vercel.app", "pages.dev", "firebaseapp.com", "netlify.app", "weebly.com", "wixsite.com"]
+    const isFreeHosting = freeHostingProviders.some(p => domain.endsWith(p))
+
+    if (isFreeHosting && hasBrandKeyword) {
+      riskScore = Math.max(riskScore, 85)
+      indicators.push(`Potential subdomain hijack: Brand keyword on free hosting provider`)
+    }
+
+    // 5. Ephemeral/temporary hosting indicators
     const ephemeralPatterns = ['temp', 'tmp', 'test', 'demo', 'staging', 'dev', 'preview']
     const hasEphemeralPattern = ephemeralPatterns.some(p => domain.includes(p))
 
     if (hasEphemeralPattern && hasBrandKeyword) {
       riskScore = Math.max(riskScore, 75)
-      detectionReason = `Ephemeral hosting pattern with brand keyword detected - Potential temporary phishing site`
+      indicators.push(`Ephemeral hosting pattern with brand keyword`)
     }
 
-    // 5. Cloud tunnel / ngrok-like patterns
+    // 6. Cloud tunnel / ngrok-like patterns
     const tunnelPatterns = ['ngrok', 'localtunnel', 'serveo', 'localhost.run']
     const hasTunnelPattern = tunnelPatterns.some(p => domain.includes(p))
 
     if (hasTunnelPattern) {
       riskScore = Math.max(riskScore, 85)
-      detectionReason = `Cloud tunnel service detected - High risk for temporary phishing infrastructure`
+      indicators.push("Cloud tunnel service detected")
     }
 
+    // 7. Censys/Shodan style: Open Port / Service anomalies (Simulated)
+    if (url.includes(":8080") || url.includes(":8443") || url.includes(":3000")) {
+      riskScore += 20
+      indicators.push("Non-standard service port exposed")
+    }
+
+    const detected = riskScore >= 70
     return {
       name: "Deceptive Infrastructure Analysis",
-      detected: riskScore >= 70,
+      detected,
       confidence: riskScore,
-      reason: detectionReason || "Infrastructure appears legitimate",
+      reason: detected
+        ? `DECEPTIVE INFRASTRUCTURE detected: ${indicators.join(", ")}`
+        : "Infrastructure appears legitimate",
       isReal: true,
       details: url
     }
@@ -884,6 +930,18 @@ export class RealPhishingDetector {
     }
   }
 
+  private isValidDomain(input: string): boolean {
+    // Basic regex to check if it looks like a domain or URL
+    // Must have at least one dot, and valid chars
+    const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/
+    const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/
+
+    // Check if it's "abc" (no dot) -> false
+    if (!input.includes('.')) return false
+
+    return domainRegex.test(input) || urlRegex.test(input)
+  }
+
   private extractUrls(text: string): string[] {
     const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9][a-zA-Z0-9-]{1,61}\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g
     const matches = text.match(urlRegex) || []
@@ -910,82 +968,154 @@ export class RealPhishingDetector {
   }
 
   private calculateRiskScore(sources: DetectionSource[], url?: string): number {
-    // 0. Trusted Global Authority Check (False Positive Suppression)
+    // -------------------------------------------------------------------------
+    // SOC-GRADE RISK ENGINE: CONSENSUS-BASED MULTI-LAYER SCORING
+    // Inspired by VirusTotal, urlscan.io, and Censys
+    // -------------------------------------------------------------------------
+
+    let score = 0;
+    const detectedSources = sources.filter(s => s.detected);
+    const domain = url ? this.extractDomain(url) : "";
+
+    // --- PHASE 1: EXTERNAL THREAT INTEL (CONSENSUS LAYER) ---
+    const externalIntel = sources.filter(s =>
+      (s.name.includes("Google") || s.name.includes("PhishTank") || s.name.includes("VirusTotal")) &&
+      s.detected
+    );
+
+    // Rule 1: Consensus Boost (Many engines flag = high confidence threat)
+    if (externalIntel.length >= 2) {
+      score = Math.max(score, 95);
+    } else if (externalIntel.some(s => s.confidence >= 80)) {
+      score = Math.max(score, 88);
+    } else if (externalIntel.length === 1) {
+      score = Math.max(score, 75);
+    }
+
+    // --- PHASE 2: BEHAVIORAL ANALYSIS (EXECUTION LAYER) ---
+    // urlscan.io style: Behavior matters more than appearance
+    const behavioralSources = detectedSources.filter(s =>
+      s.name.includes("JavaScript") || s.name.includes("Redirect") || s.name.includes("External Resources")
+    );
+
+    if (behavioralSources.length >= 2) {
+      score += 45;
+    } else if (behavioralSources.length === 1) {
+      score += 25;
+    }
+
+    // --- PHASE 3: CRITICAL TECHNICAL FORENSICS ---
+    const criticalChecks = [
+      { check: "Brand Analysis", weight: 60 },
+      { check: "Homoglyph", weight: 65 },
+      { check: "Punycode", weight: 70 },
+      { check: "Crypto Scam", weight: 75 },
+      { check: "Malware Pattern", weight: 80 }
+    ];
+
+    let criticalMatches = 0;
+    criticalChecks.forEach(crit => {
+      if (detectedSources.some(s => s.name.includes(crit.check))) {
+        score += crit.weight;
+        criticalMatches++;
+      }
+    });
+
+    if (criticalMatches >= 2) score = Math.max(score, 92);
+
+    // Deep Content Analysis Integration
+    const contentAnalysis = detectedSources.find(s => s.name === "Page Content Analysis");
+    if (contentAnalysis) {
+      // Use the confidence directly as it reflects specific high-risk content finds
+      // e.g. Sensitive Form on HTTP (80) or Title Mismatch (90)
+      score = Math.max(score, contentAnalysis.confidence);
+
+      // If content analysis found something critical, ensure we boost
+      if (contentAnalysis.confidence >= 80) score = Math.max(score, 85);
+    }
+
+    // --- PHASE 4: INFRASTRUCTURE & RELATIONSHIPS (CENSYS STYLE) ---
+    // Broaden filter to catch all infrastructure-related signals
+    const infraSources = detectedSources.filter(s =>
+      s.name.includes("Infrastructure") ||
+      s.name.includes("IP Usage") ||
+      s.name.includes("Random Domain") ||
+      s.name.includes("Parking") ||
+      s.name.includes("WHOIS") ||
+      s.name.includes("DNS")
+    );
+
+    if (infraSources.length >= 2) {
+      score = Math.max(score, 82);
+    } else if (infraSources.length === 1) {
+      // Boost single infrastructure signal if it's high confidence
+      const topInfra = infraSources[0];
+      if (topInfra.confidence > 80) score = Math.max(score, 75);
+      else score += 35;
+    }
+
+    // --- PHASE 5: SOCIAL ENGINEERING (SENSITIVE ASSETS) ---
+    const nlpSource = detectedSources.find(s =>
+      s.name.includes("NLP") ||
+      s.name.includes("Phishing Language") ||
+      s.name.includes("Context Analysis")
+    );
+
+    if (nlpSource) {
+      score += 30;
+      // High-risk combo: Social Engineering + Infrastructure Flag -> >85
+      if (infraSources.length > 0) score = Math.max(score, 85);
+    }
+
+    // --- PHASE 6: DECISION ENGINE (FINAL ADJUSTMENTS) ---
+    // Rule: Any confirmed blacklist hit -> score MUST be at least 80
+    if (externalIntel.length > 0) {
+      score = Math.max(score, 80);
+    }
+
+    // Rule: Multiple medium-risk indicators (techCount >= 2 or behavioralSources.length >= 1) 
+    // If we have at least 2 distinct technical/behavioral sources, ensure score is at least 65
+    const techCount = infraSources.length;
+    if ((techCount >= 2) || (techCount >= 1 && behavioralSources.length >= 1)) {
+      score = Math.max(score, 65);
+    }
+
     if (url) {
-      const domain = this.extractDomain(url)
-      const isSafeBrand = TOP_DOMAINS.some((b) => domain === b || domain.endsWith("." + b))
-      const isGovOrEdu = domain.endsWith(".gov") || domain.endsWith(".edu") || domain.endsWith(".gov.in")
-      const isHostingPlatform = HOSTING_PLATFORMS.some((p) => domain === p || domain.endsWith("." + p))
+      const isSafeBrand = TOP_DOMAINS.some(b => domain === b || domain.endsWith("." + b));
+      const isGovOrEdu = domain.endsWith(".gov") || domain.endsWith(".edu") || domain.endsWith(".gov.in");
 
-      // Verify Tier 1 Intelligence status for this trusted domain
-      const highConfidenceAPIBlock = sources.find(
-        (s) =>
-          (s.name.includes("Google Safe Browsing") ||
-            s.name.includes("PhishTank") ||
-            s.name.includes("VirusTotal")) &&
-          s.isReal &&
-          s.detected &&
-          s.confidence >= 90,
-      )
+      // EXCEPTION: FREE HOSTING PROVIDERS SHOULD NOT BE TREATED AS "SAFE BRANDS" FOR SUBDOMAINS
+      const freeHostingProviders = ["github.io", "vercel.app", "pages.dev", "firebaseapp.com", "netlify.app", "weebly.com", "wixsite.com", "ngrok.io"];
+      const isActuallyFreeHosting = freeHostingProviders.some(p => domain.endsWith(p));
 
-      // If trusted (and NOT a general hosting platform) and no high-conf block, it is explicitly SAFE
-      if ((isSafeBrand || isGovOrEdu) && !isHostingPlatform && !highConfidenceAPIBlock) {
-        return 0
+      if ((isSafeBrand || isGovOrEdu) && !isActuallyFreeHosting) {
+        // "Is this website compromised, not just malicious?"
+        if (detectedSources.some(s => s.name.includes("Malware") || s.name.includes("Redirect") || s.name.includes("JavaScript"))) {
+          score = Math.max(score, 70);
+        } else {
+          return 0; // Purely safe
+        }
+      }
+
+      // Old Domain dampening (Safe context) - Only if NOT a confirmed threat or free hosting
+      const domainAge = sources.find(s => s.name.includes("WHOIS") || s.name.includes("Domain Age"));
+      if (domainAge && !domainAge.detected && score < 85 && !isActuallyFreeHosting) {
+        score = Math.floor(score * 0.6);
       }
     }
 
-    // 1. Authoritative Evidence: Verified External APIs
-    const authoritativeSources = sources.filter(
-      (s) =>
-        (s.name.includes("Google Safe Browsing") || s.name.includes("PhishTank") || s.name.includes("VirusTotal")) &&
-        s.isReal,
-    )
-
-    // [Tier 1] Definitive Professional Block: Confirmed by External Intel
-    // ULTRA-STRONG: If Google/PhishTank/VT says it's bad, it is 100% bad. No mercy.
-    const highConfidenceMalicious = authoritativeSources.find((s) => s.detected && s.confidence >= 80)
-    if (highConfidenceMalicious) return 100
-
-    // [Tier 2] Technical Forensics - ULTRA-STRONG VERDICTS
-    const technicalForensics = sources.filter((s) => s.isReal && !authoritativeSources.includes(s))
-    const detectedForensics = technicalForensics.filter((s) => s.detected)
-    const heuristics = sources.filter((s) => !s.isReal)
-    const detectedHeuristics = heuristics.filter((s) => s.detected)
-
-    // SOC-GRADE: Infrastructure Evidence
-    const hasBrandImpersonation = detectedForensics.some((s) => s.name.includes("Brand Analysis") && s.detected)
-    const hasDeceptiveInfra = detectedForensics.some((s) => s.name.includes("Deceptive Infrastructure") && s.detected)
-    const hasHomoglyph = detectedForensics.some((s) => s.name.includes("Homoglyph"))
-    const hasCryptoScam = heuristics.some((s) => s.name.includes("Crypto") && s.detected)
-    const hasFakeIdentity = detectedForensics.some((s) => s.name.includes("Identity") && s.detected)
-    const hasVirusRisk = detectedForensics.some((s) => s.name.includes("Payload") && s.detected)
-
-    // ULTRA-STRONG RULES: Known High-Risk Indicators = IMMEDIATE CRITICAL SCORE
-    if (hasHomoglyph) return 99 // Homoglyphs are never accidental
-    if (hasBrandImpersonation) return 98 // Brand impersonation is a direct attack
-    if (hasDeceptiveInfra) return 95 // Deceptive Cloud Tunnels/TLDs are attack infrastructure
-    if (hasFakeIdentity) return 92 // Spoofed Email Identity
-    if (hasVirusRisk) return 99 // Malware payload detection
-    if (hasCryptoScam) return 95 // Crypto drainer patterns
-
-    // Heuristic Verification
-    // If strict heuristics aligned (e.g. NLP + small technical issue), it's risky
-    if (detectedHeuristics.length >= 2 && detectedForensics.length >= 1) {
-      return 85
-    }
-
-    // Default to SAFE (0) if no Critical/High Risk indicators found.
-    // We removed the "Warning" (20-40) zone to ensure "Ultra-Strong" reliability.
-    // Either it is definitely malicious, or it is treated as safe.
-    return 0
-
-    return 5 // SAFE (Clean)
+    return Math.min(Math.max(score, 0), 100);
   }
 
-  private classifyRisk(riskScore: number): "SAFE" | "SUSPICIOUS" | "MALICIOUS" {
-    if (riskScore >= 80) return "MALICIOUS"
-    if (riskScore >= 40) return "SUSPICIOUS"
-    return "SAFE"
+  private classifyRisk(riskScore: number): "SAFE" | "DANGEROUS" {
+    /**
+     * BINARY RISK CLASSIFICATION RULES:
+     * - Any confirmed phishing, malware, or blacklist hit -> DANGEROUS (score >= 80)
+     * - Multiple medium-risk indicators -> DANGEROUS (score >= 65)
+     * - Clean reputation + no behavioral abuse -> SAFE (score <= 30)
+     */
+    if (riskScore >= 65) return "DANGEROUS";
+    return "SAFE";
   }
 
   private calculateOverallConfidence(sources: DetectionSource[]): number {
@@ -1091,39 +1221,45 @@ export class RealPhishingDetector {
       let riskScore = 0
       const suspiciousPatterns: string[] = []
 
-      // Check for obfuscated JavaScript (Relaxed for modern web apps)
-      // Standard minification uses these patterns, so we only flag EXTREMELY suspicious evals
-      if (/eval\s*\(/.test(html) && html.length < 5000) {
-        // Only flag eval if file is small (likely a loader), large files use eval for polyfills often
-        riskScore += 10
-        suspiciousPatterns.push("possible eval()")
+      // urlscan.io style: Behavior matters more than appearance
+
+      // 1. Obfuscated JavaScript
+      if (/eval\s*\(|String\.fromCharCode|atob\s*\(/.test(html) && html.length < 5000) {
+        riskScore += 20
+        suspiciousPatterns.push("highly obfuscated loader script")
       }
 
-      // Check for crypto mining scripts (Keep high, very specific)
+      // 2. Crypto mining scripts
       if (/coinhive|crypto-loot|minero\.cc|webmining|cryptonight/i.test(html)) {
-        riskScore += 50
+        riskScore += 60
         suspiciousPatterns.push("crypto miner")
       }
 
-      // Check for suspicious redirects
-      if (/window\.location\s*=|document\.location\s*=|location\.replace/.test(html)) {
-        riskScore += 10 // Reduced from 20
-        suspiciousPatterns.push("client-side redirect")
+      // 3. Suspicious redirects / History manipulation
+      if (/window\.location\s*=|location\.replace|history\.pushState/i.test(html)) {
+        riskScore += 15
+        suspiciousPatterns.push("client-side navigation/history manipulation")
       }
 
-      // Check for data exfiltration patterns
-      if (/XMLHttpRequest.*password|fetch.*credentials|navigator\.credentials/i.test(html)) {
-        riskScore += 25
-        suspiciousPatterns.push("credential accessing code")
+      // 4. Data exfiltration / Credential harvesting behavior
+      if (/XMLHttpRequest.*password|fetch.*credentials|navigator\.credentials|input\[type=password\]/i.test(html)) {
+        riskScore += 40
+        suspiciousPatterns.push("potential credential harvesting behavior")
       }
 
-      const detected = riskScore >= 35 // Threshold adjusted
+      // 5. DOM Manipulation of sensitive fields
+      if (/\.value\s*=.*base64|\.innerHTML\s*=.*iframe/i.test(html)) {
+        riskScore += 30
+        suspiciousPatterns.push("suspicious DOM manipulation (dynamic iframes/base64 injection)")
+      }
+
+      const detected = riskScore >= 35
       return {
         name: "JavaScript Behavior Analysis",
         detected,
-        confidence: detected ? Math.min(riskScore, 95) : 5,
+        confidence: detected ? Math.min(riskScore + 10, 95) : 5,
         reason: detected
-          ? `Suspicious JavaScript detected: ${suspiciousPatterns.join(", ")}`
+          ? `Suspicious JavaScript patterns detected: ${suspiciousPatterns.join(", ")}`
           : "No malicious JavaScript patterns found",
         isReal: true,
         category: "Technical"
@@ -1227,20 +1363,19 @@ export class RealPhishingDetector {
         signal: controller.signal
       })
       clearTimeout(timeoutId)
-
       const html = await response.text()
       let riskScore = 0
       const malwareIndicators: string[] = []
 
       // Check for known malware patterns
       const malwarePatterns = [
-        { pattern: /powershell\s+-enc|-encodedcommand/i, name: "PowerShell obfuscation", score: 50 },
-        { pattern: /cmd\.exe|wscript\.exe|cscript\.exe/i, name: "system command execution", score: 45 },
+        { pattern: /powershell\s+-(enc|-encodedcommand)/i, name: "PowerShell obfuscation", score: 50 },
+        { pattern: /\b(cmd\.exe|wscript\.exe|cscript\.exe)\b/i, name: "system binary execution", score: 45 },
         { pattern: /base64_decode|gzinflate|str_rot13/i, name: "PHP obfuscation", score: 40 },
         { pattern: /document\.write\(unescape/i, name: "JavaScript unescape", score: 35 },
         { pattern: /<script[^>]*>[\s\S]*?eval\(/i, name: "eval injection", score: 40 },
         { pattern: /\$_POST\[.*?\].*?eval/i, name: "PHP backdoor", score: 50 },
-        { pattern: /shell_exec|system|passthru|exec/i, name: "command injection", score: 45 }
+        { pattern: /\b(shell_exec|system|passthru|exec)\b\s*\(/i, name: "command injection", score: 45 }
       ]
 
       malwarePatterns.forEach(({ pattern, name, score }) => {
@@ -1291,7 +1426,9 @@ export class RealPhishingDetector {
       { pattern: /security.*update/i, name: "fake security update", score: 20 },
       { pattern: /prize.*claim/i, name: "prize claim scam", score: 30 },
       { pattern: /wallet.*connect/i, name: "wallet connection phishing", score: 35 },
-      { pattern: /tax.*refund/i, name: "tax refund scam", score: 30 }
+      { pattern: /tax.*refund/i, name: "tax refund scam", score: 30 },
+      { pattern: /[?&].*=[^&]*%[0-9a-f]{2}%[0-9a-f]{2}/i, name: "nested URL encoding", score: 40 },
+      { pattern: /0x[0-9a-f]{8,}/i, name: "encoded hex parameters", score: 45 }
     ]
 
     knownMaliciousPatterns.forEach(({ pattern, name, score }) => {
@@ -1314,7 +1451,7 @@ export class RealPhishingDetector {
       indicators.push("non-standard port")
     }
 
-    const detected = riskScore >= 25
+    const detected = riskScore >= 15 // Lower threshold to catch more technical signals
     return {
       name: "Historical Threat Intelligence",
       detected,
@@ -1324,6 +1461,88 @@ export class RealPhishingDetector {
         : "No historical threat patterns detected",
       isReal: true,
       category: "Intelligence"
+    }
+  }
+
+  async checkPageContent(url: string): Promise<DetectionSource> {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      const response = await fetch(url, { signal: controller.signal })
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        // If 404/403/500, could be a takedown or just broken.
+        return {
+          name: "Page Content Analysis",
+          detected: false,
+          confidence: 0,
+          reason: `Page returned status ${response.status}`,
+          isReal: true,
+          category: "Technical"
+        }
+      }
+
+      const html = await response.text()
+      const lowerHtml = html.toLowerCase()
+      let riskScore = 0
+      const indicators: string[] = []
+
+      // 1. Phishing Keywords
+      const phishingKeywords = ["verify your account", "update payment", "unlock wallet", "confirm identity", "security alert", "unusual sign-in", "verify identity"]
+      const foundKeywords = phishingKeywords.filter(k => lowerHtml.includes(k))
+      if (foundKeywords.length > 0) {
+        riskScore += 20 * foundKeywords.length
+        indicators.push(`Suspicious keywords found: ${foundKeywords.slice(0, 3).join(", ")}`)
+      }
+
+      // 2. Sensitive Forms
+      // Regex to catch input type=password with single or double quotes
+      const passwordInputRegex = /<input[^>]*type=["']password["'][^>]*>/i;
+      if (passwordInputRegex.test(html) || lowerHtml.includes("credit_card") || lowerHtml.includes("cvv") || lowerHtml.includes("ssn")) {
+        if (!url.startsWith("https")) {
+          riskScore += 80 // Critical: Password/Card on HTTP
+          indicators.push("Sensitive input fields on non-secure (HTTP) page")
+        } else {
+          riskScore += 15
+          indicators.push("Sensitive form detected")
+        }
+      }
+
+      // 3. Title Mismatch (Brand Impersonation)
+      const titleMatch = html.match(/<title>(.*?)<\/title>/i)
+      if (titleMatch) {
+        const title = titleMatch[1].toLowerCase()
+        const domain = this.extractDomain(url)
+        const brands = ["paypal", "google", "microsoft", "apple", "facebook", "netflix", "amazon", "bank"]
+
+        for (const brand of brands) {
+          if (title.includes(brand) && !domain.includes(brand)) {
+            riskScore += 90
+            indicators.push(`Title claims '${brand}' but domain is unconnected`)
+          }
+        }
+      }
+
+      const detected = riskScore >= 40
+      return {
+        name: "Page Content Analysis",
+        detected,
+        confidence: Math.min(riskScore, 100),
+        reason: detected ? `Content Analysis: ${indicators.join(", ")}` : "Content appears legitimate",
+        isReal: true,
+        category: "Technical"
+      }
+
+    } catch (e) {
+      return {
+        name: "Page Content Analysis",
+        detected: false,
+        confidence: 0,
+        reason: "Content unreachable (Offline/Blocked)",
+        isReal: true,
+        category: "Technical"
+      }
     }
   }
 
@@ -1337,7 +1556,7 @@ export class RealPhishingDetector {
       this.checkVirusTotal(normalized).then(s => ({ ...s, category: "Intelligence" })),
 
       // Tier 2: Technical Forensics
-      // this.checkDomainAge(normalized).then(s => ({ ...s, category: "Technical" })), // Disabled by user request
+      this.checkDomainAge(normalized).then(s => ({ ...s, category: "Technical" })), // Re-enabled for Tier-1 Scoring
       this.checkSSLCertificate(normalized).then(s => ({ ...s, category: "Technical" })),
       this.checkRedirects(normalized).then(s => ({ ...s, category: "Technical" })),
       this.checkIpUrl(normalized).then(s => ({ ...s, category: "Technical" })),
@@ -1347,13 +1566,14 @@ export class RealPhishingDetector {
       this.checkPrivacyProxy(normalized).then(s => ({ ...s, category: "Technical" })),
       this.checkParkedDomain(normalized).then(s => ({ ...s, category: "Technical" })),
       this.checkDeceptiveInfrastructure(normalized).then(s => ({ ...s, category: "Technical" })),
+      this.checkPunycode(normalized).then(s => ({ ...s, category: "Technical" })),
 
       // NEW: Deep Analysis Methods
-      // this.checkSecurityHeaders(normalized).then(s => ({ ...s, category: "Technical" })), // Disabled by user request
       this.checkJavaScriptBehavior(normalized).then(s => ({ ...s, category: "Technical" })),
       this.checkExternalResources(normalized).then(s => ({ ...s, category: "Technical" })),
       this.checkMalwarePatterns(normalized).then(s => ({ ...s, category: "Virus" })),
-      this.checkHistoricalThreatIntel(normalized).then(s => ({ ...s, category: "Intelligence" }))
+      this.checkHistoricalThreatIntel(normalized).then(s => ({ ...s, category: "Intelligence" })),
+      this.checkPageContent(normalized).then(s => ({ ...s, category: "Technical" })) // NEW: Deep Content Scan
     ]) as any
     if (isRefresh) {
       return sources.map((s: any) => (!s.isReal && s.name.includes("API")) ? { ...s, reason: "Not Available (Live Refresh)" } : s)
@@ -1366,9 +1586,9 @@ export class RealPhishingDetector {
     let urlToExamine = input
     if (mode === 'url') {
       const normalized = this.normalizeUrl(input)
-      if (!normalized) {
+      if (!normalized || !this.isValidDomain(input)) {
         return {
-          riskScore: 0, classification: "SAFE", confidence: 0, reasons: ["Invalid URL"],
+          riskScore: 0, classification: "DANGEROUS", confidence: 0, reasons: ["Invalid URL format or Unreachable Domain"],
           sources: [], timestamp: new Date().toISOString(), processingTime: 0, url: input
         }
       }
@@ -1393,7 +1613,10 @@ export class RealPhishingDetector {
     const riskScore = this.calculateRiskScore(sources, urlToExamine)
     const classification = this.classifyRisk(riskScore)
     const confidence = this.calculateOverallConfidence(sources)
-    const reasons = this.generateReasons(sources)
+
+    // Top 3 Technical Reasons only
+    const allReasons = this.generateReasons(sources)
+    const reasons = allReasons.slice(0, 3)
 
     // SOC-GRADE: Determine threat category based on detection sources
     let threatCategory = "Clean"
@@ -1426,7 +1649,7 @@ export class RealPhishingDetector {
           : ["No confirmed threats found"]),
       confidenceLevel: (sources.filter(s => s.isReal).length >= 5 ? "High" : sources.filter(s => s.isReal).length >= 3 ? "Medium" : "Low") as any,
       limitations: sources.filter(s => !s.isReal).map(s => s.name).length > 0 ? [`Missing data: ${sources.filter(s => !s.isReal).map(s => s.name).join(", ")}`] : [],
-      recommendedAction: (classification === "MALICIOUS" ? "Block" : classification === "SUSPICIOUS" ? "Monitor" : "Allow") as any,
+      recommendedAction: (classification === "DANGEROUS" ? "Block" : "Allow") as any,
       infrastructureFlags: sources.filter(s => s.detected && (s.name.includes("Infrastructure") || s.name.includes("Brand") || s.name.includes("Privacy Proxy"))).map(s => s.reason) // SOC-GRADE: Infrastructure red flags
     }
 

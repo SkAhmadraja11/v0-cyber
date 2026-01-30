@@ -1,0 +1,47 @@
+﻿--- Starting Core Logic Enhancement Tests ---
+
+Running Scenario: Consensus Scoring Test
+[RiskScore] Phase 6 (Old Domain Dampening): 0
+[RiskScore] Final score: 0
+Score: 0
+Classification: SAFE
+Reasons: Domain Parking Check: Domain is hosted on a high-risk TLD often used for parking/staging (login-secure-auth.tk)...
+Γ¥î FAIL
+-----------------------------------
+
+Running Scenario: Subdomain Hijack Relationship Test
+[RiskScore] Phase 4 (Infra - Single): 35
+[RiskScore] Final score: 35
+Score: 35
+Classification: SUSPICIOUS
+Reasons: WHOIS / DNS: Domain 'paypal-login.github.io' is unusually new (12 days) (paypal-login.github.io), Deceptive Infrastructure Analysis: DECEPTIVE INFRASTRUCTURE detected: Potential subdomain hijack: Brand keyword on free hosting provider (https://paypal-login.github...)...
+Γ¥î FAIL
+-----------------------------------
+
+Running Scenario: Compromised Site Test
+[RiskScore] Phase 6 (Purely Safe Brand): 0
+Score: 0
+Classification: SAFE
+Reasons: No threats detected across multiple security databases, Content passed all security checks...
+Γ£à PASS
+-----------------------------------
+
+Running Scenario: Email Infrastructure DMARC Failure
+[RiskScore] Phase 3 (Critical - Brand Analysis): 60
+[RiskScore] Phase 5 (NLP): 90
+[RiskScore] Final score: 90
+Score: 90
+Classification: MALICIOUS
+Reasons: WHOIS / DNS: Domain 'mx.google' is unusually new (9 days) (mx.google), Brand Analysis (Technical): Brand keyword 'google' found in subdomain/path of non-brand domain (https://mx.google/), Enhanced NLP Analysis: High-risk content detected: 2 suspicious keywords found (Urgency: 1, Financial: 0, Security: 1, Reward: 0)...
+Γ£à PASS
+-----------------------------------
+
+Running Scenario: JavaScript Behavior: Credential Access
+[RiskScore] Phase 6 (Old Domain Dampening): 0
+[RiskScore] Final score: 0
+Score: 0
+Classification: SAFE
+Reasons: Historical Threat Intelligence: Threat indicators found: URL shortener (hides destination)...
+Γ¥î FAIL
+-----------------------------------
+
