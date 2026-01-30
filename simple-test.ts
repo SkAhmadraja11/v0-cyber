@@ -1,1 +1,12 @@
-console.log(\"Test script started\")\nimport { RealPhishingDetector } from \"./lib/real-detection\"\n\nasync function main() {\n  console.log(\"Detector initializing...\")\n  const detector = new RealPhishingDetector()\n  console.log(\"Scanning URL...\")\n  const result = await detector.detect(\"https://google.com\", \"url\")\n  console.log(\"Result:\", JSON.stringify(result, null, 2))\n}\n\nmain().catch(console.error)\n
+console.log("Test script started")
+import { RealPhishingDetector } from "./lib/real-detection"
+
+async function main() {
+    console.log("Detector initializing...")
+    const detector = new RealPhishingDetector()
+    console.log("Scanning URL...")
+    const result = await detector.detect("https://google.com", "url")
+    console.log("Result:", JSON.stringify(result, null, 2))
+}
+
+main().catch(console.error)
