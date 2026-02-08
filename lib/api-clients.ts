@@ -44,7 +44,7 @@ export class GoogleSafeBrowsingClient {
 
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
 
       const response = await fetch(`https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${this.apiKey}`, {
         method: "POST",
@@ -83,8 +83,12 @@ export class GoogleSafeBrowsingClient {
         reason: "No threats found in Google Safe Browsing database",
         isReal: true,
       }
-    } catch (error) {
-      console.error("[v0] Google Safe Browsing API error:", error)
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.warn("[v0] Google Safe Browsing API timeout")
+      } else {
+        console.error("[v0] Google Safe Browsing API error:", error)
+      }
       return this.simulateCheck(url)
     }
   }
@@ -122,7 +126,7 @@ export class PhishTankClient {
 
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
       const encodedUrl = encodeURIComponent(url)
       const response = await fetch(`https://checkurl.phishtank.com/checkurl/`, {
         method: "POST",
@@ -157,8 +161,12 @@ export class PhishTankClient {
         reason: "URL not flagged in PhishTank global community repository",
         isReal: true,
       }
-    } catch (error) {
-      console.error("[v0] PhishTank API error:", error)
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.warn("[v0] PhishTank API timeout")
+      } else {
+        console.error("[v0] PhishTank API error:", error)
+      }
       return this.simulateCheck(url)
     }
   }
@@ -201,7 +209,7 @@ export class VirusTotalClient {
 
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
 
       // Submission and check against VT v3 API
       const urlId = btoa(url).replace(/=/g, "")
@@ -243,8 +251,12 @@ export class VirusTotalClient {
         reason: "Indicator analyzed by VirusTotal: No vendor detections found",
         isReal: true,
       }
-    } catch (error) {
-      console.error("[v0] VirusTotal API error:", error)
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.warn("[v0] VirusTotal API timeout")
+      } else {
+        console.error("[v0] VirusTotal API error:", error)
+      }
       return this.simulateCheck(url)
     }
   }
@@ -281,7 +293,7 @@ export class WHOISClient {
 
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
 
       const response = await fetch(
         `https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=${this.apiKey}&domainName=${domain}&outputFormat=JSON`,
@@ -307,8 +319,12 @@ export class WHOISClient {
         isNew: age < 30,
         isReal: true,
       }
-    } catch (error) {
-      console.error("[v0] WHOIS API error:", error)
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.warn("[v0] WHOIS API timeout")
+      } else {
+        console.error("[v0] WHOIS API error:", error)
+      }
       return this.simulateCheck(domain)
     }
   }

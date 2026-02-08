@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { RealPhishingDetector } from "@/lib/real-detection"
+import { EnterpriseThreatEngine, ThreatInput } from "@/lib/enterprise-detection"
 import { createClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
@@ -7,99 +8,102 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { input, mode, refresh } = body
 
-    if (!input || !mode) {
+    if (!input) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
     const supabase = await createClient()
 
-    // Get authenticated user (optional - works without auth too)
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    // Initialize real detector with multiple data sources
-    const detector = new RealPhishingDetector()
-
-    // Simulate realistic API call delay (real APIs take time)
-    await new Promise((resolve) => setTimeout(resolve, 1200))
-
-    // Perform real multi-source detection
-    const result = await detector.detect(input, mode, !!refresh)
-
-    // Save scan results to database (with error handling for missing tables)
+    // Graceful Auth Check (Prevent timeout from blocking scan)
+    let user = null;
     try {
-      const { data: scanRecord, error: insertError } = await supabase
+      const { data } = await supabase.auth.getUser()
+      user = data.user
+    } catch (e) {
+      console.warn("Auth check failed (proceeding as anonymous):", e);
+    }
+
+    // --- ENTERPRISE ENGINE INTEGRATION ---
+    const engine = new EnterpriseThreatEngine()
+
+    // Simulate API delay for realism
+    await new Promise((resolve) => setTimeout(resolve, 800))
+
+    // Map legacy input to strict ThreatInput
+    const threatInput: ThreatInput = {
+      type: (mode === 'email') ? 'email' : 'url',
+      content: input
+    }
+
+    const result = await engine.analyze(threatInput)
+
+    // Save scan results to database (Adapted for new schema if needed, or best-effort mapping)
+    // We map snake_case result back to legacy DB columns where possible, or just save raw result
+    try {
+      const { error: insertError } = await supabase
         .from("scan_results")
         .insert({
           user_id: user?.id || null,
           url: input,
-          scan_type: mode,
-          risk_score: result.riskScore,
-          classification: result.classification,
-          confidence: result.confidence,
-          detection_sources: result.sources,
-          reasons: result.reasons,
-          ip_address: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
+          scan_type: mode || 'url',
+          risk_score: result.risk_score,
+          classification: result.verdict,
+          confidence: result.confidence === 'VERY_HIGH' ? 0.99 : result.confidence === 'HIGH' ? 0.85 : 0.5, // Approx mapping
+          detection_sources: result.key_indicators.map(i => ({ name: i, detected: true, reason: i })), // Map indicators to sources
+          reasons: result.key_indicators,
+          ip_address: request.headers.get("x-forwarded-for") || "unknown",
           user_agent: request.headers.get("user-agent") || "unknown",
         })
-        .select()
-        .single()
 
-      if (insertError) {
-        if (insertError.message.includes('does not exist') || insertError.message.includes('schema cache')) {
-          console.log("[v0] scan_results table missing - scan result not saved to database")
-        } else {
-          console.error("[v0] Error saving scan to database:", insertError)
-        }
-      } else {
-        console.log("[v0] Scan saved to database with ID:", scanRecord?.id)
-      }
-    } catch (dbError: any) {
-      console.error("[v0] Database error during scan save:", dbError)
-      // Continue even if database save fails - don't block scan result
-    }
+      if (insertError) console.error("[v0] DB Error:", insertError)
+    } catch (e) { /* Ignore DB errors */ }
 
-    if (result.classification === "MALICIOUS") {
+    // Save Threat Intel if malicious
+    if (result.verdict === "MALICIOUS" || result.verdict === "HIGH_RISK") {
       try {
-        let hostname = "localhost"
-        try {
-          // Robust URL parsing for potentially messy phishing links or email content
-          const urlToParse = input.trim().split(/\s+/)[0] // Take first word if it's a mix of content
-          const safeUrl = urlToParse.startsWith("http") ? urlToParse : `https://${urlToParse}`
-          hostname = new URL(safeUrl).hostname
-        } catch (e) {
-          console.log("[v0] Could not parse hostname for threat intel, using default")
-        }
-
-        await supabase.from("threat_intel").upsert(
-          {
-            url: input.slice(0, 500), // Truncate if email is huge
-            domain: hostname,
-            threat_type: result.classification,
-            sources: result.sources.filter((s) => s.detected).map((s) => s.name),
-            metadata: { confidence: result.confidence, riskScore: result.riskScore },
-          },
-          {
-            onConflict: "url",
-          },
-        )
-      } catch (threatError: any) {
-        if (threatError?.message?.includes('does not exist') || threatError?.message?.includes('schema cache')) {
-          console.log("[v0] threat_intel table missing - threat intel not saved")
-        } else {
-          console.error("[v0] Error saving threat intel:", threatError)
-        }
-      }
+        await supabase.from("threat_intel").upsert({
+          url: input.slice(0, 500),
+          domain: input.includes('http') ? new URL(input).hostname : input.split('/')[0],
+          threat_type: result.threat_type[0] || 'Unknown',
+          sources: result.key_indicators,
+          metadata: { riskScore: result.risk_score, confidence: result.confidence }
+        }, { onConflict: 'url' })
+      } catch (e) { /* Ignore */ }
     }
 
-    const response = NextResponse.json(result)
-    response.headers.set("X-Processing-Time", `${result.processingTime}ms`)
-    response.headers.set("X-Detection-Sources", result.sources.length.toString())
+    // Map to RealDetectionResult for Frontend Compatibility
+    const response = {
+      // -- Extension Fields --
+      verdict: result.verdict,
+      threat_type: result.threat_type,
+      key_indicators: result.key_indicators,
+      explanation: result.explanation,
+      user_impact: result.user_impact,
+      recommended_action: result.recommended_action,
+      risk_score: result.risk_score, // Lowercase snake_case for extension if needed, but camelCase below
 
-    return response
+      // -- Frontend Fields --
+      riskScore: result.risk_score,
+      classification: result.verdict,
+      confidence: result.confidence === 'VERY_HIGH' ? 99 : result.confidence === 'HIGH' ? 85 : result.confidence === 'MEDIUM' ? 60 : 10,
+      reasons: result.key_indicators,
+      sources: result.sources || [],
+      timestamp: new Date().toISOString(),
+      verdictReport: {
+        url: input,
+        finalVerdict: result.verdict,
+        evidenceSourcesUsed: result.sources?.map(s => s.name) || [],
+        confirmedFindings: result.key_indicators,
+        confidenceLevel: result.confidence === 'VERY_HIGH' ? "High" : "Medium",
+        limitations: [],
+        recommendedAction: result.recommended_action === 'BLOCK' ? "Block" : "Allow"
+      }
+    };
+
+    return NextResponse.json(response)
+
   } catch (error) {
-    console.error("Real scan error:", error)
+    console.error("Enterprise scan error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

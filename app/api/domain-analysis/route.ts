@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const whoisUrl = `${WHOIS_API_URL}?apiKey=${WHOIS_API_KEY}&domainName=${domainOnly}&outputFormat=JSON`
 
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 5000)
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
 
     const response = await fetch(whoisUrl, { signal: controller.signal })
     clearTimeout(timeoutId)

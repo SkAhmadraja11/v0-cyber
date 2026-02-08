@@ -1,0 +1,66 @@
+Starting Enterprise Threat Engine Tests...
+
+--- Test 1: Known Phishing URL ---
+{
+  "risk_score": 90,
+  "verdict": "MALICIOUS",
+  "threat_type": [
+    "Phishing",
+    "Brand Impersonation"
+  ],
+  "confidence": "VERY_HIGH",
+  "key_indicators": [
+    "Brand 'paypal' used deceptively with suspicious keyword in 'paypal-login-secure-update'",
+    "DECEPTIVE INFRASTRUCTURE detected: Brand keyword on high-risk TLD (paypal-login-secure-update.com.suspicious-tld.xyz)"
+  ],
+  "user_impact": "Interaction could lead to immediate credential theft, malware infection, or financial loss.",
+  "recommended_action": "BLOCK",
+  "explanation": "The system detected CRITICAL indicators: Brand 'paypal' used deceptively with suspicious keyword in 'paypal-login-secure-update', DECEPTIVE INFRASTRUCTURE detected: Brand keyword on high-risk TLD (paypal-login-secure-update.com.suspicious-tld.xyz). This content is actively malicious and matches known attack patterns."
+}
+
+--- Test 2: Safe URL (Google) ---
+{
+  "risk_score": 0,
+  "verdict": "SAFE",
+  "threat_type": [],
+  "confidence": "LOW",
+  "key_indicators": [],
+  "user_impact": "None.",
+  "recommended_action": "ALLOW",
+  "explanation": "No significant threats detected."
+}
+
+--- Test 3: Email with Bad Auth & Urgency ---
+{
+  "risk_score": 80,
+  "verdict": "MALICIOUS",
+  "threat_type": [
+    "Scam"
+  ],
+  "confidence": "VERY_HIGH",
+  "key_indicators": [
+    "Email Authentication Failed (SPF)",
+    "Email Authentication Failed (DKIM)",
+    "High-risk content detected: 4 suspicious keywords found (Urgency: 3, Financial: 1, Security: 0, Reward: 0)"
+  ],
+  "user_impact": "Interaction could lead to immediate credential theft, malware infection, or financial loss.",
+  "recommended_action": "BLOCK",
+  "explanation": "The system detected CRITICAL indicators: Email Authentication Failed (SPF), Email Authentication Failed (DKIM). This content is actively malicious and matches known attack patterns."
+}
+
+--- Test 4: Malicious Attachment ---
+{
+  "risk_score": 100,
+  "verdict": "MALICIOUS",
+  "threat_type": [
+    "Malware Delivery"
+  ],
+  "confidence": "VERY_HIGH",
+  "key_indicators": [
+    "Executable attachment detected (.exe)",
+    "Double extension malware evasion detected"
+  ],
+  "user_impact": "Interaction could lead to immediate credential theft, malware infection, or financial loss.",
+  "recommended_action": "BLOCK",
+  "explanation": "The system detected CRITICAL indicators: Executable attachment detected (.exe), Double extension malware evasion detected. This content is actively malicious and matches known attack patterns."
+}

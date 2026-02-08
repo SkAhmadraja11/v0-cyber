@@ -1,12 +1,16 @@
 {
     "manifest_version": 3,
-    "name": "Phishing Scanner - Deep Analysis",
-    "version": "1.0",
-    "description": "Deep scan current URL using Phishing Detective Engine",
+    "name": "Phishing Detective Enterprise",
+    "version": "2.1.0",
+    "minimum_chrome_version": "114",
+    "description": "Enterprise-grade real-time threat protection. Scans all web traffic and blocks malware instantly.",
     "permissions": [
         "activeTab",
         "scripting",
-        "storage"
+        "storage",
+        "notifications",
+        "tabs",
+        "sidePanel"
     ],
     "host_permissions": [
         "http://localhost:3000/*",
@@ -15,16 +19,34 @@
     "background": {
         "service_worker": "background.js"
     },
+    "icons": {
+        "16": "icon.png",
+        "48": "icon.png",
+        "128": "icon.png"
+    },
     "action": {
-        "default_title": "Open Phishing Detective",
-        "default_popup": "popup.html",
+        "default_title": "Phishing Detective Status",
         "default_icon": {
             "16": "icon.png",
             "48": "icon.png",
             "128": "icon.png"
         }
     },
+    "side_panel": {
+        "default_path": "sidepanel.html"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "*://mail.google.com/*"
+            ],
+            "js": [
+                "content_gmail.js"
+            ],
+            "run_at": "document_idle"
+        }
+    ],
     "content_security_policy": {
-        "extension_pages": "script-src 'self'; object-src 'self'"
+        "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com"
     }
 }

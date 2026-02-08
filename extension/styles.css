@@ -720,3 +720,100 @@ body {
         transform: rotate(360deg);
     }
 }
+
+/* Enterprise Details */
+.enterprise-details {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--card-border);
+}
+
+.detail-row {
+    margin-bottom: 16px;
+}
+
+.detail-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Tags */
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Impact & Explanation */
+.impact-text,
+.explanation-text {
+    font-size: 12px;
+    color: #d0d0d0;
+    line-height: 1.5;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 8px;
+    border-left: 2px solid var(--text-secondary);
+}
+
+.impact-text {
+    border-left-color: var(--malicious);
+    color: #ffcccc;
+}
+
+/* Action Banner */
+.action-banner {
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+    margin-top: 24px;
+    border: 1px solid transparent;
+}
+
+.action-label {
+    font-size: 10px;
+    font-weight: 700;
+    opacity: 0.8;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+}
+
+.action-value {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+/* Action Variants */
+.action-block {
+    background: rgba(255, 0, 85, 0.1);
+    border-color: rgba(255, 0, 85, 0.3);
+    color: #ff0055;
+    box-shadow: 0 0 20px rgba(255, 0, 85, 0.1);
+}
+
+.action-warn {
+    background: rgba(255, 183, 0, 0.1);
+    border-color: rgba(255, 183, 0, 0.3);
+    color: #ffb700;
+}
+
+.action-allow {
+    background: rgba(0, 255, 157, 0.1);
+    border-color: rgba(0, 255, 157, 0.3);
+    color: #00ff9d;
+}

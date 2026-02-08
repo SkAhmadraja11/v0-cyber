@@ -43,7 +43,7 @@ import { MobileNav } from "@/components/mobile-nav"
 import Footer from "@/components/footer"
 
 export default function Home() {
-  const [activeSection, setActiveSection] = useState<"overview" | "how-it-works" | "tech" | "features" | "analytics">("overview")
+  const [activeSection, setActiveSection] = useState<"overview" | "how-it-works" | "tech" | "features" | "analytics" | "download">("overview")
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false })
@@ -414,6 +414,12 @@ export default function Home() {
                   icon={BarChart3}
                   label="Analytics"
                 />
+                <SidebarItem
+                  active={activeSection === "download"}
+                  onClick={() => setActiveSection("download")}
+                  icon={Download}
+                  label="Download Tool"
+                />
               </nav>
 
               <div className="mt-6 pt-6 border-t border-border/50 space-y-3">
@@ -660,6 +666,61 @@ export default function Home() {
                     <Button>Go to Dashboard</Button>
                   </Link>
                 </Card>
+              </div>
+            )}
+
+            {activeSection === "download" && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-foreground mb-4">Download Security Tools</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Deploy our endpoint agents and browser extensions for complete coverage.
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Card className="p-6 glassmorphism border-white/5 hover:border-primary/40 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                      <Globe className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-bold text-foreground mb-2">Browser Extension</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Real-time protection for Chrome, Firefox, and Edge. Blocks phishing sites instantly.
+                    </p>
+                    <a href="/downloads/phishing-extension.zip" download>
+                      <Button className="w-full" variant="outline">
+                        <Download className="w-4 h-4 mr-2" />
+                        Download for Chrome
+                      </Button>
+                    </a>
+                  </Card>
+
+                  <Card className="p-6 glassmorphism border-white/5 hover:border-primary/40 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center mb-4">
+                      <Shield className="w-6 h-6 text-blue-500" />
+                    </div>
+                    <h3 className="text-lg font-bold text-foreground mb-2">Desktop Agent</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      System-wide monitoring for Windows and macOS. Detects background malware activity.
+                    </p>
+                    <Button className="w-full" variant="outline">
+                      <Download className="w-4 h-4 mr-2" />
+                      Download for Windows
+                    </Button>
+                  </Card>
+
+
+                </div>
+
+                <div className="mt-8 p-6 glassmorphism border-white/10 rounded-xl">
+                  <h3 className="text-lg font-bold text-white mb-4">Enterprise Installation</h3>
+                  <div className="text-sm text-muted-foreground space-y-2">
+                    <p>1. <strong>Download & Unzip</strong> the agent package.</p>
+                    <p>2. Double-click <code className="bg-blue-500/20 text-blue-400 px-1 rounded">Setup-Enterprise.bat</code>.</p>
+                    <p>3. The wizard will install the agent to your system and configure Chrome.</p>
+                    <p className="text-primary mt-2">✨ Professional automated installation wizard.</p>
+                  </div>
+                </div>
               </div>
             )}
           </div>

@@ -5,16 +5,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const loader = document.getElementById('loader');
     const statusBadge = document.getElementById('statusBadge');
 
-    // Get current tab URL
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        const currentTab = tabs[0];
-        if (currentTab && currentTab.url) {
-            urlDisplay.textContent = currentTab.url;
+    // Function to update URL from current tab
+    function updateCurrentTab() {
+        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+            const currentTab = tabs[0];
+            if (currentTab && currentTab.url) {
+                urlDisplay.textContent = currentTab.url;
+            }
+        });
+    }
+
+    // Initial check
+    updateCurrentTab();
+
+    // Listen for tab switching to update the URL in the side panel
+    chrome.tabs.onActivated.addListener(updateCurrentTab);
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+        if (changeInfo.status === 'complete' && tab.active) {
+            updateCurrentTab();
         }
     });
 
     // Daily Limit Logic
-    const DAILY_LIMIT = 10;
+    const DAILY_LIMIT = 50; // Increased for "Real" Usage
     const RESET_PERIOD = 24 * 60 * 60 * 1000; // 24 hours
 
     function updateCreditUI(used) {
@@ -26,9 +39,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Color based on remaining
         const fill = document.getElementById('creditFill');
-        if (remaining <= 2) {
+        if (remaining <= 5) {
             fill.style.background = '#ff0055'; // Red warning
-        } else if (remaining <= 5) {
+        } else if (remaining <= 10) {
             fill.style.background = '#ffb700'; // Yellow caution
         } else {
             fill.style.background = '#00f2ff'; // Cyan safe
@@ -78,18 +91,18 @@ document.addEventListener('DOMContentLoaded', () => {
             statusBadge.className = 'status-badge';
 
             try {
-                // Call Local API (In production, replace with real domain)
+                // Call API
                 const response = await fetch('http://localhost:3000/api/real-scan', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url })
                 });
 
+                if (!response.ok) throw new Error('Network error');
+
                 const data = await response.json();
 
-                if (data.verdict) { // Check for valid response
+                if (data.verdict) {
                     renderResults(data);
 
                     // Increment Usage
@@ -101,11 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateCreditUI(newUsed);
 
                 } else {
-                    alert('Scan failed: ' + (data.error || 'Unknown error'));
+                    showError('Scan failed: ' + (data.error || 'Unknown error'));
                 }
             } catch (error) {
-                console.error('Scan Error:', error);
-                alert('Connection failed. Ensure the local server is running at http://localhost:3000');
+                // User friendly error
+                showError('Connection failed. Is the Phishing Detective server running?');
             } finally {
                 // UI State: Reset
                 loader.style.display = 'none';
@@ -120,6 +133,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    function showError(msg) {
+        resultsArea.style.display = 'block';
+        resultsArea.innerHTML = `<div class="card verdict-card bg-suspicious" style="padding: 20px; text-align: center; color: white;">
+            <div style="font-size: 24px; margin-bottom: 10px;">⚠️</div>
+            <div style="font-size: 14px;">${msg}</div>
+            <div style="font-size: 12px; margin-top: 8px; opacity: 0.8;">Run <code>npm run dev</code> locally</div>
+        </div>`;
+    }
 
     function renderResults(result) {
         resultsArea.style.display = 'block';

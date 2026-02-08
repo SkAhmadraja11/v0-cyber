@@ -17,7 +17,7 @@ export interface DetectionSource {
 
 export interface RealDetectionResult {
   riskScore: number // 0-100
-  classification: "SAFE" | "DANGEROUS"
+  classification: "SAFE" | "DANGEROUS" | "MALICIOUS" | "SUSPICIOUS" | "HIGH_RISK"
   confidence: number // 0-100
   reasons: string[]
   sources: DetectionSource[]
@@ -25,7 +25,7 @@ export interface RealDetectionResult {
   processingTime: number
   verdictReport?: {
     url: string
-    finalVerdict: "SAFE" | "DANGEROUS"
+    finalVerdict: "SAFE" | "DANGEROUS" | "MALICIOUS" | "SUSPICIOUS" | "HIGH_RISK"
     evidenceSourcesUsed: string[]
     confirmedFindings: string[]
     confidenceLevel: "High" | "Medium" | "Low"
@@ -397,7 +397,7 @@ export class RealPhishingDetector {
   async checkRedirects(url: string): Promise<DetectionSource> {
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5s timeout for consistency
+      const timeoutId = setTimeout(() => controller.abort(), 15000) // 15s timeout for consistency
 
       const response = await fetch(url, {
         method: "HEAD",
@@ -1107,13 +1107,14 @@ export class RealPhishingDetector {
     return Math.min(Math.max(score, 0), 100);
   }
 
-  private classifyRisk(riskScore: number): "SAFE" | "DANGEROUS" {
+  private classifyRisk(riskScore: number): "SAFE" | "DANGEROUS" | "MALICIOUS" {
     /**
-     * BINARY RISK CLASSIFICATION RULES:
-     * - Any confirmed phishing, malware, or blacklist hit -> DANGEROUS (score >= 80)
-     * - Multiple medium-risk indicators -> DANGEROUS (score >= 65)
+     * RISK CLASSIFICATION RULES:
+     * - Critical threats (Phishing, Malware, Blocklist) -> MALICIOUS (score >= 85)
+     * - High risk indicators -> DANGEROUS (score >= 65)
      * - Clean reputation + no behavioral abuse -> SAFE (score <= 30)
      */
+    if (riskScore >= 85) return "MALICIOUS";
     if (riskScore >= 65) return "DANGEROUS";
     return "SAFE";
   }
@@ -1153,7 +1154,7 @@ export class RealPhishingDetector {
   async checkSecurityHeaders(url: string): Promise<DetectionSource> {
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
 
       const response = await fetch(url, {
         method: "HEAD",
@@ -1210,7 +1211,7 @@ export class RealPhishingDetector {
   async checkJavaScriptBehavior(url: string): Promise<DetectionSource> {
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
 
       const response = await fetch(url, {
         signal: controller.signal
@@ -1279,7 +1280,7 @@ export class RealPhishingDetector {
   async checkExternalResources(url: string): Promise<DetectionSource> {
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
 
       const response = await fetch(url, {
         signal: controller.signal
@@ -1357,7 +1358,7 @@ export class RealPhishingDetector {
   async checkMalwarePatterns(url: string): Promise<DetectionSource> {
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
 
       const response = await fetch(url, {
         signal: controller.signal
@@ -1467,7 +1468,7 @@ export class RealPhishingDetector {
   async checkPageContent(url: string): Promise<DetectionSource> {
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
       const response = await fetch(url, { signal: controller.signal })
       clearTimeout(timeoutId)
 
@@ -1649,7 +1650,7 @@ export class RealPhishingDetector {
           : ["No confirmed threats found"]),
       confidenceLevel: (sources.filter(s => s.isReal).length >= 5 ? "High" : sources.filter(s => s.isReal).length >= 3 ? "Medium" : "Low") as any,
       limitations: sources.filter(s => !s.isReal).map(s => s.name).length > 0 ? [`Missing data: ${sources.filter(s => !s.isReal).map(s => s.name).join(", ")}`] : [],
-      recommendedAction: (classification === "DANGEROUS" ? "Block" : "Allow") as any,
+      recommendedAction: (classification === "DANGEROUS" || classification === "MALICIOUS" ? "Block" : "Allow") as any,
       infrastructureFlags: sources.filter(s => s.detected && (s.name.includes("Infrastructure") || s.name.includes("Brand") || s.name.includes("Privacy Proxy"))).map(s => s.reason) // SOC-GRADE: Infrastructure red flags
     }
 

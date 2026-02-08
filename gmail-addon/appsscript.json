@@ -1,0 +1,25 @@
+{
+  "timeZone": "GMT",
+  "dependencies": {
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "addOns": {
+    "common": {
+      "name": "PhiusGuard Security",
+      "logoUrl": "https://img.icons8.com/color/48/shield.png",
+      "useLocaleFromApp": true,
+      "homepageTrigger": {
+        "runFunction": "getContextualAddOn",
+        "enabled": true
+      }
+    },
+    "gmail": {
+      "contextualTriggers": [{
+        "unconditional": {
+        },
+        "onTriggerFunction": "getContextualAddOn"
+      }]
+    }
+  }
+}
