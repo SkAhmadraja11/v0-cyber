@@ -76,9 +76,14 @@ async function scanUrl(tabId, url) {
     }
 
     try {
-        // Set loading state
-        chrome.action.setBadgeText({ text: '...', tabId });
-        chrome.action.setBadgeBackgroundColor({ color: '#666', tabId });
+        // Set loading state safely
+        try {
+            await chrome.action.setBadgeText({ text: '...', tabId });
+            await chrome.action.setBadgeBackgroundColor({ color: '#666', tabId });
+        } catch (e) {
+            // Tab might be closed
+            return;
+        }
 
         const response = await fetch(API_ENDPOINT, {
             method: 'POST',
@@ -92,77 +97,88 @@ async function scanUrl(tabId, url) {
 
         const result = await response.json();
 
+        // Verify tab still exists before updating
+        try {
+            const tab = await chrome.tabs.get(tabId);
+            if (!tab) return;
+        } catch (e) { return; }
+
         if (result && result.verdict) {
             scanCache.set(url, result);
             updateBadge(tabId, result);
             handleThreat(tabId, result);
         }
     } catch (error) {
-        // Silent fail in production, or simple error badge
-        chrome.action.setBadgeText({ text: 'ERR', tabId });
+        // Silent fail in production
+        try {
+            chrome.action.setBadgeText({ text: 'ERR', tabId });
+        } catch (e) { }
     }
 }
 
 function updateBadge(tabId, result) {
-    let text = 'SAFE';
-    let color = '#00ff9d';
+    try {
+        let text = 'SAFE';
+        let color = '#00ff9d';
 
-    if (result.verdict === 'MALICIOUS') {
-        text = 'MALWARE';
-        color = '#ff0055';
-    } else if (result.verdict === 'HIGH_RISK') {
-        text = 'RISK';
-        color = '#ff0055';
-    } else if (result.verdict === 'SUSPICIOUS') {
-        text = 'WARN';
-        color = '#ffb700';
-    } else {
-        text = 'OK';
-    }
+        if (result.verdict === 'MALICIOUS') {
+            text = 'MALWARE';
+            color = '#ff0055';
+        } else if (result.verdict === 'HIGH_RISK') {
+            text = 'RISK';
+            color = '#ff0055';
+        } else if (result.verdict === 'SUSPICIOUS') {
+            text = 'WARN';
+            color = '#ffb700';
+        } else {
+            text = 'OK';
+        }
 
-    chrome.action.setBadgeText({ text, tabId });
-    chrome.action.setBadgeBackgroundColor({ color, tabId });
+        chrome.action.setBadgeText({ text, tabId });
+        chrome.action.setBadgeBackgroundColor({ color, tabId });
+    } catch (e) { }
 }
 
 function handleThreat(tabId, result) {
-    if (result.verdict === 'MALICIOUS' || result.verdict === 'HIGH_RISK') {
-        // 1. Notify the user
-        chrome.notifications.create({
-            type: 'basic',
-            iconUrl: 'icon.png',
-            title: 'CRITICAL THREAT DETECTED',
-            message: `This page is ${result.verdict}. ${result.threat_type?.[0] || 'Phishing'} detected.`,
-            priority: 2
-        });
+    try {
+        if (result.verdict === 'MALICIOUS' || result.verdict === 'HIGH_RISK') {
+            // 1. Notify the user
+            chrome.notifications.create({
+                type: 'basic',
+                iconUrl: 'icon.png',
+                title: 'CRITICAL THREAT DETECTED',
+                message: `This page is ${result.verdict}. ${result.threat_type?.[0] || 'Phishing'} detected.`,
+                priority: 2
+            });
 
-        // 2. Inject content script to block view
-        chrome.scripting.executeScript({
-            target: { tabId },
-            func: (data) => {
-                try {
-                    // Check if already blocked to prevent duplicates
-                    if (document.getElementById('phius-block-overlay')) return;
+            // 2. Inject content script to block view
+            chrome.scripting.executeScript({
+                target: { tabId },
+                func: (data) => {
+                    try {
+                        // Check if already blocked to prevent duplicates
+                        if (document.getElementById('phius-block-overlay')) return;
 
-                    const blockOverlay = document.createElement('div');
-                    blockOverlay.id = 'phius-block-overlay';
-                    Object.assign(blockOverlay.style, {
-                        position: 'fixed',
-                        top: '0',
-                        left: '0',
-                        width: '100%',
-                        height: '100%',
-                        backgroundColor: '#0d0d12',
-                        color: '#ff0055',
-                        zIndex: '2147483647', // Max Z-Index
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-                        textAlign: 'center'
-                    });
+                        const blockOverlay = document.createElement('div');
+                        blockOverlay.id = 'phius-block-overlay';
+                        Object.assign(blockOverlay.style, {
+                            position: 'fixed',
+                            top: '0',
+                            left: '0',
+                            width: '100%',
+                            height: '100%',
+                            backgroundColor: '#0d0d12',
+                            color: '#ff0055',
+                            zIndex: '2147483647', // Max Z-Index
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                            textAlign: 'center'
+                        });
 
-                    blockOverlay.innerHTML = `
+                        blockOverlay.innerHTML = `
                         <div style="background: rgba(255,0,85,0.1); padding: 40px; border: 2px solid #ff0055; border-radius: 16px; max-width: 600px; box-shadow: 0 0 50px rgba(255,0,85,0.2);">
                             <h1 style="font-size: 3rem; margin: 0 0 20px 0; font-weight: 800;">🚫 BLOCKED</h1>
                             <h2 style="color: white; margin-bottom: 20px; font-weight: 600;">PhiusGuard blocked this unsafe site</h2>
@@ -176,22 +192,23 @@ function handleThreat(tabId, result) {
                         </div>
                     `;
 
-                    document.body.appendChild(blockOverlay);
-                    document.body.style.overflow = 'hidden';
+                        document.body.appendChild(blockOverlay);
+                        document.body.style.overflow = 'hidden';
 
-                    document.getElementById('unsafe-proceed').addEventListener('click', () => {
-                        blockOverlay.remove();
-                        document.body.style.overflow = 'auto';
-                    });
+                        document.getElementById('unsafe-proceed').addEventListener('click', () => {
+                            blockOverlay.remove();
+                            document.body.style.overflow = 'auto';
+                        });
 
-                    // Add hover effect via JS since we are using inline styles
-                    const btn = document.getElementById('unsafe-proceed');
-                    btn.onmouseover = () => { btn.style.borderColor = '#ccc'; btn.style.color = '#ccc'; };
-                    btn.onmouseout = () => { btn.style.borderColor = '#666'; btn.style.color = '#888'; };
+                        // Add hover effect via JS since we are using inline styles
+                        const btn = document.getElementById('unsafe-proceed');
+                        btn.onmouseover = () => { btn.style.borderColor = '#ccc'; btn.style.color = '#ccc'; };
+                        btn.onmouseout = () => { btn.style.borderColor = '#666'; btn.style.color = '#888'; };
 
-                } catch (e) { }
-            },
-            args: [result]
-        });
-    }
+                    } catch (e) { }
+                },
+                args: [result]
+            }).catch(() => { }); // Catch scripting errors
+        }
+    } catch (e) { }
 }

@@ -712,24 +712,42 @@ export default function Home() {
 
                 </div>
 
-                <div className="mt-8 p-6 glassmorphism border-white/10 rounded-xl">
-                  <h3 className="text-lg font-bold text-white mb-4">Enterprise Installation</h3>
-                  <div className="text-sm text-muted-foreground space-y-2">
-                    <p>1. <strong>Download & Unzip</strong> the agent package.</p>
-                    <p>2. Double-click <code className="bg-blue-500/20 text-blue-400 px-1 rounded">Setup-Enterprise.bat</code>.</p>
-                    <p>3. The wizard will install the agent to your system and configure Chrome.</p>
-                    <p className="text-primary mt-2">✨ Professional automated installation wizard.</p>
+
+
+                <div className="grid md:grid-cols-2 gap-6 mt-8">
+                  <div className="p-6 glassmorphism border-white/10 rounded-xl">
+                    <h3 className="text-lg font-bold text-white mb-4">Enterprise Installation</h3>
+                    <div className="text-sm text-muted-foreground space-y-2">
+                      <p>1. <strong>Download & Unzip</strong> the agent package.</p>
+                      <p>2. Double-click <code className="bg-blue-500/20 text-blue-400 px-1 rounded">Setup-Enterprise.bat</code>.</p>
+                      <p>3. The wizard will install the agent to your system and configure Chrome.</p>
+                      <p className="text-primary mt-2">✨ Professional automated installation wizard.</p>
+                    </div>
+                  </div>
+
+                  <div className="p-6 glassmorphism border-white/10 rounded-xl">
+                    <h3 className="text-lg font-bold text-white mb-4">Manual Developer Install</h3>
+                    <div className="text-sm text-muted-foreground space-y-2">
+                      <p>1. Download the header <strong>Browser Extension</strong>.</p>
+                      <p>2. Go to <code className="bg-white/10 px-1 rounded">chrome://extensions</code>.</p>
+                      <p>3. Enable <strong>Developer mode</strong> (top right).</p>
+                      <p>4. Drag and drop the downloaded folder (or unzip first) into the window.</p>
+                      <div className="flex items-center gap-2 mt-3 text-emerald-400 text-xs font-bold">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Verifies "PhiusGuard Protected" notification</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
           </div>
         </div>
-      </main>
+      </main >
 
       {/* Footer */}
-      <Footer />
-    </div>
+      < Footer />
+    </div >
   )
 }
 
