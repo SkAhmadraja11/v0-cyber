@@ -10,6 +10,25 @@
 <body>
     <div class="app-container">
 
+        <!-- Live Technical Ticker -->
+        <div class="live-ticker" id="liveTicker">
+            <div class="ticker-left">
+                <span class="status-item secure">SYS: <span id="sysStatus">SECURE</span></span>
+                <span class="status-divider"></span>
+                <span class="status-item ip">IP: <span id="ipDisplay">Scanning...</span></span>
+            </div>
+            <div class="ticker-center">
+                <div id="logRolling" class="log-rolling">
+                    <span class="log-entry">Initializing secure handshake...</span>
+                </div>
+            </div>
+            <div class="ticker-right">
+                <span class="status-item protocol">SSL: <span id="sslStatus">ACTIVE</span></span>
+                <span class="status-divider"></span>
+                <span class="status-item latency"><span id="latencyDisplay">0ms</span></span>
+            </div>
+        </div>
+
         <!-- Header -->
         <header class="main-header">
             <div class="logo-area">
@@ -22,16 +41,14 @@
         <!-- Main Content -->
         <main class="content-area">
 
-            <!-- Credit Card -->
-            <div class="card credit-card">
-                <div class="card-header">
-                    <span>DAILY CREDITS</span>
-                    <span id="creditCount">10/10</span>
+            <!-- User Profile Card -->
+            <div class="card profile-card" id="profileCard">
+                <div class="profile-header">
+                    <div class="user-info">
+                        <div class="user-email" id="userEmail">Loading...</div>
+                        <div class="user-plan" id="userPlan">Phishing Detective Pro</div>
+                    </div>
                 </div>
-                <div class="progress-track">
-                    <div class="progress-fill" id="creditFill" style="width: 100%;"></div>
-                </div>
-                <div id="limitMsg" class="limit-msg" style="display: none;">Limit reached. Resets in 24h.</div>
             </div>
 
             <!-- Target URL -->

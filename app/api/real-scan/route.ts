@@ -6,11 +6,37 @@ import { createClient } from "@/lib/supabase/server"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { input, mode, refresh } = body
+    console.log("Incoming real-scan body:", body)
 
-    if (!input) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    // Strict Validation
+    const input = body.url || body.input
+    const mode = body.mode || 'url'
+    const refresh = body.refresh
+
+    if (!input || typeof input !== 'string' || input.trim() === '') {
+      return NextResponse.json({
+        success: false,
+        error: "URL is required",
+        message: "Please provide a valid URL to scan"
+      }, { status: 400 })
     }
+
+    // Basic URL format validation
+    try {
+      if (input.includes('.') && !input.startsWith('http') && !input.startsWith('//')) {
+        new URL('https://' + input)
+      } else {
+        new URL(input)
+      }
+    } catch (e) {
+      return NextResponse.json({
+        success: false,
+        error: "Invalid URL format",
+        message: "The provided string is not a valid URL"
+      }, { status: 400 })
+    }
+
+    const normalizedInput = input.trim()
 
     const supabase = await createClient()
 
@@ -26,8 +52,8 @@ export async function POST(request: NextRequest) {
     // --- ENTERPRISE ENGINE INTEGRATION ---
     const engine = new EnterpriseThreatEngine()
 
-    // Simulate API delay for realism
-    await new Promise((resolve) => setTimeout(resolve, 800))
+    // Speed optimization: Removed artificial delay
+    // await new Promise((resolve) => setTimeout(resolve, 800))
 
     // Map legacy input to strict ThreatInput
     const threatInput: ThreatInput = {
@@ -44,7 +70,7 @@ export async function POST(request: NextRequest) {
         .from("scan_results")
         .insert({
           user_id: user?.id || null,
-          url: input,
+          url: normalizedInput,
           scan_type: mode || 'url',
           risk_score: result.risk_score,
           classification: result.verdict,
@@ -62,8 +88,8 @@ export async function POST(request: NextRequest) {
     if (result.verdict === "MALICIOUS" || result.verdict === "HIGH_RISK") {
       try {
         await supabase.from("threat_intel").upsert({
-          url: input.slice(0, 500),
-          domain: input.includes('http') ? new URL(input).hostname : input.split('/')[0],
+          url: normalizedInput.slice(0, 500),
+          domain: normalizedInput.includes('http') ? new URL(normalizedInput).hostname : normalizedInput.split('/')[0],
           threat_type: result.threat_type[0] || 'Unknown',
           sources: result.key_indicators,
           metadata: { riskScore: result.risk_score, confidence: result.confidence }
@@ -90,13 +116,19 @@ export async function POST(request: NextRequest) {
       sources: result.sources || [],
       timestamp: new Date().toISOString(),
       verdictReport: {
-        url: input,
+        url: normalizedInput,
         finalVerdict: result.verdict,
         evidenceSourcesUsed: result.sources?.map(s => s.name) || [],
         confirmedFindings: result.key_indicators,
-        confidenceLevel: result.confidence === 'VERY_HIGH' ? "High" : "Medium",
-        limitations: [],
-        recommendedAction: result.recommended_action === 'BLOCK' ? "Block" : "Allow"
+        confidenceLevel: result.confidence === 'VERY_HIGH' ? "High (Verified)" :
+          result.confidence === 'HIGH' ? "High (Forensic)" :
+            result.confidence === 'MEDIUM' ? "Standard (Forensic)" : "Initial Assessment",
+        limitations: result.confidence === 'MEDIUM' || result.confidence === 'LOW'
+          ? ["Engine relying on technical forensics and heuristic patterns due to limited external API intelligence."]
+          : [],
+        recommendedAction: result.recommended_action === 'BLOCK' ? "Block" :
+          result.recommended_action === 'QUARANTINE' ? "Isolate" :
+            result.recommended_action === 'WARN' ? "Warn" : "Allow"
       }
     };
 
@@ -104,6 +136,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("Enterprise scan error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({
+      success: false,
+      error: "Internal server error",
+      message: error instanceof Error ? error.message : "An unexpected error occurred during scan"
+    }, { status: 500 })
   }
 }

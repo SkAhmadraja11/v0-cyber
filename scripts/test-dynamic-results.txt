@@ -1,0 +1,75 @@
+DYNAMIC DETECTION VERDICT REPORT - 2026-02-23T08:38:20.114Z
+
+
+================================================================
+TEST CASE: Multiple Dangerous URLs in Text
+INPUT: Check these links: http://bank-secure-update.xyz/login and http://paypal-verify-account.tk/verify. A...
+================================================================
+VERDICT: MALICIOUS (Score: 100/100)
+THREAT TYPES: Unknown
+DETECTED INDICATORS:
+ - SSL / TLS: No SSL encryption
+ - Domain Parking Check: Domain is hosted on a high-risk TLD often used for parking/staging
+ - Deceptive Infrastructure Analysis: DECEPTIVE INFRASTRUCTURE detected: CRITICAL: Brand keyword on high-risk TLD (bank-secure-update.xyz), CRITICAL: Suspicious TLD with urgency keywords
+ - Google Safe Browsing: URL matches known phishing patterns (Heuristic Match)
+ - Brand Analysis (Technical): Brand 'paypal' used deceptively with suspicious keyword in 'paypal-verify-account'
+ - Deceptive Infrastructure Analysis: DECEPTIVE INFRASTRUCTURE detected: CRITICAL: Brand keyword on high-risk TLD (paypal-verify-account.tk), CRITICAL: Suspicious TLD with urgency keywords
+DYNAMICALLY SCANNED URLS (2):
+ - http://bank-secure-update.xyz/login
+ - http://paypal-verify-account.tk/verify.
+
+================================================================
+TEST CASE: Embedded Suspicious Email in URL context
+INPUT: https://secure-gate.site/portal?email=admin@paypal-support.xyz
+================================================================
+VERDICT: MALICIOUS (Score: 95/100)
+THREAT TYPES: Unknown
+DETECTED INDICATORS:
+ - Deceptive Infrastructure Analysis: DECEPTIVE INFRASTRUCTURE detected: CRITICAL: Brand keyword on high-risk TLD (secure-gate.site)
+ - Email Reputation: Suspicious email address: Suspicious sender TLD (paypal-support.xyz); Brand impersonation in sender domain (paypal-support.xyz)
+EMAIL REPUTATION HITS (1):
+ - //secure-gate.site/portal?email=admin@paypal-support.xyz: Suspicious email address: Suspicious sender TLD (paypal-support.xyz); Brand impersonation in sender domain (paypal-support.xyz) (95%)
+DYNAMICALLY SCANNED URLS (1):
+ - https://secure-gate.site/portal
+
+================================================================
+TEST CASE: Official Name on Free Provider Email
+INPUT: From: PayPal Support <support.verification.2024@gmail.com>
+Subject: Security Alert
+
+Please update yo...
+================================================================
+VERDICT: MALICIOUS (Score: 95/100)
+THREAT TYPES: Unknown
+DETECTED INDICATORS:
+ - SSL / TLS: No SSL encryption
+ - Enhanced NLP Analysis: High-risk content detected: 5 suspicious keywords found (Urgency: 1, Financial: 1, Security: 3, Reward: 0)
+ - Identity Verification: FAKE IDENTITY: Official brand communication originating from a free email provider (support.verification.2024@gmail.com)
+ - Email Pattern Analysis: Suspicious email patterns detected: Official brand name using free email provider
+ - Email Reputation: Suspicious email address: Official-sounding address on free provider (support.verification.2024@gmail.com)
+EMAIL REPUTATION HITS (1):
+ - support.verification.2024@gmail.com: Suspicious email address: Official-sounding address on free provider (support.verification.2024@gmail.com) (60%)
+DYNAMICALLY SCANNED URLS (2):
+ - https://support.verification/
+ - http://secure-update-now.com/
+
+================================================================
+TEST CASE: Mixed Threat Environment
+INPUT: Urgent: contact support@bank-security-alert.tk to claim your bonus. Login at http://free-token-gift....
+================================================================
+VERDICT: MALICIOUS (Score: 100/100)
+THREAT TYPES: Unknown
+DETECTED INDICATORS:
+ - Google Safe Browsing: URL matches known phishing patterns (Heuristic Match)
+ - WHOIS / DNS: Domain 'security-alert.tk' is unusually new (2 days)
+ - Domain Parking Check: Domain is hosted on a high-risk TLD often used for parking/staging
+ - Deceptive Infrastructure Analysis: DECEPTIVE INFRASTRUCTURE detected: CRITICAL: Suspicious TLD with urgency keywords
+ - Ultra-Strict Heuristics: Ultra-Strict Pattern Match: MALICIOUS_INTENT_INFERRED: Social Engineering: Urgent Security Lure
+ - SSL / TLS: No SSL encryption
+EMAIL REPUTATION HITS (1):
+ - support@bank-security-alert.tk: Suspicious email address: Suspicious sender TLD (bank-security-alert.tk); Brand impersonation in sender domain (bank-security-alert.tk) (95%)
+DYNAMICALLY SCANNED URLS (2):
+ - https://security-alert.tk/
+ - http://free-token-gift.xyz/
+
+Verification complete. Results saved to C:\cyber-phishing\v0-cyber\scripts\test-dynamic-results.txt

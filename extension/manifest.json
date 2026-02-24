@@ -13,7 +13,8 @@
         "sidePanel"
     ],
     "host_permissions": [
-        "http://localhost:3000/*",
+        "http://localhost:*/*",
+        "http://127.0.0.1:*/*",
         "*://*/*"
     ],
     "background": {
@@ -26,6 +27,7 @@
     },
     "action": {
         "default_title": "Phishing Detective Status",
+        "default_popup": "popup.html",
         "default_icon": {
             "16": "icon.png",
             "48": "icon.png",

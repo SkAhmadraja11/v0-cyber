@@ -290,7 +290,7 @@ export default function ScannerPage() {
           {/* Scanning Animation - Enhanced with progress bar */}
           {isScanning && (
             <Card className="p-8 mb-8 border-2 border-primary/50 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 animate-pulse" />
+              <div className="absolute inset-0 bg-linear-to-r from-primary/5 via-primary/10 to-primary/5 animate-pulse" />
               <div className="relative space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -306,7 +306,7 @@ export default function ScannerPage() {
                 </div>
                 <div className="h-3 bg-secondary rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-primary via-primary to-primary/50 rounded-full transition-all duration-300"
+                    className="h-full bg-linear-to-r from-primary via-primary to-primary/50 rounded-full transition-all duration-300"
                     style={{ width: `${scanProgress}%` }}
                   />
                 </div>
@@ -404,10 +404,10 @@ export default function ScannerPage() {
                     <div className="h-4 bg-secondary rounded-full overflow-hidden shadow-inner">
                       <div
                         className={`h-full rounded-full transition-all shadow-lg ${["DANGEROUS", "MALICIOUS", "HIGH_RISK"].includes(result.classification)
-                          ? "bg-gradient-to-r from-destructive to-destructive/70"
+                          ? "bg-linear-to-r from-destructive to-destructive/70"
                           : result.classification === "SUSPICIOUS"
-                            ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
-                            : "bg-gradient-to-r from-green-500 to-green-600"
+                            ? "bg-linear-to-r from-yellow-500 to-yellow-600"
+                            : "bg-linear-to-r from-green-500 to-green-600"
                           }`}
                         style={{ width: `${result.riskScore}%` }}
                       />
@@ -514,21 +514,21 @@ export default function ScannerPage() {
                   </div>
 
                   {/* Data Integrity Status Banner */}
-                  <div className={`mb-6 p-4 rounded-lg border flex items-center gap-3 ${result!.verdictReport.confidenceLevel === "High"
+                  <div className={`mb-6 p-4 rounded-lg border flex items-center gap-3 ${result!.verdictReport.confidenceLevel.includes("High")
                     ? "bg-green-500/10 border-green-500/20 text-green-700"
                     : "bg-yellow-500/10 border-yellow-500/20 text-yellow-700"
                     }`}>
-                    {result!.verdictReport.confidenceLevel === "High" ? (
+                    {result!.verdictReport.confidenceLevel.includes("High") ? (
                       <CheckCircle2 className="w-5 h-5 shrink-0" />
                     ) : (
                       <AlertTriangle className="w-5 h-5 shrink-0" />
                     )}
                     <div className="text-xs">
-                      <p className="font-bold uppercase tracking-widest">Evidence Integrity: {result!.verdictReport.confidenceLevel === "High" ? "Professional Grade" : "Limited/Heuristic"}</p>
+                      <p className="font-bold uppercase tracking-widest">Evidence Integrity: {result!.verdictReport.confidenceLevel.includes("Verified") ? "Verified Intelligence" : "Forensic Deep Scan"}</p>
                       <p className="opacity-80">
-                        {result!.verdictReport.confidenceLevel === "High"
+                        {result!.verdictReport.confidenceLevel.includes("Verified")
                           ? "Analysis is supported by authenticated real-time intelligence feeds (Google, VirusTotal, PhishTank)."
-                          : "Real-time API intelligence is currently limited. Verdict is based on technical forensics and heuristic patterns."}
+                          : "Analysis driven by deep technical forensics, structural heuristics, and high-fidelity engine intelligence."}
                       </p>
                     </div>
                   </div>
@@ -542,19 +542,19 @@ export default function ScannerPage() {
                       <div>
                         <label className="text-xs font-extra-bold text-muted-foreground uppercase tracking-widest">Final Verdict</label>
                         <p className={`text-2xl font-black mt-1 ${["DANGEROUS", "MALICIOUS", "HIGH_RISK"].includes(result.classification)
-                            ? "text-destructive"
-                            : result.classification === "SUSPICIOUS"
-                              ? "text-yellow-500"
-                              : "text-green-600"
+                          ? "text-destructive"
+                          : result.classification === "SUSPICIOUS"
+                            ? "text-yellow-500"
+                            : "text-green-600"
                           }`}>{result.verdictReport.finalVerdict}</p>
                       </div>
                       <div>
                         <label className="text-xs font-extra-bold text-muted-foreground uppercase tracking-widest">Confidence Level</label>
-                        <div className={`flex items-center gap-2 mt-1 ${result!.verdictReport.confidenceLevel === "High" ? "text-green-500" :
-                          result!.verdictReport.confidenceLevel === "Medium" ? "text-yellow-500" : "text-muted-foreground"
+                        <div className={`flex items-center gap-2 mt-1 ${result!.verdictReport.confidenceLevel.includes("High") ? "text-green-500" :
+                          result!.verdictReport.confidenceLevel.includes("Forensic") ? "text-yellow-500" : "text-muted-foreground"
                           }`}>
-                          <div className={`w-2 h-2 rounded-full ${result!.verdictReport.confidenceLevel === "High" ? "bg-green-500" :
-                            result!.verdictReport.confidenceLevel === "Medium" ? "bg-yellow-500" : "bg-muted"
+                          <div className={`w-2 h-2 rounded-full ${result!.verdictReport.confidenceLevel.includes("High") ? "bg-green-500" :
+                            result!.verdictReport.confidenceLevel.includes("Forensic") ? "bg-yellow-500" : "bg-muted"
                             }`} />
                           <span className="font-bold">{result!.verdictReport.confidenceLevel}</span>
                         </div>
@@ -571,7 +571,7 @@ export default function ScannerPage() {
                       </div>
                       {result!.verdictReport.limitations.length > 0 && (
                         <div>
-                          <label className="text-xs font-extra-bold text-muted-foreground uppercase tracking-widest text-destructive/80">Analysis Limitations</label>
+                          <label className="text-xs font-extra-bold uppercase tracking-widest text-destructive/80">Analysis Limitations</label>
                           <div className="space-y-1 mt-1">
                             {result!.verdictReport.limitations.map((limit, idx) => (
                               <p key={idx} className="text-xs text-destructive/90 font-medium italic">⚠️ {limit}</p>

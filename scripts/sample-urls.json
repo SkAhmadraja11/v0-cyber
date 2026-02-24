@@ -1,0 +1,10 @@
+[
+  { "url": "https://paypal-login.github.io", "expected": "malicious" },
+  { "url": "http://192.168.1.1/urgent-security-update.php", "expected": "malicious" },
+  { "url": "https://example.com", "expected": "safe" },
+  { "url": "http://phishing-keyword.com/login", "expected": "malicious" },
+  { "url": "https://bank.example-secure.com/login", "expected": "malicious" },
+  { "url": "https://github.com/", "expected": "safe" },
+  { "url": "http://suspicious-domain-xyz.top/verify", "expected": "malicious" },
+  { "url": "https://login-secure-auth.tk", "expected": "malicious" }
+]

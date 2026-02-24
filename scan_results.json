@@ -1,0 +1,52 @@
+[
+  {
+    "url": "https://www.google.com",
+    "verdict": "SAFE",
+    "risk_score": 0
+  },
+  {
+    "url": "https://www.amazon.com",
+    "verdict": "SAFE",
+    "risk_score": 0
+  },
+  {
+    "url": "https://www.microsoft.com",
+    "verdict": "SAFE",
+    "risk_score": 2
+  },
+  {
+    "url": "https://www.paypal.com",
+    "verdict": "SAFE",
+    "risk_score": 0
+  },
+  {
+    "url": "https://www.github.com",
+    "verdict": "SAFE",
+    "risk_score": 0
+  },
+  {
+    "url": "https://phishing-scam-test.com",
+    "verdict": "SAFE",
+    "risk_score": 32
+  },
+  {
+    "url": "https://secure-login-bank.xyz",
+    "verdict": "MALICIOUS",
+    "risk_score": 95
+  },
+  {
+    "url": "https://verify-your-account-now.top",
+    "verdict": "HIGH_RISK",
+    "risk_score": 70
+  },
+  {
+    "url": "https://update-browser-security.site",
+    "verdict": "SUSPICIOUS",
+    "risk_score": 56
+  },
+  {
+    "url": "https://claim-your-prize-winner.info",
+    "verdict": "SUSPICIOUS",
+    "risk_score": 41
+  }
+]

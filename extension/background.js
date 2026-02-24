@@ -1,8 +1,11 @@
 // Background Service Worker for Phishing Detective Enterprise
 // Continuously monitors navigation and scans in the background
+try {
+    importScripts('offline-detector.js');
+} catch (e) { console.error('PhusGuard: Offline detector load failed:', e); }
 
-// TODO: Replace with your production API URL
-const API_ENDPOINT = 'http://localhost:3000/api/real-scan';
+// Using 127.0.0.1 instead of localhost to avoid IPv6 resolution issues on Windows
+const API_ENDPOINT = 'http://127.0.0.1:3000/api/real-scan';
 
 // Cache for scan results to avoid spamming the API
 const scanCache = new Map();
@@ -16,6 +19,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 // Initialize Side Panel Behavior
 chrome.runtime.onInstalled.addListener(() => {
+    console.log('PhusGuard: System Initialized');
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 });
 
@@ -29,24 +33,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function handleBatchScan(links) {
     const threats = [];
-
-    // De-duplicate links to minimize requests
     const uniqueLinks = [...new Set(links)];
 
-    // Using Promise.all for parallel scanning (faster user experience)
     await Promise.all(uniqueLinks.map(async (link) => {
-        // Check cache first
         if (scanCache.has(link)) {
             const cached = scanCache.get(link);
             if (isThreat(cached)) threats.push({ url: link, verdict: cached.verdict });
             return;
         }
 
+        let cleanedLink = link.trim();
+        if (!cleanedLink.startsWith('http://') && !cleanedLink.startsWith('https://')) {
+            cleanedLink = 'https://' + cleanedLink;
+        }
+
         try {
             const response = await fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ input: link, mode: 'url' })
+                body: JSON.stringify({ url: cleanedLink, mode: 'url' })
             });
 
             if (response.ok) {
@@ -57,7 +62,7 @@ async function handleBatchScan(links) {
                 }
             }
         } catch (e) {
-            // Silently ignore fetch failures for batch items
+            console.warn('PhusGuard: Batch scan connection failed for:', link);
         }
     }));
 
@@ -69,7 +74,6 @@ function isThreat(result) {
 }
 
 async function scanUrl(tabId, url) {
-    // Check cache first
     if (scanCache.has(url)) {
         updateBadge(tabId, scanCache.get(url));
         return;
@@ -80,15 +84,22 @@ async function scanUrl(tabId, url) {
         try {
             await chrome.action.setBadgeText({ text: '...', tabId });
             await chrome.action.setBadgeBackgroundColor({ color: '#666', tabId });
-        } catch (e) {
-            // Tab might be closed
-            return;
+        } catch (e) { return; }
+
+        let cleanedUrl = url.trim();
+        if (!cleanedUrl.startsWith('http://') && !cleanedUrl.startsWith('https://')) {
+            cleanedUrl = 'https://' + cleanedUrl;
         }
+
+        console.log('PhusGuard: Scanning network resource:', cleanedUrl);
 
         const response = await fetch(API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ input: url, mode: 'url' })
+            body: JSON.stringify({ url: cleanedUrl, mode: 'url' })
+        }).catch(err => {
+            console.error('PhusGuard: Connection Error - Is npm run dev active?', err);
+            throw err;
         });
 
         if (!response.ok) {
@@ -97,7 +108,7 @@ async function scanUrl(tabId, url) {
 
         const result = await response.json();
 
-        // Verify tab still exists before updating
+        // Verify tab still exists
         try {
             const tab = await chrome.tabs.get(tabId);
             if (!tab) return;
@@ -109,10 +120,19 @@ async function scanUrl(tabId, url) {
             handleThreat(tabId, result);
         }
     } catch (error) {
-        // Silent fail in production
+        console.warn("PhusGuard: Server unreachable, failing over to Local Engine...");
         try {
-            chrome.action.setBadgeText({ text: 'ERR', tabId });
-        } catch (e) { }
+            const offlineResult = await OfflineDetector.scan(url);
+            updateBadge(tabId, offlineResult);
+            if (isThreat(offlineResult)) {
+                handleThreat(tabId, offlineResult);
+            }
+        } catch (offlineError) {
+            try {
+                chrome.action.setBadgeText({ text: 'OFF', tabId });
+                chrome.action.setBadgeBackgroundColor({ color: '#999', tabId });
+            } catch (e) { }
+        }
     }
 }
 
@@ -142,7 +162,6 @@ function updateBadge(tabId, result) {
 function handleThreat(tabId, result) {
     try {
         if (result.verdict === 'MALICIOUS' || result.verdict === 'HIGH_RISK') {
-            // 1. Notify the user
             chrome.notifications.create({
                 type: 'basic',
                 iconUrl: 'icon.png',
@@ -151,34 +170,30 @@ function handleThreat(tabId, result) {
                 priority: 2
             });
 
-            // 2. Inject content script to block view
             chrome.scripting.executeScript({
                 target: { tabId },
                 func: (data) => {
-                    try {
-                        // Check if already blocked to prevent duplicates
-                        if (document.getElementById('phius-block-overlay')) return;
+                    if (document.getElementById('phius-block-overlay')) return;
+                    const blockOverlay = document.createElement('div');
+                    blockOverlay.id = 'phius-block-overlay';
+                    Object.assign(blockOverlay.style, {
+                        position: 'fixed',
+                        top: '0',
+                        left: '0',
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: '#0d0d12',
+                        color: '#ff0055',
+                        zIndex: '2147483647',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                        textAlign: 'center'
+                    });
 
-                        const blockOverlay = document.createElement('div');
-                        blockOverlay.id = 'phius-block-overlay';
-                        Object.assign(blockOverlay.style, {
-                            position: 'fixed',
-                            top: '0',
-                            left: '0',
-                            width: '100%',
-                            height: '100%',
-                            backgroundColor: '#0d0d12',
-                            color: '#ff0055',
-                            zIndex: '2147483647', // Max Z-Index
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-                            textAlign: 'center'
-                        });
-
-                        blockOverlay.innerHTML = `
+                    blockOverlay.innerHTML = `
                         <div style="background: rgba(255,0,85,0.1); padding: 40px; border: 2px solid #ff0055; border-radius: 16px; max-width: 600px; box-shadow: 0 0 50px rgba(255,0,85,0.2);">
                             <h1 style="font-size: 3rem; margin: 0 0 20px 0; font-weight: 800;">🚫 BLOCKED</h1>
                             <h2 style="color: white; margin-bottom: 20px; font-weight: 600;">PhiusGuard blocked this unsafe site</h2>
@@ -192,23 +207,16 @@ function handleThreat(tabId, result) {
                         </div>
                     `;
 
-                        document.body.appendChild(blockOverlay);
-                        document.body.style.overflow = 'hidden';
-
-                        document.getElementById('unsafe-proceed').addEventListener('click', () => {
-                            blockOverlay.remove();
-                            document.body.style.overflow = 'auto';
-                        });
-
-                        // Add hover effect via JS since we are using inline styles
-                        const btn = document.getElementById('unsafe-proceed');
-                        btn.onmouseover = () => { btn.style.borderColor = '#ccc'; btn.style.color = '#ccc'; };
-                        btn.onmouseout = () => { btn.style.borderColor = '#666'; btn.style.color = '#888'; };
-
-                    } catch (e) { }
+                    document.body.appendChild(blockOverlay);
+                    document.body.style.overflow = 'hidden';
+                    document.getElementById('unsafe-proceed').addEventListener('click', () => {
+                        blockOverlay.remove();
+                        document.body.style.overflow = 'auto';
+                    });
                 },
                 args: [result]
-            }).catch(() => { }); // Catch scripting errors
+            }).catch(() => { });
         }
     } catch (e) { }
 }
+

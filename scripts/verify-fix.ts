@@ -18,7 +18,7 @@ async function verify() {
     console.log(`IP Usage Check Detected: ${ipSource?.detected}`);
     console.log(`NLP Analysis Detected: ${nlpSource?.detected}`);
 
-    if (result.classification === "MALICIOUS" && result.riskScore >= 85) {
+    if ((result.classification as string) === "MALICIOUS" && result.riskScore >= 85) {
         console.log("SUCCESS: URL classified as MALICIOUS with high score.");
     } else {
         console.log("FAILURE: URL not classified correctly.");

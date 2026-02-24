@@ -13,112 +13,147 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Daily Limit Logic
-    const DAILY_LIMIT = 10;
-    const RESET_PERIOD = 24 * 60 * 60 * 1000; // 24 hours
+    const userEmail = document.getElementById('userEmail');
+    const userPlan = document.getElementById('userPlan');
 
-    function updateCreditUI(used) {
-        const remaining = Math.max(0, DAILY_LIMIT - used);
-        const percent = (remaining / DAILY_LIMIT) * 100;
+    // API Configuration
+    const API_BASE = 'http://127.0.0.1:3000';
+    const SESSION_API = `${API_BASE}/api/user/session`;
+    const SCAN_API = `${API_BASE}/api/real-scan`;
 
-        document.getElementById('creditCount').textContent = remaining + '/' + DAILY_LIMIT;
-        document.getElementById('creditFill').style.width = percent + '%';
+    // ---------------------------------------------------------
+    // Live Technical Ticker Logic
+    // ---------------------------------------------------------
+    function initLiveTicker() {
+        const ipDisplay = document.getElementById('ipDisplay');
+        const latencyDisplay = document.getElementById('latencyDisplay');
+        const logRolling = document.getElementById('logRolling');
 
-        // Color based on remaining
-        const fill = document.getElementById('creditFill');
-        if (remaining <= 2) {
-            fill.style.background = '#ff0055'; // Red warning
-        } else if (remaining <= 5) {
-            fill.style.background = '#ffb700'; // Yellow caution
-        } else {
-            fill.style.background = '#00f2ff'; // Cyan safe
-        }
+        // 1. Get Real IP
+        fetch('https://api.ipify.org?format=json')
+            .then(res => res.json())
+            .then(data => { if (ipDisplay) ipDisplay.textContent = data.ip; })
+            .catch(() => { if (ipDisplay) ipDisplay.textContent = "Unknown"; });
 
-        if (remaining === 0) {
-            scanBtn.disabled = true;
-            scanBtn.textContent = 'LIMIT REACHED';
-            document.getElementById('limitMsg').style.display = 'block';
-        }
-    }
-
-    function checkLimit(callback) {
-        chrome.storage.local.get(['scansUsed', 'lastReset'], (data) => {
-            const now = Date.now();
-            let used = data.scansUsed || 0;
-            let lastReset = data.lastReset || 0;
-
-            // Reset if more than 24h passed
-            if (now - lastReset > RESET_PERIOD) {
-                used = 0;
-                lastReset = now;
-                chrome.storage.local.set({ scansUsed: 0, lastReset: now });
+        // 2. Measure Latency
+        const measureLatency = async () => {
+            try {
+                const start = performance.now();
+                await fetch(`${API_BASE}/api/health`, { method: 'HEAD', cache: 'no-store' }).catch(() => { });
+                const end = performance.now();
+                if (latencyDisplay) latencyDisplay.textContent = Math.round(end - start) + "ms";
+            } catch (e) {
+                if (latencyDisplay) latencyDisplay.textContent = "-- ms";
             }
+        };
 
-            updateCreditUI(used);
-            callback(used, lastReset);
-        });
+        // 3. Log Ticker Logic
+        const logPool = [
+            "Analyzing incoming packets...",
+            "Firewall rule check: PASS",
+            "Encryption protocol: TLS 1.3",
+            "Checking database integrity...",
+            "Refreshing threat signatures...",
+            "Heuristic engine: IDLE",
+            "Sandbox environment: READY",
+            "Geo-IP lookup: SUCCESS",
+            "Scanning network layer..."
+        ];
+
+        let logIndex = 0;
+        const updateLogs = () => {
+            if (!logRolling) return;
+            logRolling.innerHTML = `<span class="log-entry active">${logPool[logIndex]}</span>`;
+            logIndex = (logIndex + 1) % logPool.length;
+        };
+
+        measureLatency();
+        setInterval(measureLatency, 5000);
+        setInterval(updateLogs, 3000);
+        updateLogs();
     }
 
-    // Initial Check
-    checkLimit(() => { });
+    // Initialize Ticker
+    initLiveTicker();
+
+    // Fetch User Session
+    async function fetchSession() {
+        try {
+            const response = await fetch(SESSION_API);
+            const data = await response.json();
+
+            if (data.authenticated && data.user) {
+                userEmail.textContent = data.user.email;
+                userPlan.textContent = data.user.plan || 'Phishing Detective Pro';
+            } else {
+                userEmail.textContent = 'Guest User';
+                userPlan.textContent = 'Limited Protection';
+            }
+        } catch (error) {
+            console.error('Session fetch failed:', error);
+            userEmail.textContent = 'Offline Mode';
+            userPlan.textContent = 'Check Connection';
+        }
+    }
+
+    // Initial session fetch
+    fetchSession();
 
     scanBtn.addEventListener('click', async () => {
-        checkLimit(async (currentUsed, lastReset) => {
-            if (currentUsed >= DAILY_LIMIT) return;
+        let url = urlDisplay.textContent ? urlDisplay.textContent.trim() : '';
 
-            const url = urlDisplay.textContent;
-            if (!url || url === 'No URL targeted') return;
+        // Prevent empty submissions
+        if (!url || url === 'No URL targeted' || url === '') {
+            alert('Please select a valid page to scan');
+            return;
+        }
 
-            // UI State: Loading
-            scanBtn.disabled = true;
-            scanBtn.textContent = 'SCANNING...';
-            resultsArea.style.display = 'none';
-            loader.style.display = 'block';
-            statusBadge.textContent = 'Analyzing';
-            statusBadge.className = 'status-badge';
+        // Auto-prepend https:// if protocol missing
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
+        }
 
-            try {
-                // Call Local API (In production, replace with real domain)
-                const response = await fetch('http://localhost:3000/api/real-scan', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ url })
-                });
+        // UI State: Loading
+        scanBtn.disabled = true;
+        scanBtn.textContent = 'SCANNING...';
+        resultsArea.style.display = 'none';
+        loader.style.display = 'block';
+        const urlCard = document.querySelector('.url-card');
+        if (urlCard) urlCard.classList.add('scanning-state');
+        statusBadge.textContent = 'Analyzing';
+        statusBadge.className = 'status-badge';
 
-                const data = await response.json();
+        try {
+            // Call API with new body format
+            const response = await fetch(SCAN_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url, mode: 'url' })
+            });
 
-                if (data.verdict) { // Check for valid response
-                    renderResults(data);
+            const data = await response.json();
 
-                    // Increment Usage
-                    const newUsed = currentUsed + 1;
-                    chrome.storage.local.set({
-                        scansUsed: newUsed,
-                        lastReset: (newUsed === 1 && currentUsed === 0) ? Date.now() : lastReset
-                    });
-                    updateCreditUI(newUsed);
-
-                } else {
-                    alert('Scan failed: ' + (data.error || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Scan Error:', error);
-                alert('Connection failed. Ensure the local server is running at http://localhost:3000');
-            } finally {
-                // UI State: Reset
-                loader.style.display = 'none';
-
-                // Re-check limit to set button state correctly
-                checkLimit((used) => {
-                    if (used < DAILY_LIMIT) {
-                        scanBtn.disabled = false;
-                        scanBtn.textContent = 'SCAN CURRENT TAB';
-                    }
-                });
+            if (!response.ok) {
+                const errorMsg = data.message || data.error || `Server error: ${response.status}`;
+                throw new Error(errorMsg);
             }
-        });
+
+            if (data.verdict) {
+                renderResults(data);
+            } else {
+                alert('Scan failed: ' + (data.message || data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Scan Error:', error);
+            alert('Scan Error: ' + error.message);
+        } finally {
+            // UI State: Reset
+            loader.style.display = 'none';
+            const urlCard = document.querySelector('.url-card');
+            if (urlCard) urlCard.classList.remove('scanning-state');
+            scanBtn.disabled = false;
+            scanBtn.textContent = 'SCAN CURRENT TAB';
+        }
     });
 
     function renderResults(result) {
