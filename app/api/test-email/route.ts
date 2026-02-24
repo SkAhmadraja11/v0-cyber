@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function POST(request: NextRequest) {
+  const resend = new Resend(process.env.RESEND_API_KEY)
   try {
     // Test email configuration
     console.log('Testing email configuration...')
@@ -12,14 +11,14 @@ export async function POST(request: NextRequest) {
     console.log('NEXT_PUBLIC_APP_URL:', process.env.NEXT_PUBLIC_APP_URL)
 
     if (!process.env.RESEND_API_KEY) {
-      return NextResponse.json({ 
-        error: 'RESEND_API_KEY not configured' 
+      return NextResponse.json({
+        error: 'RESEND_API_KEY not configured'
       }, { status: 500 })
     }
 
     // Test sending a simple email
     const testEmail = 'ahmadraja984821@gmail.com' // Your email for testing
-    
+
     try {
       const data = await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL || 'noreply@phishguard.ai',
@@ -71,8 +70,8 @@ export async function POST(request: NextRequest) {
 
       console.log('Email sent successfully:', data)
 
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         message: 'Test email sent successfully',
         data: {
           emailId: (data as any)?.id,
@@ -84,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     } catch (error: any) {
       console.error('Email sending failed:', error)
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Failed to send test email',
         details: error.message || 'Unknown error',
         config: {

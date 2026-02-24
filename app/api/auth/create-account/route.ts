@@ -2,9 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function POST(request: NextRequest) {
+  const resend = new Resend(process.env.RESEND_API_KEY)
   try {
     const { email, password, fullName } = await request.json()
 
@@ -128,11 +127,11 @@ export async function POST(request: NextRequest) {
         `,
       })
 
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         message: 'Account created successfully. Please check your email to activate your account.',
         requires_activation: true,
-        activation_token 
+        activation_token
       })
 
     } catch (emailError) {

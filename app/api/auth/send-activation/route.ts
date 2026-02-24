@@ -2,9 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function POST(request: NextRequest) {
+  const resend = new Resend(process.env.RESEND_API_KEY)
   try {
     const { email } = await request.json()
 
@@ -133,18 +132,18 @@ export async function POST(request: NextRequest) {
 
       console.log('Activation email sent successfully:', emailData)
 
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         message: 'Activation email sent successfully',
-        activation_token 
+        activation_token
       })
 
     } catch (emailError: any) {
       console.error('Error sending activation email:', emailError)
-      
+
       // Check if it's a 403 error (Resend domain limitation)
       if (emailError.status === 403) {
-        return NextResponse.json({ 
+        return NextResponse.json({
           error: 'Email service limitation detected. For testing, please use your Resend account email address.',
           details: 'The resend.dev domain only sends emails to the account owner. For production use, verify your custom domain.',
           activation_token, // Include token for manual testing
@@ -152,7 +151,7 @@ export async function POST(request: NextRequest) {
           workaround: 'Use your Resend account email for testing, or verify your custom domain in Resend.'
         }, { status: 403 })
       }
-      
+
       return NextResponse.json({ error: 'Failed to send activation email' }, { status: 500 })
     }
 
