@@ -7,8 +7,47 @@ try {
 
 const API_ENDPOINT = (typeof CONFIG !== 'undefined' ? CONFIG.API_BASE + CONFIG.SCAN_ENDPOINT : 'http://127.0.0.1:3000/api/real-scan');
 
-// Cache for scan results to avoid spamming the API
-const scanCache = new Map();
+// --- IMPORTANT: Do NOT use a plain Map() for caching ---
+// Service workers are killed/restarted by Chrome every ~30s.
+// A plain Map() is wiped on every restart, causing API spam.
+// We use chrome.storage.session which persists across SW restarts.
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes per URL
+const MIN_RESCAN_MS = 30 * 1000;     // 30s minimum between rescans of same domain
+
+// Domains we never need to scan (internal / trusted / very high traffic)
+const SKIP_DOMAINS = new Set([
+    'newtab', 'extensions', 'settings',
+    'google.com', 'google.co.in', 'youtube.com', 'googleapis.com',
+    'gstatic.com', 'bing.com', 'microsoft.com', 'msn.com', 'live.com',
+    'outlook.com', 'office.com', 'github.com', 'stackoverflow.com',
+    'cloudflare.com', 'amazon.com', 'aws.amazon.com',
+    'next-gen-cyber.vercel.app', // Never scan our own backend
+]);
+
+function shouldSkip(url) {
+    if (!url || !url.startsWith('http')) return true;
+    try {
+        const { hostname } = new URL(url);
+        return SKIP_DOMAINS.has(hostname) ||
+            SKIP_DOMAINS.has(hostname.split('.').slice(-2).join('.'));
+    } catch { return true; }
+}
+
+// Read from storage.session cache
+async function getCached(key) {
+    try {
+        const data = await chrome.storage.session.get(key);
+        const entry = data[key];
+        if (entry && (Date.now() - entry.ts) < CACHE_TTL_MS) return entry.result;
+    } catch { }
+    return null;
+}
+
+async function setCached(key, result) {
+    try {
+        await chrome.storage.session.set({ [key]: { result, ts: Date.now() } });
+    } catch { }
+}
 
 // Listen for tab updates
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -33,11 +72,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function handleBatchScan(links) {
     const threats = [];
-    const uniqueLinks = [...new Set(links)];
+    const uniqueLinks = [...new Set(links)].filter(l => !shouldSkip(l));
 
     await Promise.all(uniqueLinks.map(async (link) => {
-        if (scanCache.has(link)) {
-            const cached = scanCache.get(link);
+        const cached = await getCached(link);
+        if (cached) {
             if (isThreat(cached)) threats.push({ url: link, verdict: cached.verdict });
             return;
         }
@@ -81,6 +120,11 @@ function isThreat(result) {
 }
 
 async function scanUrl(tabId, url) {
+    // Skip internal pages and known-safe high-traffic domains
+    if (shouldSkip(url)) {
+        try { chrome.action.setBadgeText({ text: '', tabId }); } catch { }
+        return;
+    }
 
     try {
         // Set loading state safely
@@ -101,12 +145,14 @@ async function scanUrl(tabId, url) {
             }
         }
 
-        if (scanCache.has(cleanedUrl)) {
-            updateBadge(tabId, scanCache.get(cleanedUrl));
+        // Check persistent cache (survives service worker restarts)
+        const cached = await getCached(cleanedUrl);
+        if (cached) {
+            updateBadge(tabId, cached);
             return;
         }
 
-        console.log('PhusGuard: Scanning network resource:', cleanedUrl);
+        console.log('PhusGuard: Scanning:', cleanedUrl);
 
         const response = await fetch(API_ENDPOINT, {
             method: 'POST',
@@ -130,12 +176,12 @@ async function scanUrl(tabId, url) {
         } catch (e) { return; }
 
         if (result && result.verdict) {
-            scanCache.set(cleanedUrl, result);
+            await setCached(cleanedUrl, result); // Persist across SW restarts
             updateBadge(tabId, result);
             handleThreat(tabId, result);
         }
     } catch (error) {
-        console.warn("PhusGuard: Scan failed (no local failover as per strict requirements):", error);
+        console.warn("PhusGuard: Scan failed:", error);
         try {
             chrome.action.setBadgeText({ text: 'ERR', tabId });
             chrome.action.setBadgeBackgroundColor({ color: '#999', tabId });

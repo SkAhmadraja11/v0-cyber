@@ -3,6 +3,18 @@ import { RealPhishingDetector } from "@/lib/real-detection"
 import { EnterpriseThreatEngine, ThreatInput } from "@/lib/enterprise-detection"
 import { createClient } from "@/lib/supabase/server"
 
+// CORS headers for Chrome extension compatibility
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+}
+
+// Handles CORS preflight from the Chrome extension (browser always sends OPTIONS first)
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS })
+}
+
 export async function POST(request: NextRequest) {
   try {
     let body;
@@ -142,7 +154,7 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    return NextResponse.json(response)
+    return NextResponse.json(response, { headers: CORS_HEADERS })
 
   } catch (error) {
     console.error("Enterprise scan error:", error)
@@ -150,6 +162,7 @@ export async function POST(request: NextRequest) {
       success: false,
       error: "Internal server error",
       message: error instanceof Error ? error.message : "An unexpected error occurred during scan"
-    }, { status: 500 })
+    }, { status: 500, headers: CORS_HEADERS })
+
   }
 }

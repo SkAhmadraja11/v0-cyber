@@ -90,6 +90,41 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Ticker
     initLiveTicker();
 
+    // Rotating Cybersecurity Quotes
+    const QUOTES = [
+        { text: "Security is not a product, but a process.", author: "Bruce Schneier" },
+        { text: "The only truly secure system is one that is powered off, cast in a block of concrete and sealed in a lead-lined room.", author: "Gene Spafford" },
+        { text: "If you think technology can solve your security problems, then you don't understand the problems.", author: "Bruce Schneier" },
+        { text: "Amateurs hack systems, professionals hack people.", author: "Bruce Schneier" },
+        { text: "It takes 20 years to build a reputation and a few minutes of cyber incident to ruin it.", author: "Stephane Nappo" },
+        { text: "The internet is a dangerous place. Be the shield, not the vulnerability.", author: "PhiusGuard" },
+        { text: "Privacy is not something that I'm merely entitled to, it's an absolute prerequisite.", author: "Marlon Brando" },
+        { text: "Think before you click.", author: "Cybersecurity Axiom" },
+        { text: "Every system has a weakness. Know yours before attackers do.", author: "PhiusGuard" },
+        { text: "Encryption works. If your data is encrypted, NSA can't get to it.", author: "Edward Snowden" },
+    ];
+
+    function rotateQuote() {
+        const textEl = document.getElementById('quoteText');
+        const authorEl = document.getElementById('quoteAuthor');
+        if (!textEl || !authorEl) return;
+        // Fade out
+        textEl.style.opacity = '0';
+        authorEl.style.opacity = '0';
+        setTimeout(() => {
+            const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+            textEl.textContent = `"${q.text}"`;
+            authorEl.textContent = `— ${q.author}`;
+            // Fade in
+            textEl.style.opacity = '1';
+            authorEl.style.opacity = '1';
+        }, 500);
+    }
+
+    // Start with a random quote, then rotate every 8s
+    rotateQuote();
+    setInterval(rotateQuote, 8000);
+
     // Fetch User Session
     async function fetchSession() {
         try {
@@ -197,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsArea.innerHTML = `<div class="card verdict-card bg-suspicious" style="padding: 20px; text-align: center; color: white;">
             <div style="font-size: 24px; margin-bottom: 10px;">⚠️</div>
             <div style="font-size: 14px;">${msg}</div>
-            <div style="font-size: 12px; margin-top: 8px; opacity: 0.8;">Run <code>npm run dev</code> locally</div>
+            <div style="font-size: 12px; margin-top: 8px; opacity: 0.8;">Backend: ${API_BASE}</div>
         </div>`;
     }
 

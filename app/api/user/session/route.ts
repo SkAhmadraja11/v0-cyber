@@ -1,6 +1,17 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 
+const CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+}
+
+// CORS preflight for Chrome extension
+export async function OPTIONS() {
+    return new NextResponse(null, { status: 204, headers: CORS_HEADERS })
+}
+
 export async function GET() {
     try {
         const supabase = await createClient()
@@ -13,7 +24,7 @@ export async function GET() {
                 authenticated: false,
                 user: null,
                 message: 'No active session'
-            })
+            }, { headers: CORS_HEADERS })
         }
 
         // Get profile details (optional, for plan info)
@@ -29,12 +40,12 @@ export async function GET() {
                 id: user.id,
                 email: user.email,
                 name: profile?.full_name || user.user_metadata?.full_name || 'Enterprise User',
-                plan: 'Premium Protection', // Mock or fetch from DB if available
+                plan: 'Premium Protection',
                 avatar: profile?.avatar_url || null
             }
-        })
+        }, { headers: CORS_HEADERS })
     } catch (error) {
         console.error('Error in session check:', error)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: CORS_HEADERS })
     }
 }
