@@ -124,8 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // UI State: Loading
-        scanBtn.disabled = true;
-        scanBtn.textContent = 'SCANNING...';
+        if (scanBtn) {
+            scanBtn.disabled = true;
+            scanBtn.textContent = 'SCANNING...';
+        }
         if (resultsArea) resultsArea.style.display = 'none';
         if (loader) loader.style.display = 'block';
         const urlCard = document.querySelector('.url-card');
@@ -175,8 +177,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (loader) loader.style.display = 'none';
             const urlCard = document.querySelector('.url-card');
             if (urlCard) urlCard.classList.remove('scanning-state');
-            scanBtn.disabled = false;
-            scanBtn.textContent = 'SCAN CURRENT TAB';
+            if (scanBtn) {
+                scanBtn.disabled = false;
+                scanBtn.textContent = 'SCAN CURRENT TAB';
+            }
         }
     });
 
@@ -372,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const easeProgress = 1 - Math.pow(1 - progress, 3);
 
             const current = Math.floor(easeProgress * (end - start) + start);
-            obj.textContent = current + '/100';
+            if (obj) obj.textContent = current + '/100';
 
             if (progress < 1) {
                 window.requestAnimationFrame(step);

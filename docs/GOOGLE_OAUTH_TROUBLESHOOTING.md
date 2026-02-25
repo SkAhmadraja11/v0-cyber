@@ -20,7 +20,7 @@ If you're seeing a "Content is blocked" error when trying to sign in with Google
 5. Choose **Web application**
 6. Add these **Authorized redirect URIs**:
    - `https://hntttwcudnetgufhpelf.supabase.co/auth/v1/callback`
-   - `http://localhost:3000/auth/callback` (for local testing)
+   - `https://your-domain.vercel.app/auth/callback` (for testing)
    - Your production URL callback (if deploying)
 
 ### Step 3: Add Google Credentials to Supabase

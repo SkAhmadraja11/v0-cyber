@@ -12,7 +12,7 @@ To enable Google Sign-In for your PhishGuard AI platform, follow these steps:
 6. Select **Web application** as the application type
 7. Add the following authorized redirect URIs:
    - `https://hntttwcudnetgufhpelf.supabase.co/auth/v1/callback`
-   - `http://localhost:3000/auth/callback` (for local development)
+   - `https://your-domain.vercel.app/auth/callback` (for development)
 8. Copy your **Client ID** and **Client Secret**
 
 ## 2. Configure Supabase

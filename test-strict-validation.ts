@@ -18,7 +18,7 @@ async function testValidation() {
         process.stdout.write(`Testing ${t.name.padEnd(25)}: `);
 
         try {
-            const req = new NextRequest("http://localhost:3000/api/real-scan", {
+            const req = new NextRequest("https://next-gen-cyber.vercel.app/api/real-scan", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(t.body)
@@ -38,7 +38,7 @@ async function testValidation() {
             if (status !== 200) {
                 console.log(`       Error Info: ${data.message || data.error}`);
             }
-        } catch (e) {
+        } catch (e: any) {
             console.log(`[ERROR] ${e.message}`);
         }
     }

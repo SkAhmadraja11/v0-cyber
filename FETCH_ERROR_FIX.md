@@ -5,6 +5,7 @@
 - **API endpoint not responding**
 - **Server not running or crashed**
 - **CORS or routing issues**
+- **Production vs Local**: Deployed app should use relative paths or `https://next-gen-cyber.vercel.app`. Local dev uses `http://localhost:3000`.
 
 ## 🚀 Quick Fix Steps:
 
@@ -17,16 +18,16 @@ npm run dev
 
 **Should show**:
 ```
-- Local: http://localhost:3000
+- Local: http://localhost-or-ip:3000
 - Network: use --host to expose
 ```
 
 ### Step 2: Test Basic Connection
-**Open browser**: `http://localhost:3000`
+**Open browser**: `http://localhost-or-ip:3000`
 **Should show**: Your application homepage
 
 ### Step 3: Test API Endpoints
-**Test diagnostic**: `http://localhost:3000/api/system-diagnostic`
+**Test diagnostic**: `http://localhost-or-ip:3000/api/system-diagnostic`
 **Should return**: JSON with system status
 
 ### Step 4: Fix Common Issues
@@ -74,7 +75,7 @@ tasklist | findstr node.exe
 ### 2. Test Simple API
 **Create test file**: `test-api.js`
 ```javascript
-fetch('http://localhost:3000/api/system-diagnostic')
+fetch('/api/system-diagnostic') // Relative path safe for local and production
   .then(response => response.json())
   .then(data => console.log('API Working:', data))
   .catch(error => console.error('API Error:', error))

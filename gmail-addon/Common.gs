@@ -20,7 +20,7 @@ function getContextualAddOn(e) {
 }
 
 function analyzeEmail(sender, content) {
-  var url = "http://localhost:3000/api/real-scan"; // Local endpoint for dev
+  var url = "https://next-gen-cyber.vercel.app/api/real-scan"; // Production endpoint
   var payload = {
     type: "email",
     content: content,

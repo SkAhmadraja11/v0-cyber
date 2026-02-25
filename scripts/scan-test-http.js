@@ -15,7 +15,7 @@ async function main() {
   const raw = fs.readFileSync(datasetPath, 'utf8')
   const dataset = JSON.parse(raw)
 
-  const endpoint = process.env.SCAN_ENDPOINT || 'http://localhost:3000/api/real-scan'
+  const endpoint = process.env.SCAN_ENDPOINT || '/api/real-scan'
 
   for (const entry of dataset) {
     console.log('-'.repeat(60))

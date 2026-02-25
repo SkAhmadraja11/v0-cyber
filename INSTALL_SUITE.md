@@ -68,5 +68,5 @@ This suite consists of three components working together:
 
 ## Troubleshooting
 
--   **"Network Error" / Timeout**: Ensure the backend server (`http://localhost:3000`) is running (`npm run dev`).
+-   **"Network Error" / Timeout**: Ensure the backend server (standard `/api/real-scan` endpoint) is reachable. If running locally, ensure `npm run dev` is active.
 -   **Extension Icon Missing**: Run `Easy-Installer.bat` again or check if `icon.png` is in the folder.
