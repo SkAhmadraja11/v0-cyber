@@ -5,38 +5,49 @@ import { createClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    console.log("Incoming real-scan body:", body)
+    let body;
+    try {
+      body = await request.json()
+    } catch (e) {
+      return NextResponse.json({
+        success: false,
+        error: "Invalid JSON",
+        message: "The request body must be a valid JSON object"
+      }, { status: 400 })
+    }
+
+    console.log("Incoming body:", body)
 
     // Strict Validation
     const input = body.url || body.input
     const mode = body.mode || 'url'
-    const refresh = body.refresh
 
     if (!input || typeof input !== 'string' || input.trim() === '') {
       return NextResponse.json({
         success: false,
         error: "URL is required",
-        message: "Please provide a valid URL to scan"
-      }, { status: 400 })
-    }
-
-    // Basic URL format validation
-    try {
-      if (input.includes('.') && !input.startsWith('http') && !input.startsWith('//')) {
-        new URL('https://' + input)
-      } else {
-        new URL(input)
-      }
-    } catch (e) {
-      return NextResponse.json({
-        success: false,
-        error: "Invalid URL format",
-        message: "The provided string is not a valid URL"
+        message: "URL is required"
       }, { status: 400 })
     }
 
     const normalizedInput = input.trim()
+    let finalUrl = normalizedInput
+
+    // Auto-prepend protocol if missing for basic validation
+    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+      finalUrl = 'https://' + finalUrl
+    }
+
+    // Basic URL format validation
+    try {
+      new URL(finalUrl)
+    } catch (e) {
+      return NextResponse.json({
+        success: false,
+        error: "Invalid URL format",
+        message: "Invalid URL format"
+      }, { status: 400 })
+    }
 
     const supabase = await createClient()
 
@@ -58,24 +69,23 @@ export async function POST(request: NextRequest) {
     // Map legacy input to strict ThreatInput
     const threatInput: ThreatInput = {
       type: (mode === 'email') ? 'email' : 'url',
-      content: input
+      content: finalUrl
     }
 
     const result = await engine.analyze(threatInput)
 
-    // Save scan results to database (Adapted for new schema if needed, or best-effort mapping)
-    // We map snake_case result back to legacy DB columns where possible, or just save raw result
+    // Save scan results to database
     try {
       const { error: insertError } = await supabase
         .from("scan_results")
         .insert({
           user_id: user?.id || null,
-          url: normalizedInput,
+          url: finalUrl,
           scan_type: mode || 'url',
           risk_score: result.risk_score,
           classification: result.verdict,
-          confidence: result.confidence === 'VERY_HIGH' ? 0.99 : result.confidence === 'HIGH' ? 0.85 : 0.5, // Approx mapping
-          detection_sources: result.key_indicators.map(i => ({ name: i, detected: true, reason: i })), // Map indicators to sources
+          confidence: result.confidence === 'VERY_HIGH' ? 99 : result.confidence === 'HIGH' ? 85 : result.confidence === 'MEDIUM' ? 60 : 30,
+          detection_sources: result.key_indicators.map(i => ({ name: i, detected: true, reason: i })),
           reasons: result.key_indicators,
           ip_address: request.headers.get("x-forwarded-for") || "unknown",
           user_agent: request.headers.get("user-agent") || "unknown",
@@ -88,8 +98,8 @@ export async function POST(request: NextRequest) {
     if (result.verdict === "MALICIOUS" || result.verdict === "HIGH_RISK") {
       try {
         await supabase.from("threat_intel").upsert({
-          url: normalizedInput.slice(0, 500),
-          domain: normalizedInput.includes('http') ? new URL(normalizedInput).hostname : normalizedInput.split('/')[0],
+          url: finalUrl.slice(0, 500),
+          domain: finalUrl.includes('http') ? new URL(finalUrl).hostname : finalUrl.split('/')[0],
           threat_type: result.threat_type[0] || 'Unknown',
           sources: result.key_indicators,
           metadata: { riskScore: result.risk_score, confidence: result.confidence }
@@ -106,29 +116,29 @@ export async function POST(request: NextRequest) {
       explanation: result.explanation,
       user_impact: result.user_impact,
       recommended_action: result.recommended_action,
-      risk_score: result.risk_score, // Lowercase snake_case for extension if needed, but camelCase below
+      risk_score: result.risk_score,
 
       // -- Frontend Fields --
       riskScore: result.risk_score,
-      classification: result.verdict,
-      confidence: result.confidence === 'VERY_HIGH' ? 99 : result.confidence === 'HIGH' ? 85 : result.confidence === 'MEDIUM' ? 60 : 10,
+      classification: result.verdict === 'HIGH_RISK' ? 'DANGEROUS' : result.verdict,
+      confidence: result.confidence === 'VERY_HIGH' ? 99 :
+        result.confidence === 'HIGH' ? 85 :
+          result.confidence === 'MEDIUM' ? 60 : 15,
       reasons: result.key_indicators,
       sources: result.sources || [],
       timestamp: new Date().toISOString(),
       verdictReport: {
-        url: normalizedInput,
+        url: finalUrl,
         finalVerdict: result.verdict,
         evidenceSourcesUsed: result.sources?.map(s => s.name) || [],
         confirmedFindings: result.key_indicators,
-        confidenceLevel: result.confidence === 'VERY_HIGH' ? "High (Verified)" :
-          result.confidence === 'HIGH' ? "High (Forensic)" :
-            result.confidence === 'MEDIUM' ? "Standard (Forensic)" : "Initial Assessment",
+        confidenceLevel: result.confidence === 'VERY_HIGH' ? "High" :
+          result.confidence === 'HIGH' ? "High" :
+            result.confidence === 'MEDIUM' ? "Medium" : "Low",
         limitations: result.confidence === 'MEDIUM' || result.confidence === 'LOW'
-          ? ["Engine relying on technical forensics and heuristic patterns due to limited external API intelligence."]
+          ? ["Heuristic analysis baseline."]
           : [],
-        recommendedAction: result.recommended_action === 'BLOCK' ? "Block" :
-          result.recommended_action === 'QUARANTINE' ? "Isolate" :
-            result.recommended_action === 'WARN' ? "Warn" : "Allow"
+        recommendedAction: result.recommended_action === 'BLOCK' ? "Block" : "Allow"
       }
     };
 

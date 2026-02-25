@@ -53,14 +53,19 @@ export default function ScannerPage() {
 
   const handleScan = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
-    if (!inputValue.trim() || isScanning) return
+    const trimmedInput = inputValue.trim()
+    if (!trimmedInput || isScanning) return
+
+    let finalInput = trimmedInput
+    if (scanMode === 'url' && !finalInput.startsWith('http://') && !finalInput.startsWith('https://')) {
+      finalInput = 'https://' + finalInput
+    }
 
     setIsScanning(true)
     setResult(null)
     setRefreshAttempt(false)
-    setScanProgress(0) // Reset progress for new scan
+    setScanProgress(0)
 
-    // Animate progress
     const progressInterval = setInterval(() => {
       setScanProgress((prev) => Math.min(prev + 8, 90))
     }, 150)
@@ -69,12 +74,15 @@ export default function ScannerPage() {
       const response = await fetch("/api/real-scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: inputValue, mode: scanMode }),
+        body: JSON.stringify({ url: finalInput, mode: scanMode }),
       })
 
-      if (!response.ok) throw new Error("Scan failed")
+      const scanResult = await response.json()
 
-      const scanResult: RealDetectionResult = await response.json()
+      if (!response.ok) {
+        throw new Error(scanResult.message || scanResult.error || "Scan failed")
+      }
+
       clearInterval(progressInterval)
       setScanProgress(100)
 
@@ -82,8 +90,9 @@ export default function ScannerPage() {
         setResult(scanResult)
         setIsScanning(false)
       }, 500)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Scan error:", error)
+      alert(error.message || "An unexpected error occurred")
       clearInterval(progressInterval)
       setIsScanning(false)
     }
@@ -92,12 +101,17 @@ export default function ScannerPage() {
   const handleRefresh = async () => {
     if (isScanning || !result) return
 
+    const trimmedInput = inputValue.trim()
+    let finalInput = trimmedInput
+    if (scanMode === 'url' && !finalInput.startsWith('http://') && !finalInput.startsWith('https://')) {
+      finalInput = 'https://' + finalInput
+    }
+
     setIsScanning(true)
     setResult(null)
     setRefreshAttempt(true)
-    setScanProgress(0) // Reset progress for refresh
+    setScanProgress(0)
 
-    // Animate progress
     const progressInterval = setInterval(() => {
       setScanProgress((prev) => Math.min(prev + 8, 90))
     }, 150)
@@ -106,12 +120,15 @@ export default function ScannerPage() {
       const response = await fetch("/api/real-scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: inputValue, mode: scanMode, refresh: true }),
+        body: JSON.stringify({ url: finalInput, mode: scanMode, refresh: true }),
       })
 
-      if (!response.ok) throw new Error("Refresh failed")
+      const scanResult = await response.json()
 
-      const scanResult: RealDetectionResult = await response.json()
+      if (!response.ok) {
+        throw new Error(scanResult.message || scanResult.error || "Refresh failed")
+      }
+
       clearInterval(progressInterval)
       setScanProgress(100)
 
@@ -119,8 +136,9 @@ export default function ScannerPage() {
         setResult(scanResult)
         setIsScanning(false)
       }, 500)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error during refresh:", error)
+      alert(error.message || "An unexpected error occurred during refresh")
       clearInterval(progressInterval)
       setIsScanning(false)
     }

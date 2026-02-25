@@ -30,9 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const userPlan = document.getElementById('userPlan');
 
     // API Configuration
-    const API_BASE = 'http://127.0.0.1:3000';
-    const SESSION_API = `${API_BASE}/api/user/session`;
-    const SCAN_API = `${API_BASE}/api/real-scan`;
+    // Use centralized config if available
+    const API_BASE = (typeof CONFIG !== 'undefined' ? CONFIG.API_BASE : 'http://127.0.0.1:3000');
+    const SESSION_API = (typeof CONFIG !== 'undefined' ? API_BASE + CONFIG.SESSION_ENDPOINT : `${API_BASE}/api/user/session`);
+    const SCAN_API = (typeof CONFIG !== 'undefined' ? API_BASE + CONFIG.SCAN_ENDPOINT : `${API_BASE}/api/real-scan`);
 
     // ---------------------------------------------------------
     // Live Technical Ticker Logic
@@ -121,9 +122,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Auto-prepend https:// if protocol missing
-        if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            url = 'https://' + url;
+        // Robust trimming and protocol prepending (Deterministic Normalization)
+        url = url.trim();
+        // Remove fragments as per requirement
+        try {
+            const urlObj = new URL(url.startsWith('http') ? url : 'https://' + url);
+            urlObj.hash = '';
+            url = urlObj.toString();
+        } catch (e) {
+            // Fallback for very simple URLs
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
         }
 
         // UI State: Loading
@@ -137,33 +147,41 @@ document.addEventListener('DOMContentLoaded', () => {
         statusBadge.className = 'status-badge';
 
         try {
-            // Call API with new body format
+            // Call API with identical request format as web app
             console.log('PhusGuard: Scanning URL:', url);
             const response = await fetch(SCAN_API, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: url, mode: 'url' })
-            }).catch(e => {
-                console.error('Fetch error:', e);
-                throw new Error('Connection failed');
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                console.error('API Error Status:', response.status);
-                const errorMsg = data.message || data.error || `Server error: ${response.status}`;
-                throw new Error(errorMsg);
+                if (response.status === 400) {
+                    showError('Invalid URL');
+                } else if (response.status === 500) {
+                    showError('Backend issue');
+                } else {
+                    showError(`Server error: ${response.status}`);
+                }
+                throw new Error(data.message || data.error || `Server error: ${response.status}`);
             }
 
-            if (data.verdict) {
+            if (data.verdict || typeof data.risk_score !== 'undefined') {
+                if (window.pgUsage) window.pgUsage.updateState(data.verdict);
                 renderResults(data);
             } else {
-                showError('Scan failed: ' + (data.message || data.error || 'Unknown error'));
+                showError('Scan failed: Invalid response format');
             }
         } catch (error) {
-            // User friendly error
-            showError('Scan Error: ' + error.message);
+            console.error('Scan Error:', error);
+            if (error.message.includes('Failed to fetch') || error.name === 'TypeError' || error.message === 'Connection failed') {
+                showError('Extension connectivity error');
+            } else {
+                // Already shown if it was a status error
+                console.warn('Silent caught error for UI stack trace');
+            }
         } finally {
             // UI State: Reset
             loader.style.display = 'none';
@@ -188,14 +206,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Risk Score
         const scoreEl = document.getElementById('riskScore');
-        animateScore(scoreEl, 0, result.risk_score, 1000);
+        const numericScore = result.riskScore || result.risk_score || 0;
+        animateScore(scoreEl, 0, numericScore, 1000);
 
-        // Verdict & Styling
+        // Risk Level Mapping (Requirement mapping)
+        const getRiskLevel = (verdict) => {
+            switch (verdict) {
+                case 'SAFE': return 'Low';
+                case 'SUSPICIOUS': return 'Medium';
+                case 'HIGH_RISK': return 'High';
+                case 'MALICIOUS': return 'Critical';
+                default: return 'Unknown';
+            }
+        };
+
         const verdictEl = document.getElementById('verdict');
         const verdictCard = document.querySelector('.verdict-card');
+        const riskLevel = getRiskLevel(result.verdict);
 
-        verdictEl.textContent = result.verdict;
-        statusBadge.textContent = result.verdict;
+        verdictEl.textContent = riskLevel;
+        statusBadge.textContent = riskLevel;
 
         // Reset classes
         verdictCard.className = 'card verdict-card';
@@ -217,7 +247,16 @@ document.addEventListener('DOMContentLoaded', () => {
             statusBadge.classList.add('status-suspicious');
             statusBadge.style.color = '#ffb700';
             statusBadge.style.borderColor = '#ffb700';
+        } else if (result.verdict === 'HIGH_RISK') {
+            // High Risk -> Orange-ish / Red mix
+            verdictCard.classList.add('bg-high-risk');
+            scoreEl.classList.add('status-high-risk');
+            verdictEl.classList.add('status-high-risk');
+            statusBadge.classList.add('status-high-risk');
+            statusBadge.style.color = 'var(--high-risk)';
+            statusBadge.style.borderColor = 'var(--high-risk)';
         } else {
+            // MALICIOUS -> Critical (Red)
             verdictCard.classList.add('bg-malicious');
             scoreEl.classList.add('status-malicious');
             verdictEl.classList.add('status-malicious');
@@ -227,12 +266,62 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Confidence
-        document.getElementById('confidence').textContent = (result.confidence === 'VERY_HIGH' || result.confidence === 'HIGH') ?
-            result.confidence : result.confidence;
+        document.getElementById('confidence').textContent = result.confidence;
+
+        // Evidence Sources Used (Pills)
+        const sourcesContainer = document.getElementById('evidenceSourcesUsed');
+        if (sourcesContainer) {
+            sourcesContainer.innerHTML = '';
+            const sources = result.verdictReport?.evidenceSourcesUsed || [];
+            if (sources.length > 0) {
+                sources.forEach(source => {
+                    const pill = document.createElement('span');
+                    pill.className = 'source-pill';
+                    pill.textContent = source;
+                    sourcesContainer.appendChild(pill);
+                });
+            } else {
+                sourcesContainer.textContent = '--';
+            }
+        }
+
+        // Technical Evidence Grid
+        const techGridBody = document.getElementById('techGridBody');
+        if (techGridBody) {
+            techGridBody.innerHTML = '';
+
+            const getTier = (name) => {
+                const n = name.toLowerCase();
+                if (n.includes('google') || n.includes('phishtank') || n.includes('virustotal')) return 'T1';
+                if (n.includes('pattern') || n.includes('forensic') || n.includes('reputation') || n.includes('whois')) return 'T2';
+                return 'T3';
+            };
+
+            const sources = result.sources || [];
+            if (sources.length > 0) {
+                sources.forEach(s => {
+                    const tier = getTier(s.name);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <div class="indicator-name">${s.name}</div>
+                            <div class="indicator-reason">${s.reason || '--'}</div>
+                        </td>
+                        <td><span class="tier-badge tier-${tier.toLowerCase()}">${tier}</span></td>
+                        <td><span class="grid-status ${s.detected ? 'status-detected' : 'status-clean'}">${s.detected ? 'DETECTED' : 'CLEAN'}</span></td>
+                    `;
+                    techGridBody.appendChild(row);
+                });
+            } else {
+                const emptyRow = document.createElement('tr');
+                emptyRow.innerHTML = `<td colspan="3" style="text-align: center; color: var(--text-secondary); padding: 20px;">No forensic data available for this scan</td>`;
+                techGridBody.appendChild(emptyRow);
+            }
+        }
 
         // Findings / Indicators
         const list = document.getElementById('findingsList');
-        list.className = 'findings-grid';
+        list.className = 'findings-grid'; // Ensure grid layout
         list.innerHTML = '';
 
         if (result.key_indicators && result.key_indicators.length > 0) {

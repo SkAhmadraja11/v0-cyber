@@ -4,9 +4,11 @@
 <head>
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 
 <body>
+  <canvas id="vfx-canvas"></canvas>
   <div class="app-container">
 
     <!-- Live Technical Ticker -->
@@ -92,10 +94,35 @@
           <span class="value" id="confidence">--</span>
         </div>
 
-        <!-- Findings List -->
-        <div class="findings-section">
-          <div class="section-title">KEY INDICATORS</div>
-          <ul id="findingsList" class="findings-list"></ul>
+        <!-- Evidence Sources Used -->
+        <div class="evidence-sources-section">
+          <div class="section-title text-xs">EVIDENCE SOURCES TRACED</div>
+          <div id="evidenceSourcesUsed" class="sources-pills mt-2">--</div>
+        </div>
+
+        <!-- Technical Evidence Grid -->
+        <div class="findings-section mt-4">
+          <div class="section-title">AUDITABLE TECHNICAL GRID</div>
+          <div class="grid-container mt-2">
+            <table class="tech-grid">
+              <thead>
+                <tr>
+                  <th>Indicator</th>
+                  <th>Tier</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="techGridBody">
+                <!-- Dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Key Indicators List -->
+        <div class="findings-section mt-4">
+          <div class="section-title">DETECTION SUMMARY</div>
+          <div id="findingsList" class="reasons-list mt-2"></div>
         </div>
 
         <!-- Enterprise Details -->
@@ -125,7 +152,9 @@
 
     </main>
   </div>
+  <script src="config.js"></script>
   <script src="popup.js"></script>
+  <script src="visuals-vfx.js"></script>
 </body>
 
 </html>

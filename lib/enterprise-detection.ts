@@ -50,194 +50,71 @@ export class EnterpriseThreatEngine {
     }
 
     public async analyze(input: ThreatInput): Promise<EnterpriseThreatResponse> {
-        // Comprehensive multi-layer analysis using detector's technical and intelligence checks
-        const signals: DetectionSource[] = [];
-        const reasons: string[] = [];
+        // Use the core detector for the heavy lifting
+        const mode = input.type === "email" ? "email" : "url";
+        const result = await this.detector.detect(input.content, mode);
 
-        // --- DYNAMIC EXTRACTION ---
-        // Discover ALL URLs and email addresses in the input at runtime
-        const dynamicUrls = this.extractAllUrls(input.content);
-        const dynamicEmails = this.extractAllEmails(input.content);
+        // Map Verdict
+        let verdict: Verdict = "SAFE";
+        if (result.classification === "MALICIOUS") verdict = "MALICIOUS";
+        else if (result.classification === "DANGEROUS") verdict = "HIGH_RISK";
+        else if (result.riskScore >= 40) verdict = "SUSPICIOUS";
 
-        // Primary URL for URL-mode inputs
-        const primaryUrl = input.type === 'url' ? input.content : null;
-        // Merge: primary URL + any URLs found dynamically (up to 5 total)
-        const urlsToScan = Array.from(new Set([
-            ...(primaryUrl ? [primaryUrl] : []),
-            ...dynamicUrls
-        ])).slice(0, 5);
+        // Map Confidence
+        let confidence: Confidence = "LOW";
+        if (result.confidence >= 90) confidence = "VERY_HIGH";
+        else if (result.confidence >= 70) confidence = "HIGH";
+        else if (result.confidence >= 40) confidence = "MEDIUM";
 
-        // 1) Scan all discovered URLs in parallel
-        if (urlsToScan.length > 0) {
-            try {
-                const urlSignalGroups = await Promise.all(
-                    urlsToScan.map(url => this.detector.scanUrl(url, false).catch(() => [] as DetectionSource[]))
-                );
-                signals.push(...urlSignalGroups.flat());
-            } catch (e) {
-                // Non-fatal
-            }
+        // Map Recommended Action
+        let recommended_action: RecommendedAction = "ALLOW";
+        if (verdict === "MALICIOUS") recommended_action = "BLOCK";
+        else if (verdict === "HIGH_RISK") recommended_action = "QUARANTINE";
+        else if (verdict === "SUSPICIOUS") recommended_action = "WARN";
+
+        // Determine Threat Types from sources
+        const threat_types: ThreatType[] = [];
+        const detectedSources = result.sources.filter(s => s.detected);
+
+        if (detectedSources.some(s => s.category === "Virus" || s.name.toLowerCase().includes("malware"))) {
+            threat_types.push("Malware Delivery");
+        }
+        if (detectedSources.some(s => s.name.toLowerCase().includes("brand") || s.name.toLowerCase().includes("impersonation"))) {
+            threat_types.push("Brand Impersonation");
+        }
+        if (detectedSources.some(s => s.name.toLowerCase().includes("phishing") || s.name.toLowerCase().includes("homoglyph"))) {
+            threat_types.push("Phishing");
+        }
+        if (detectedSources.some(s => s.name.toLowerCase().includes("credential") || s.name.toLowerCase().includes("login"))) {
+            threat_types.push("Credential Harvesting");
+        }
+        if (detectedSources.some(s => s.name.toLowerCase().includes("scam") || s.name.toLowerCase().includes("crypto"))) {
+            threat_types.push("Scam");
         }
 
-        // 2) Content and email-specific signals
-        if (input.type === 'email') {
-            try {
-                signals.push(await this.detector.nlpPhishingLanguageDetection(input.content));
-                signals.push(await this.detector.checkEmailIdentity(input.content));
-                signals.push(await this.detector.checkEmailVirusRisk(input.content));
-                signals.push(await this.detector.checkEmailSpecificPatterns(input.content));
-
-                // --- DYNAMIC EMAIL ADDRESS REPUTATION ---
-                // Check every email address found in the content
-                if (dynamicEmails.length > 0) {
-                    const emailRep = await Promise.all(
-                        dynamicEmails.slice(0, 8).map(e => this.detector.checkEmailReputation(e).catch(() => null))
-                    );
-                    signals.push(...emailRep.filter(Boolean) as DetectionSource[]);
-                }
-
-                if (input.metadata?.emailHeaders) {
-                    const auth = this.analyzeEmailHeaders(input.metadata.emailHeaders);
-                    if (auth.indicators.length) {
-                        signals.push({ name: 'Email Authentication', detected: true, confidence: auth.score, reason: auth.indicators.join('; '), isReal: true });
-                    }
-                }
-            } catch { /* continue */ }
-        } else {
-            // For URL scans: run NLP on the raw URL string and also check any email addresses embedded in path/query
-            try {
-                signals.push(await this.detector.nlpPhishingLanguageDetection(input.content));
-            } catch { }
-
-            if (dynamicEmails.length > 0) {
-                const emailRep = await Promise.all(
-                    dynamicEmails.slice(0, 3).map(e => this.detector.checkEmailReputation(e).catch(() => null))
-                );
-                signals.push(...emailRep.filter(Boolean) as DetectionSource[]);
-            }
+        if (threat_types.length === 0 && verdict !== "SAFE") {
+            threat_types.push("Unknown");
         }
 
-        // 3) Scoring: deterministic, weighted, explainable
-        let riskScore = 0;
-        let highestConfidence = 0;
-        let realDetections = 0;
-
-        for (const s of signals) {
-            if (!s) continue;
-            const name = (s.name || '').toLowerCase();
-            const detected = !!s.detected;
-            const conf = Math.min(Math.max(Math.round(s.confidence || 0), 0), 100);
-            highestConfidence = Math.max(highestConfidence, conf);
-            if (s.isReal && detected) realDetections++;
-
-            if (!detected) continue;
-
-            // Base weight by indicator type
-            let weight = 10;
-            if (name.includes('google') || name.includes('phishtank') || name.includes('virustotal')) weight = 45;
-            else if (name.includes('malware') || name.includes('payload') || name.includes('virus')) weight = 40;
-            else if (name.includes('puny') || name.includes('homoglyph') || name.includes('idn')) weight = 40;
-            else if (name.includes('brand') || name.includes('imperson') || name.includes('title')) weight = 35;
-            else if (name.includes('deceptive') || name.includes('infrastructure') || name.includes('random domain')) weight = 35;
-            else if (name.includes('redirect') || name.includes('javascript') || name.includes('external resources') || name.includes('page content')) weight = 30;
-            else if (name.includes('whois') || name.includes('domain age') || name.includes('privacy') || name.includes('parking')) weight = 20;
-            else if (name.includes('ip usage') || name.includes('raw ip')) weight = 25;
-
-            // Scale by confidence to create deterministic contributions
-            const contribution = Math.round((conf / 100) * weight);
-            riskScore += contribution;
-
-            // Record concise technical reason
-            const shortReason = s.reason && s.reason.length > 180 ? s.reason.slice(0, 177) + '...' : s.reason || s.name;
-            reasons.push(`${s.name}: ${shortReason}`);
-        }
-
-        // Consensus / absolute rules
-        const t1Hits = signals.filter(s => s.detected && /(google|phishtank|virustotal)/i.test(s.name)).length;
-        if (t1Hits >= 2) riskScore = Math.max(riskScore, 98);
-        if (signals.some(s => s.detected && /google|phishtank|virustotal/i.test(s.name) && (s.confidence || 100) >= 90)) riskScore = Math.max(riskScore, 95);
-
-        // Strong single indicator domination
-        if (highestConfidence >= 95) riskScore = Math.max(riskScore, highestConfidence);
-
-        // If domain is new or WHOIS shows 'isNew', elevate minimal risk
-        const whois = signals.find(s => /whois|domain age/i.test(s.name));
-        if (whois && /new|unusually new|is unusually new/i.test(String(whois.reason))) {
-            riskScore = Math.max(riskScore, 40);
-            reasons.push(`Domain Intelligence: ${whois.reason}`);
-        }
-
-        // If no real verified signals (all heuristic), treat as SUSPICIOUS baseline
-        // Optimistic Clean: If no threats detected, do not force a risk baseline. 
-        // Allow score to be 0 for clean sites.
-
-        // Normalize and clamp
-        riskScore = Math.min(Math.max(Math.round(riskScore), 0), 100);
-
-        // Deterministic mapping to verdict and confidence
-        let verdict: Verdict = 'SAFE';
-        let confidence: Confidence = 'LOW';
-        let recommended_action: RecommendedAction = 'ALLOW';
-
-        // Intelligence check: Did we get hits from external APIs?
-        const hasT1Intelligence = signals.some(s => s.detected && /(google|phishtank|virustotal)/i.test(s.name));
-        const hasForensicHits = signals.some(s => s.detected && !/(google|phishtank|virustotal)/i.test(s.name));
-
-        if (riskScore >= 85) {
-            verdict = 'MALICIOUS';
-            confidence = hasT1Intelligence ? 'VERY_HIGH' : 'HIGH';
-            recommended_action = 'BLOCK';
-        } else if (riskScore >= 65) {
-            verdict = 'HIGH_RISK';
-            confidence = hasT1Intelligence ? 'HIGH' : 'MEDIUM';
-            recommended_action = 'QUARANTINE';
-        } else if (riskScore >= 40) {
-            verdict = 'SUSPICIOUS';
-            confidence = hasForensicHits ? 'MEDIUM' : 'LOW';
-            recommended_action = 'WARN';
-        } else {
-            verdict = 'SAFE';
-            // If it's safe because of a lack of evidence, confidence is low.
-            // If it's safe even with some noise, confidence is medium.
-            confidence = riskScore < 10 ? 'MEDIUM' : 'LOW';
-            recommended_action = 'ALLOW';
-        }
-
-        // If truly unknown (no signals at all), treat as SAFE (Opt-in to threat detection)
-        if (signals.length === 0) {
-            verdict = 'SAFE';
-            confidence = 'LOW';
-            riskScore = 0;
-            reasons.push('No immediate threat indicators found');
-        }
-
-        // Build concise, de-duplicated reasons (top 6)
-        const uniqueReasons: string[] = [];
-        for (const r of reasons) {
-            if (uniqueReasons.length >= 6) break;
-            if (!uniqueReasons.includes(r)) uniqueReasons.push(r);
-        }
-
-        // Final user-impact and explanation (concise)
+        // Final user-impact and explanation
         const userImpact = (verdict === 'MALICIOUS' || verdict === 'HIGH_RISK')
             ? 'Interaction could lead to credential theft, malware infection, or financial loss.'
             : (verdict === 'SUSPICIOUS' ? 'Potential social engineering or suspicious infrastructure.' : 'No immediate threats detected.');
 
-        const explanation = uniqueReasons.length > 0
-            ? uniqueReasons.join(' | ')
+        const explanation = result.reasons.length > 0
+            ? result.reasons.join(' | ')
             : 'No specific indicators found';
 
-        // Return enterprise-shaped response (keeps original schema)
         return {
-            risk_score: riskScore,
+            risk_score: result.riskScore,
             verdict,
-            threat_type: uniqueReasons.length ? ['Unknown'] : ['Unknown'],
+            threat_type: threat_types,
             confidence,
-            key_indicators: uniqueReasons,
+            key_indicators: result.reasons,
             user_impact: userImpact,
             recommended_action: recommended_action,
             explanation,
-            sources: signals
+            sources: result.sources
         };
     }
 

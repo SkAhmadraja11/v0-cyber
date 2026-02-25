@@ -31,9 +31,18 @@ export async function proxy(request: NextRequest) {
     },
   })
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Graceful Auth Check (Prevent ConnectTimeoutError from crashing the app)
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data?.user
+  } catch (e: any) {
+    if (e.code === 'UND_ERR_CONNECT_TIMEOUT' || e.message?.includes('Timeout')) {
+      console.warn("PhishGuard Middleware: Supabase connection timeout (proceeding as guest)");
+    } else {
+      console.error("PhishGuard Middleware: Auth check failed:", e.message);
+    }
+  }
 
   // Protect dashboard, profile, and admin routes
   if (

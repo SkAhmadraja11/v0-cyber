@@ -3,18 +3,7 @@ import { EnterpriseThreatEngine, ThreatInput } from "./lib/enterprise-detection"
 import * as fs from 'fs';
 
 async function batchScan() {
-    const urls = [
-        "https://www.google.com",
-        "https://www.amazon.com",
-        "https://www.microsoft.com",
-        "https://www.paypal.com",
-        "https://www.github.com",
-        "https://phishing-scam-test.com",
-        "https://secure-login-bank.xyz",
-        "https://verify-your-account-now.top",
-        "https://update-browser-security.site",
-        "https://claim-your-prize-winner.info"
-    ];
+    const urls = JSON.parse(fs.readFileSync('test-urls.json', 'utf8'));
 
     const engine = new EnterpriseThreatEngine();
     const results = [];
@@ -22,6 +11,7 @@ async function batchScan() {
     console.log(`Starting batch scan of ${urls.length} URLs...`);
 
     for (const url of urls) {
+        console.log(`Processing [${results.length + 1}/${urls.length}]: ${url}`);
         try {
             const threatInput: ThreatInput = {
                 type: 'url',
@@ -34,13 +24,19 @@ async function batchScan() {
                 verdict: result.verdict,
                 risk_score: result.risk_score
             });
-        } catch (e) {
+            console.log(`  Verdict: ${result.verdict} (${result.risk_score})`);
+        } catch (e: any) {
             results.push({ url, error: e.message });
+            console.log(`  Error: ${e.message}`);
         }
     }
 
     fs.writeFileSync('scan_results.json', JSON.stringify(results, null, 2));
-    console.log("Results written to scan_results.json");
+    console.log(`Successfully scanned ${results.length} URLs. Results written to scan_results.json`);
+    process.exit(0);
 }
 
-batchScan().catch(console.error);
+batchScan().catch(err => {
+    console.error("Critical error in batch scan:", err);
+    process.exit(1);
+});

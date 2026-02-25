@@ -1,11 +1,11 @@
 // Background Service Worker for Phishing Detective Enterprise
 // Continuously monitors navigation and scans in the background
 try {
+    importScripts('config.js');
     importScripts('offline-detector.js');
-} catch (e) { console.error('PhusGuard: Offline detector load failed:', e); }
+} catch (e) { console.error('PhusGuard: Script load failed:', e); }
 
-// Using 127.0.0.1 instead of localhost to avoid IPv6 resolution issues on Windows
-const API_ENDPOINT = 'http://127.0.0.1:3000/api/real-scan';
+const API_ENDPOINT = (typeof CONFIG !== 'undefined' ? CONFIG.API_BASE + CONFIG.SCAN_ENDPOINT : 'http://127.0.0.1:3000/api/real-scan');
 
 // Cache for scan results to avoid spamming the API
 const scanCache = new Map();
@@ -42,12 +42,19 @@ async function handleBatchScan(links) {
             return;
         }
 
-        let cleanedLink = link.trim();
-        if (!cleanedLink.startsWith('http://') && !cleanedLink.startsWith('https://')) {
-            cleanedLink = 'https://' + cleanedLink;
-        }
-
         try {
+            // Deterministic Normalization
+            let cleanedLink = link.trim();
+            try {
+                const urlObj = new URL(cleanedLink.startsWith('http') ? cleanedLink : 'https://' + cleanedLink);
+                urlObj.hash = ''; // Remove fragments
+                cleanedLink = urlObj.toString();
+            } catch (e) {
+                if (!cleanedLink.startsWith('http://') && !cleanedLink.startsWith('https://')) {
+                    cleanedLink = 'https://' + cleanedLink;
+                }
+            }
+
             const response = await fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -57,7 +64,7 @@ async function handleBatchScan(links) {
             if (response.ok) {
                 const result = await response.json();
                 if (result && result.verdict) {
-                    scanCache.set(link, result);
+                    scanCache.set(cleanedLink, result);
                     if (isThreat(result)) threats.push({ url: link, verdict: result.verdict });
                 }
             }
@@ -74,10 +81,6 @@ function isThreat(result) {
 }
 
 async function scanUrl(tabId, url) {
-    if (scanCache.has(url)) {
-        updateBadge(tabId, scanCache.get(url));
-        return;
-    }
 
     try {
         // Set loading state safely
@@ -86,9 +89,21 @@ async function scanUrl(tabId, url) {
             await chrome.action.setBadgeBackgroundColor({ color: '#666', tabId });
         } catch (e) { return; }
 
+        // Deterministic Normalization - IMPORTANT: Normalize BEFORE checking cache
         let cleanedUrl = url.trim();
-        if (!cleanedUrl.startsWith('http://') && !cleanedUrl.startsWith('https://')) {
-            cleanedUrl = 'https://' + cleanedUrl;
+        try {
+            const urlObj = new URL(cleanedUrl.startsWith('http') ? cleanedUrl : 'https://' + cleanedUrl);
+            urlObj.hash = ''; // Remove fragments
+            cleanedUrl = urlObj.toString();
+        } catch (e) {
+            if (!cleanedUrl.startsWith('http://') && !cleanedUrl.startsWith('https://')) {
+                cleanedUrl = 'https://' + cleanedUrl;
+            }
+        }
+
+        if (scanCache.has(cleanedUrl)) {
+            updateBadge(tabId, scanCache.get(cleanedUrl));
+            return;
         }
 
         console.log('PhusGuard: Scanning network resource:', cleanedUrl);
@@ -98,7 +113,7 @@ async function scanUrl(tabId, url) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: cleanedUrl, mode: 'url' })
         }).catch(err => {
-            console.error('PhusGuard: Connection Error - Is npm run dev active?', err);
+            console.error('PhusGuard: Connection Error - Is backend active?', err);
             throw err;
         });
 
@@ -115,24 +130,16 @@ async function scanUrl(tabId, url) {
         } catch (e) { return; }
 
         if (result && result.verdict) {
-            scanCache.set(url, result);
+            scanCache.set(cleanedUrl, result);
             updateBadge(tabId, result);
             handleThreat(tabId, result);
         }
     } catch (error) {
-        console.warn("PhusGuard: Server unreachable, failing over to Local Engine...");
+        console.warn("PhusGuard: Scan failed (no local failover as per strict requirements):", error);
         try {
-            const offlineResult = await OfflineDetector.scan(url);
-            updateBadge(tabId, offlineResult);
-            if (isThreat(offlineResult)) {
-                handleThreat(tabId, offlineResult);
-            }
-        } catch (offlineError) {
-            try {
-                chrome.action.setBadgeText({ text: 'OFF', tabId });
-                chrome.action.setBadgeBackgroundColor({ color: '#999', tabId });
-            } catch (e) { }
-        }
+            chrome.action.setBadgeText({ text: 'ERR', tabId });
+            chrome.action.setBadgeBackgroundColor({ color: '#999', tabId });
+        } catch (e) { }
     }
 }
 

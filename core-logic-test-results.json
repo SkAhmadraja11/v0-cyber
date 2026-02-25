@@ -3,17 +3,17 @@
     "name": "Consensus Scoring Test",
     "url": "https://login-secure-auth.tk",
     "expectedMinScore": 80,
-    "actualScore": 82,
-    "actualClassification": "MALICIOUS",
+    "actualScore": 85,
+    "actualClassification": "DANGEROUS",
     "passed": true
   },
   {
     "name": "Subdomain Hijack Relationship Test",
     "url": "https://paypal-login.github.io",
     "expectedMinScore": 85,
-    "actualScore": 75,
-    "actualClassification": "MALICIOUS",
-    "passed": false
+    "actualScore": 85,
+    "actualClassification": "DANGEROUS",
+    "passed": true
   },
   {
     "name": "Compromised Site Test",
@@ -28,16 +28,16 @@
     "type": "email",
     "input": "Subject: Action Required! Authentication-Results: mx.google.com; dmarc=fail",
     "expectedMinScore": 70,
-    "actualScore": 90,
-    "actualClassification": "MALICIOUS",
+    "actualScore": 82,
+    "actualClassification": "DANGEROUS",
     "passed": true
   },
   {
     "name": "JavaScript Behavior: Credential Access",
     "url": "https://test-credentials-theft.com",
     "expectedMinScore": 40,
-    "actualScore": 35,
-    "actualClassification": "SUSPICIOUS",
-    "passed": false
+    "actualScore": 90,
+    "actualClassification": "MALICIOUS",
+    "passed": true
   }
 ]

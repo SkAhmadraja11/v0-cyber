@@ -14,7 +14,20 @@
     --suspicious-glow: rgba(245, 158, 11, 0.3);
     --malicious: #ef4444;
     --malicious-glow: rgba(239, 68, 68, 0.3);
-    --surface-glass: rgba(255, 255, 255, 0.03);
+    --high-risk: #ff6b00;
+    --high-risk-glow: rgba(255, 107, 0, 0.3);
+    --surface-glass: rgba(255, 255, 255, 0.05);
+    --glass-blur: blur(12px);
+}
+
+#vfx-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
 }
 
 * {
@@ -24,15 +37,11 @@
 body {
     width: 100%;
     margin: 0;
-    background-color: var(--bg-color);
+    background-color: #030303;
     color: var(--text-primary);
     font-family: 'Inter', -apple-system, system-ui, sans-serif;
     overflow-x: hidden;
     min-height: 100vh;
-    background-image:
-        radial-gradient(circle at 0% 0%, rgba(0, 242, 255, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 100% 100%, rgba(0, 255, 157, 0.08) 0%, transparent 40%);
-    background-attachment: fixed;
 }
 
 .app-container {
@@ -180,11 +189,12 @@ body {
 
 /* Cards */
 .card {
-    background: var(--card-bg);
+    background: rgba(20, 20, 25, 0.4);
     border-radius: var(--radius);
     padding: 20px;
-    border: 1px solid var(--card-border);
-    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -440,6 +450,144 @@ body {
     transition: all 0.2s ease;
 }
 
+/* Technical Grid Styles */
+.tech-grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--card-border);
+}
+
+.tech-grid th {
+    padding: 10px;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    font-weight: 800;
+}
+
+.tech-grid td {
+    padding: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.tech-grid tr:last-child td {
+    border-bottom: none;
+}
+
+.indicator-name {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.indicator-reason {
+    font-size: 9px;
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 2px;
+}
+
+/* Evidence Tiers */
+.tier-badge {
+    font-size: 8px;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+}
+
+.tier-t1 {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.tier-t2 {
+    background: rgba(168, 85, 247, 0.1);
+    color: #a855f7;
+    border-color: rgba(168, 85, 247, 0.2);
+}
+
+.tier-t3 {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border-color: var(--card-border);
+}
+
+/* Status Badges */
+.grid-status {
+    font-size: 8px;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.status-detected {
+    background: rgba(255, 0, 85, 0.1);
+    color: #ff0055;
+    border: 1px solid rgba(255, 0, 85, 0.2);
+}
+
+.status-clean {
+    background: rgba(0, 255, 157, 0.1);
+    color: #00ff9d;
+    border: 1px solid rgba(0, 255, 157, 0.2);
+}
+
+/* Sources Pills */
+.sources-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.source-pill {
+    font-size: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--card-border);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Detection Summary List */
+.reasons-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.reason-item {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.mt-4 {
+    margin-top: 16px;
+}
+
+.mt-2 {
+    margin-top: 8px;
+}
+
+.text-xs {
+    font-size: 10px;
+}
+
 .evidence-card:hover {
     background: rgba(255, 255, 255, 0.06);
     transform: translateX(4px);
@@ -563,6 +711,11 @@ body {
     filter: drop-shadow(0 0 8px var(--malicious-glow));
 }
 
+.status-high-risk {
+    color: var(--high-risk);
+    filter: drop-shadow(0 0 8px var(--high-risk-glow));
+}
+
 .bg-safe {
     border-color: var(--safe);
     background: linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(0, 0, 0, 0.4));
@@ -576,6 +729,11 @@ body {
 .bg-malicious {
     border-color: var(--malicious);
     background: linear-gradient(145deg, rgba(239, 68, 68, 0.1), rgba(0, 0, 0, 0.4));
+}
+
+.bg-high-risk {
+    border-color: var(--high-risk);
+    background: linear-gradient(145deg, rgba(255, 107, 0, 0.1), rgba(0, 0, 0, 0.4));
 }
 
 .action-allow {

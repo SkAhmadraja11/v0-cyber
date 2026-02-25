@@ -18,9 +18,9 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('id, email')
       .eq('email', email)
-      .single()
+      .maybeSingle()
 
-    if (existingUser && !existingError) {
+    if (existingUser) {
       return NextResponse.json({ error: 'User with this email already exists' }, { status: 400 })
     }
 

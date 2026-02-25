@@ -91,7 +91,45 @@ export const TOP_DOMAINS = [
     "un.org", "nasa.gov", "ca.gov", "ny.gov", "india.gov.in",
     "amazon.in", "amazon.co.uk", "amazon.de", "amazon.co.jp",
     "google.co.in", "google.co.uk", "google.de", "google.co.jp",
-    "yahoo.co.jp", "baidu.com", "qq.com", "taobao.com", "yandex.ru"
+    "yahoo.co.jp", "baidu.com", "qq.com", "taobao.com", "yandex.ru",
+    // --- MICROSOFT / MSN ECOSYSTEM ---
+    "msn.com", "live.com", "hotmail.com", "outlook.com",
+    "microsoft.com", "microsoftonline.com", "microsoftazure.com",
+    "office.com", "office365.com", "onedrive.com", "onenote.com",
+    "sharepoint.com", "skype.com", "xbox.com", "windowsazure.com",
+    "azure.com", "azureedge.net", "windows.com", "windowsupdate.com",
+    "bing.com", "bingapis.com", "msecnd.net", "msftauth.net",
+    "msftauthimages.net", "msauth.net", "msn.net", "microsoft.net",
+    "visualstudio.com", "github.com", "nuget.org", "powershell.com",
+    // --- GOOGLE ECOSYSTEM ---
+    "google.com", "googleapis.com", "gstatic.com", "googlevideo.com",
+    "googlesyndication.com", "googleadservices.com", "doubleclick.net",
+    "google-analytics.com", "googletagmanager.com", "googleusercontent.com",
+    "ytimg.com", "ggpht.com", "appspot.com", "blogspot.com",
+    "chromium.org", "google.org",
+    // --- AMAZON/AWS ECOSYSTEM ---
+    "amazon.com", "amazonaws.com", "cloudfront.net", "awsstatic.com",
+    "awscloud.com", "s3.amazonaws.com", "aws.amazon.com",
+    "twitch.tv", "twitchsvc.net", "twitchapps.com",
+    // --- APPLE ECOSYSTEM ---
+    "apple.com", "icloud.com", "mzstatic.com", "itunes.com",
+    "appstore.com", "icloud-content.com", "apple-cloudkit.com",
+    // --- OTHER POPULR TRUSTED SITES ---
+    "archive.org", "medium.com", "substack.com", "notion.so",
+    "airtable.com", "figma.com", "canva.com", "loom.com",
+    "typeform.com", "mailchimp.com", "hubspot.com", "zendesk.com",
+    "atlassian.com", "jira.com", "confluence.com", "trello.com",
+    "asana.com", "monday.com", "clickup.com", "basecamp.com",
+    "box.com", "dropbox.com", "onedrive.live.com",
+    "cloudflare.com", "cloudflareinsights.com",
+    "wp.com", "wordpress.com", "tumblr.com", "blogger.com",
+    "wix.com", "squarespace.com", "webflow.com",
+    "paypal.com", "stripe.com", "square.com",
+    "twilio.com", "sendgrid.com", "mailgun.com",
+    "okta.com", "auth0.com", "duo.com",
+    "splunk.com", "datadog.com", "newrelic.com", "elastic.co",
+    "sentry.io", "pagerduty.com", "statuspage.io",
+    "npr.org", "pbs.org", "bbc.co.uk", "theguardian.com",
 ];
 
 export const HOSTING_PLATFORMS = [

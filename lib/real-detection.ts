@@ -238,9 +238,25 @@ export class RealPhishingDetector {
     const isGovOrEdu = domain.endsWith(".gov") || domain.endsWith(".edu") || domain.endsWith(".gov.in")
 
     // 0. GLOBAL WHITELIST (Immediate Pass for known safe domains)
-    // Prevents false positives on Google, StackOverflow, etc.
-    const trustedDomains = ["google.com", "stackoverflow.com", "github.com", "amazon.com", "microsoft.com", "paypal.com"];
-    if (trustedDomains.some(t => domain === t || domain.endsWith("." + t))) {
+    // Prevents false positives on major trusted domains and their subdomains.
+    const trustedDomainsForBrand = [
+      // Big Tech
+      "google.com", "youtube.com", "googleapis.com", "gstatic.com",
+      "microsoft.com", "msn.com", "live.com", "outlook.com", "hotmail.com",
+      "bing.com", "office.com", "azure.com", "windows.com", "skype.com",
+      "xbox.com", "github.com", "visualstudio.com", "microsoftonline.com",
+      "apple.com", "icloud.com",
+      "amazon.com", "amazonaws.com", "cloudfront.net",
+      "facebook.com", "instagram.com", "whatsapp.com", "meta.com",
+      "twitter.com", "x.com", "linkedin.com",
+      // Finance
+      "paypal.com", "stripe.com", "visa.com", "mastercard.com",
+      "chase.com", "bankofamerica.com", "wellsfargo.com",
+      // Infrastructure
+      "cloudflare.com", "stackoverflow.com", "reddit.com",
+      "yahoo.com", "aol.com", "wikipedia.org",
+    ];
+    if (trustedDomainsForBrand.some(t => domain === t || domain.endsWith("." + t))) {
       return {
         name: "Whitelisted Trusted Domain",
         detected: false,
@@ -680,12 +696,13 @@ export class RealPhishingDetector {
     const full = components.full.toLowerCase()
 
     // 0. User Info / Authority Manipulation (@ symbol)
-    // Attackers use user:pass@EVIL-SITE.com to trick users into seeing the first part
-    // 0. User Info / Authority Manipulation (@ symbol)
-    // Attackers use user:pass@EVIL-SITE.com to trick users into seeing the first part
-    if (full.includes('@')) {
+    // Attackers use user:pass@EVIL-SITE.com to trick users into seeing the first part.
+    // IMPORTANT: Only flag if '@' appears BEFORE the first '/' (i.e., in the authority section).
+    // Query parameters and fragments can legitimately contain '@' in tracking links.
+    const urlAuthority = full.split('/').slice(0, 3).join('/') // scheme://host part only
+    if (urlAuthority.includes('@')) {
       score = 100 // CRITICAL - Force MALICIOUS (prevent score dilution)
-      indicators.push("CRITICAL_THREAT: URL Authority Manipulation (@ symbol detected)")
+      indicators.push("CRITICAL_THREAT: URL Authority Manipulation (@ symbol detected in authority)")
     }
 
     // 1. Double URL Encoding / Mixed Encoding
@@ -694,17 +711,19 @@ export class RealPhishingDetector {
       indicators.push("Double/Nested URL encoding detected")
     }
 
-    // 2. Base64-like strings in path/query
-    const base64Pattern = /(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)/
-    if (components.pathSegments.some((s: string) => base64Pattern.test(s) && s.length > 20)) {
+    // 2. Base64-like strings in path/query (must be long enough to be meaningful)
+    // Short base64 patterns appear in normal alphanumeric query params - require >= 20 chars of base64
+    const base64Pattern = /(?:[A-Za-z0-9+\/]{4}){5,}(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})/
+    const hasBase64 = base64Pattern.test(full) && full.length > 80
+    if (hasBase64) {
       score += 50
-      indicators.push("Base64-encoded string in path")
+      indicators.push("Suspicious Base64-encoded string in URL (Potential Payload)")
     }
 
     // 3. Hex-encoded payloads
-    if (/0x[0-9a-fA-F]{4,}/.test(full)) {
+    if (/0x[0-9a-fA-F]{4,}/.test(full) || /%x[0-9a-fA-F]{2}/.test(full)) {
       score += 45
-      indicators.push("Hex-encoded payload detected")
+      indicators.push("Hex-encoded payload detected in URL")
     }
 
     return { score, indicators }
@@ -718,7 +737,8 @@ export class RealPhishingDetector {
 
     const criticalKeywords = [
       "cmd.exe", "/bin/sh", "/bin/bash", "powershell", "wget", "curl",
-      "javascript:", "vbscript:", "onload=", "onerror=", "eval(", "exec("
+      "javascript:", "vbscript:", "onload=", "onerror=", "eval(", "exec(",
+      "src=http", "href=http", "redirect=", "callback=", "jsonp="
     ]
 
     const pathString = components.pathSegments.join(' ').toLowerCase()
@@ -729,9 +749,9 @@ export class RealPhishingDetector {
     }
 
     // Serialized object patterns
-    if (full.includes("rO0AB") || full.includes("eyJ")) { // Java/JSON serialization prefixes
-      score += 60
-      indicators.push("Serialized object data detected (Potential Deserialization Exploit)")
+    if (full.includes("rO0AB") || full.includes("eyJ") || full.includes("Tzo")) {
+      score += 65
+      indicators.push("Serialized data detected (Potential Exploit Payload)")
     }
 
     // File inclusion markers
@@ -778,7 +798,9 @@ export class RealPhishingDetector {
       { regex: /verify.*wallet|connect.*dapp/i, name: "Crypto Wallet Drainer Intent" },
       { regex: /confirm.*password|login.*verify/i, name: "Credential Capture Intent" },
       { regex: /download.*driver|driver.*update/i, name: "Fake Driver Download" },
-      { regex: /urgent.*(action|update|verify)|security.*(alert|update|notification)/i, name: "Social Engineering: Urgent Security Lure" }
+      { regex: /urgent.*(action|update|verify)|security.*(alert|update|notification)/i, name: "Social Engineering: Urgent Security Lure" },
+      { regex: /captcha|robot.*verification|human.*check/i, name: "Anti-Analysis: Fake CAPTCHA Redirect" },
+      { regex: /drainer|contract.*verify|stake.*reward/i, name: "Crypto: Potential Drainer Interaction" }
     ]
 
     intentPatterns.forEach(p => {
@@ -1167,8 +1189,8 @@ export class RealPhishingDetector {
         input = 'https://' + input
       }
       const urlObj = new URL(input)
-      urlObj.search = ""
-      urlObj.hash = ""
+      // COMPREHENSIVE SCAN: Do NOT strip search/hash. 
+      // Attacker payloads often hide in query params and fragments.
       urlObj.hostname = urlObj.hostname.toLowerCase()
       return urlObj.toString()
     } catch (e) {
@@ -1188,15 +1210,14 @@ export class RealPhishingDetector {
   }
 
   private isValidDomain(input: string): boolean {
-    // Basic regex to check if it looks like a domain or URL
-    // Must have at least one dot, and valid chars
-    const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/
-    const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/
-
-    // Check if it's "abc" (no dot) -> false
-    if (!input.includes('.')) return false
-
-    return domainRegex.test(input) || urlRegex.test(input)
+    if (!input || !input.includes('.')) return false;
+    try {
+      const urlToTest = input.includes('://') ? input : 'https://' + input;
+      const urlObj = new URL(urlToTest);
+      return urlObj.hostname.includes('.') && urlObj.hostname.length > 3;
+    } catch (e) {
+      return false;
+    }
   }
 
   private extractUrls(text: string): string[] {
@@ -1945,8 +1966,11 @@ export class RealPhishingDetector {
 
     if (mode === 'url') {
       // 0. QUICK-FIX: Check if it's a raw IP or @ symbol attack (which validDomain/normalize might fail on)
-      // Moved to TOP to ensure it runs before any validation
-      if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(input) || (input.includes('@') && !input.includes(' '))) {
+      // Moved to TOP to ensure it runs before any validation.
+      // NOTE: '@' in query params is fine (used in tracking). Only flag '@' in the authority (host) part.
+      const inputAuthority = input.split('?')[0].split('#')[0] // strip query and fragment first
+      const hasAtInAuthority = inputAuthority.includes('@') && !inputAuthority.startsWith('mailto:')
+      if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(input) || hasAtInAuthority) {
         return {
           riskScore: 100, classification: "MALICIOUS", confidence: 95, reasons: ["CRITICAL: Raw IP or Authority Manipulation detected"],
           sources: [{ name: "Critical Pre-Check", detected: true, confidence: 100, reason: "Raw IP / @ Symbol Attack", isReal: true, category: "Technical" }],
@@ -1954,10 +1978,35 @@ export class RealPhishingDetector {
         }
       }
 
-      // 0. QUICK-FIX: Global Whitelist for Google/StackOverflow/etc BEFORE VALIDATION
-      // This prevents "DANGEROUS" verdict due to validation failures on complex query params
-      const trustedDomains = ["google.com", "stackoverflow.com", "github.com", "amazon.com", "microsoft.com", "paypal.com", "www.google.com"];
-      if (trustedDomains.some(t => input.includes(t))) {
+      // 0. QUICK-FIX: Global Whitelist for major trusted domains BEFORE VALIDATION
+      // This prevents false positives due to complex query params on trusted sites
+      const trustedDomains = [
+        // Microsoft / MSN ecosystem
+        "msn.com", "microsoft.com", "microsoftonline.com",
+        "live.com", "outlook.com", "hotmail.com",
+        "bing.com", "office.com", "office365.com",
+        "azure.com", "windows.com", "skype.com", "xbox.com",
+        "onedrive.com", "sharepoint.com", "onenote.com",
+        // Google ecosystem
+        "google.com", "googleapis.com", "gstatic.com", "youtube.com",
+        "gmail.com", "googlevideo.com", "blogger.com",
+        // Amazon ecosystem
+        "amazon.com", "amazonaws.com", "cloudfront.net",
+        // Apple
+        "apple.com", "icloud.com",
+        // Social / Big Tech
+        "facebook.com", "instagram.com", "whatsapp.com", "meta.com",
+        "twitter.com", "x.com", "linkedin.com",
+        "reddit.com", "wikipedia.org", "stackoverflow.com",
+        "github.com", "gitlab.com",
+        // Finance
+        "paypal.com", "stripe.com",
+        // News
+        "bbc.com", "cnn.com", "nytimes.com",
+        "yahoo.com",
+      ];
+      const inputDomain = (() => { try { return new URL(input.includes('://') ? input : 'https://' + input).hostname.toLowerCase(); } catch { return ''; } })();
+      if (trustedDomains.some(t => inputDomain === t || inputDomain.endsWith('.' + t))) {
         return {
           riskScore: 0, classification: "SAFE", confidence: 100, reasons: ["Verified Trusted Domain (Whitelisted Pre-Check)"],
           sources: [{ name: "Whitelisted Trusted Domain", detected: false, confidence: 0, reason: "Whitelisted Pre-Check", isReal: true, category: "Trust" }],
@@ -2017,9 +2066,9 @@ export class RealPhishingDetector {
     let riskScore = this.calculateRiskScore(sources, urlToExamine)
     const confidence = this.calculateOverallConfidence(sources)
 
-    // Top 3 Technical Reasons only
+    // Increased visibility for Deep URL Analysis: Show top 8 reasons
     const allReasons = this.generateReasons(sources)
-    const reasons = allReasons.slice(0, 3)
+    const reasons = allReasons.slice(0, 8)
 
     // PATCH-10: Risk Finalization Logic
     // If Ultra-Strict Heuristics triggered, FORCE HIGH/MALICIOUS

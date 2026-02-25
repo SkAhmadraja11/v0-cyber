@@ -5,8 +5,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  ScatterChart,
-  Scatter,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -21,16 +19,14 @@ import {
 import {
   Activity,
   ArrowLeft,
-  Download,
-  Filter,
   RefreshCcw,
   Shield,
   AlertTriangle,
   Globe,
-  Wallet,
-  FileText,
-  MessageSquare,
+  Filter,
   Gamepad2,
+  MessageSquare,
+  TrendingUp,
 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -40,106 +36,112 @@ import CyberRangeWidget from "@/components/cyber-range-widget"
 import { MobileNav } from "@/components/mobile-nav"
 import { UserNav } from "@/components/user-nav"
 
-// --- Mock Data for Graphs ---
+interface AnalyticsData {
+  totalScans: number
+  threatsBlocked: number
+  mlAccuracy: number
+  avgResponseTime: number
+  scanTypes: { name: string; value: number; color: string }[]
+  riskSplit: { name: string; value: number; color: string }[]
+  trendData: { name: string; incoming: number; blocked: number }[]
+  alertsData: { name: string; value: number }[]
+  lastUpdated: string
+}
 
-const SCAN_TYPES = [
-  { name: "URL Scans", value: 450, color: "#3b82f6" }, // Blue
-  { name: "Email Analysis", value: 320, color: "#8b5cf6" }, // Purple
-  { name: "File Checks", value: 210, color: "#ec4899" }, // Pink
-]
+interface RecentScan {
+  id: string
+  url: string
+  scan_type: string
+  risk_score: number
+  classification: string
+  confidence: number
+  created_at: string
+  reasons: string[]
+}
 
-const RISK_SPLIT = [
-  { name: "Safe", value: 680, color: "#22c55e" }, // Green
-  { name: "Suspicious", value: 240, color: "#eab308" }, // Yellow
-  { name: "Malicious", value: 80, color: "#ef4444" }, // Red
-]
+const DEFAULT_ANALYTICS: AnalyticsData = {
+  totalScans: 0,
+  threatsBlocked: 0,
+  mlAccuracy: 99.2,
+  avgResponseTime: 347,
+  scanTypes: [],
+  riskSplit: [
+    { name: "Safe", value: 0, color: "#22c55e" },
+    { name: "Suspicious", value: 0, color: "#eab308" },
+    { name: "Malicious", value: 0, color: "#ef4444" },
+  ],
+  trendData: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((name) => ({
+    name,
+    incoming: 0,
+    blocked: 0,
+  })),
+  alertsData: [],
+  lastUpdated: new Date().toISOString(),
+}
 
-// Risk Matrix: x=Risk Score, y=Confidence, z=Volume(size)
-const RISK_MATRIX_DATA = [
-  { x: 20, y: 85, z: 100, name: "Low Risk" },
-  { x: 45, y: 60, z: 200, name: "Medium Risk" },
-  { x: 80, y: 95, z: 50, name: "High Potential" },
-  { x: 90, y: 98, z: 80, name: "Confirmed Fraud" },
-  { x: 15, y: 30, z: 150, name: "Noise" },
-  { x: 65, y: 75, z: 120, name: "Investigate" },
-  { x: 30, y: 90, z: 90, name: "Safe High Conf" },
-  { x: 85, y: 40, z: 60, name: "Anomaly" },
-]
+function classificationColor(cls: string) {
+  if (cls === "MALICIOUS" || cls === "HIGH_RISK") return "text-red-500 bg-red-500/10"
+  if (cls === "DANGEROUS" || cls === "SUSPICIOUS") return "text-yellow-500 bg-yellow-500/10"
+  return "text-green-500 bg-green-500/10"
+}
 
-const ALERTS_DATA = [
-  { name: "Malware", value: 120 },
-  { name: "Malicious", value: 200 },
-  { name: "Spam", value: 150 },
-  { name: "Spoofing", value: 80 },
-  { name: "Data Leak", value: 40 },
-]
-
-const TREND_DATA = [
-  { name: "Mon", incoming: 400, blocked: 24 },
-  { name: "Tue", incoming: 300, blocked: 18 },
-  { name: "Wed", incoming: 550, blocked: 45 },
-  { name: "Thu", incoming: 480, blocked: 32 },
-  { name: "Fri", incoming: 600, blocked: 58 },
-  { name: "Sat", incoming: 350, blocked: 20 },
-  { name: "Sun", incoming: 280, blocked: 15 },
-]
-
-const GLOBAL_FLOW = [
-  { region: "North America", value: 45 },
-  { region: "Europe", value: 30 },
-  { region: "Asia Pacific", value: 25 },
-]
+function timeAgo(dateStr: string) {
+  const diff = (Date.now() - new Date(dateStr).getTime()) / 1000
+  if (diff < 60) return `${Math.floor(diff)}s ago`
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+  return `${Math.floor(diff / 86400)}d ago`
+}
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState({
-    totalScans: 0,
-    threatsBlocked: 0,
-    mlAccuracy: 99.2,
-    avgResponseTime: 347,
-    scanTypes: [
-      { name: "URL Scans", value: 0, color: "#3b82f6" },
-      { name: "Email Analysis", value: 0, color: "#8b5cf6" },
-    ],
-  })
+  const [analytics, setAnalytics] = useState<AnalyticsData>(DEFAULT_ANALYTICS)
+  const [recentScans, setRecentScans] = useState<RecentScan[]>([])
   const [loading, setLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [timeRange, setTimeRange] = useState("24h")
-  const [recentScans, setRecentScans] = useState([])
+  const [timeRange, setTimeRange] = useState("7d")
   const [showContactWidget, setShowContactWidget] = useState(false)
+  const [fetchError, setFetchError] = useState(false)
 
-  const fetchAnalytics = useCallback(async (isManual = false) => {
-    if (isManual) setIsRefreshing(true)
-    try {
-      const [analyticsRes, scansRes] = await Promise.all([
-        fetch(`/api/analytics?range=${timeRange}`),
-        fetch("/api/scans"),
-      ])
+  const fetchAnalytics = useCallback(
+    async (isManual = false) => {
+      if (isManual) setIsRefreshing(true)
+      setFetchError(false)
+      try {
+        const [analyticsRes, scansRes] = await Promise.allSettled([
+          fetch(`/api/analytics?range=${timeRange}`),
+          fetch("/api/scans"),
+        ])
 
-      if (analyticsRes.ok) {
-        const analyticsData = await analyticsRes.json()
-        setStats({
-          totalScans: analyticsData.totalScans,
-          threatsBlocked: analyticsData.threatsBlocked,
-          mlAccuracy: analyticsData.mlAccuracy,
-          avgResponseTime: analyticsData.avgResponseTime,
-          scanTypes: analyticsData.scanTypes || [],
-        })
+        if (analyticsRes.status === "fulfilled" && analyticsRes.value.ok) {
+          const data: AnalyticsData = await analyticsRes.value.json()
+          setAnalytics(data)
+        } else {
+          setFetchError(true)
+        }
+
+        if (scansRes.status === "fulfilled" && scansRes.value.ok) {
+          const scansData = await scansRes.value.json()
+          setRecentScans((scansData?.data || []).slice(0, 6))
+        }
+      } catch (error) {
+        console.error("[Dashboard] Failed to fetch analytics:", error)
+        setFetchError(true)
+      } finally {
+        setLoading(false)
+        setIsRefreshing(false)
       }
-
-      if (scansRes.ok) {
-        const scansData = await scansRes.json()
-        setRecentScans((scansData?.data || []).slice(0, 5))
-      }
-    } catch (error) {
-      console.error("[v0] Error fetching dashboard data:", error)
-    } finally {
-      setLoading(false)
-      setIsRefreshing(false)
-    }
-  }, [timeRange])
+    },
+    [timeRange]
+  )
 
   useEffect(() => {
     fetchAnalytics()
+  }, [fetchAnalytics])
+
+  // Auto-refresh every 60s
+  useEffect(() => {
+    const interval = setInterval(() => fetchAnalytics(), 60_000)
+    return () => clearInterval(interval)
   }, [fetchAnalytics])
 
   if (loading) {
@@ -147,11 +149,16 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Activity className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading Risk Analytics...</p>
+          <p className="text-muted-foreground">Loading Security Analytics...</p>
         </div>
       </div>
     )
   }
+
+  const safePercent =
+    analytics.totalScans > 0
+      ? Math.round(((analytics.totalScans - analytics.threatsBlocked) / analytics.totalScans) * 100)
+      : 100
 
   return (
     <div className="min-h-screen bg-background">
@@ -187,7 +194,7 @@ export default function DashboardPage() {
                 onClick={() => fetchAnalytics(true)}
                 disabled={isRefreshing}
               >
-                <RefreshCcw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCcw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
                 {isRefreshing ? "Refreshing..." : "Refresh"}
               </Button>
               <Button
@@ -218,7 +225,7 @@ export default function DashboardPage() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Time Range Selector */}
+        {/* Title + Time Range */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">Security Analytics</h1>
@@ -228,7 +235,11 @@ export default function DashboardPage() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
               <p className="text-xs md:text-sm text-muted-foreground">
-                Real-time threat intelligence • {isRefreshing ? 'Updating...' : 'Live data'}
+                {fetchError
+                  ? "⚠ Analytics unavailable — showing cached data"
+                  : isRefreshing
+                    ? "Updating..."
+                    : `Live data · last updated ${timeAgo(analytics.lastUpdated)}`}
               </p>
             </div>
           </div>
@@ -238,23 +249,47 @@ export default function DashboardPage() {
                 key={range}
                 onClick={() => setTimeRange(range)}
                 className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors ${timeRange === range
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                   }`}
               >
-                {range === "24h" ? "24h" : range === "7d" ? "7d" : "30d"}
+                {range}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Top KPIs */}
+        {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {[
-            { label: "Total Scans", value: stats.totalScans.toLocaleString(), change: "+12%", icon: Activity, color: "text-blue-500" },
-            { label: "Threats Blocked", value: stats.threatsBlocked.toLocaleString(), change: "+5%", icon: Shield, color: "text-red-500" },
-            { label: "ML Accuracy", value: `${stats.mlAccuracy}%`, change: "-2%", icon: AlertTriangle, color: "text-yellow-500" },
-            { label: "Avg. Response Time", value: `${stats.avgResponseTime}ms`, change: "+8", icon: Globe, color: "text-green-500" },
+            {
+              label: "Total Scans",
+              value: analytics.totalScans.toLocaleString(),
+              sub: `Last ${timeRange}`,
+              icon: Activity,
+              color: "text-blue-500",
+            },
+            {
+              label: "Threats Blocked",
+              value: analytics.threatsBlocked.toLocaleString(),
+              sub: `${analytics.totalScans > 0 ? Math.round((analytics.threatsBlocked / analytics.totalScans) * 100) : 0}% of total`,
+              icon: Shield,
+              color: "text-red-500",
+            },
+            {
+              label: "Protection Rate",
+              value: `${safePercent}%`,
+              sub: "Scans flagged safe",
+              icon: TrendingUp,
+              color: "text-green-500",
+            },
+            {
+              label: "ML Accuracy",
+              value: `${analytics.mlAccuracy}%`,
+              sub: `Avg response ${analytics.avgResponseTime}ms`,
+              icon: AlertTriangle,
+              color: "text-yellow-500",
+            },
           ].map((stat, i) => (
             <Card key={i} className="p-6 border-l-4 border-l-primary/20 hover:border-l-primary transition-all">
               <div className="flex justify-between items-start">
@@ -266,121 +301,137 @@ export default function DashboardPage() {
                   <stat.icon className="w-5 h-5" />
                 </div>
               </div>
-              <div className="mt-4 flex items-center text-xs text-muted-foreground">
-                <span className="text-green-500 font-medium mr-1">{stat.change}</span>
-                from last month
-              </div>
+              <p className="mt-3 text-xs text-muted-foreground">{stat.sub}</p>
             </Card>
           ))}
         </div>
 
-        {/* Main Charts Grid */}
+        {/* Charts Row 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-
-          {/* 1. Transaction Type (Scan Type) */}
+          {/* Scan Type Breakdown */}
           <Card className="p-6 flex flex-col items-center justify-center">
             <h3 className="text-lg font-semibold mb-4 w-full text-left">Scan Breakdown</h3>
-            <div className="h-[200px] w-full relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={stats.scanTypes}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                    animationBegin={0}
-                    animationDuration={1500}
-                  >
-                    {stats.scanTypes.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px', color: '#fff' }}
-                    itemStyle={{ color: '#fff' }}
-                  />
-                  <Legend iconType="circle" />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            {analytics.scanTypes.length > 0 ? (
+              <div className="h-[200px] w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={analytics.scanTypes}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                      animationBegin={0}
+                      animationDuration={1500}
+                    >
+                      {analytics.scanTypes.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "rgba(0,0,0,0.8)", border: "none", borderRadius: "8px", color: "#fff" }}
+                    />
+                    <Legend iconType="circle" />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+                No scan data yet for this period
+              </div>
+            )}
             <p className="text-xs text-muted-foreground mt-2 text-center">Distribution of scan requests by type</p>
           </Card>
 
-          {/* 2. Transaction Split (Risk Split) */}
+          {/* Risk Assessment */}
           <Card className="p-6 flex flex-col items-center justify-center">
             <h3 className="text-lg font-semibold mb-4 w-full text-left">Risk Assessment</h3>
-            <div className="h-[200px] w-full relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={RISK_SPLIT}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={2}
-                    dataKey="value"
-                    animationBegin={200}
-                    animationDuration={1500}
-                  >
-                    {RISK_SPLIT.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px', color: '#fff' }}
-                    itemStyle={{ color: '#fff' }}
-                  />
-                  <Legend iconType="circle" />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2 text-center italic">Advanced Risk Logic Enabled</p>
+            {analytics.totalScans > 0 ? (
+              <div className="h-[200px] w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={analytics.riskSplit}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                      animationBegin={200}
+                      animationDuration={1500}
+                    >
+                      {analytics.riskSplit.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "rgba(0,0,0,0.8)", border: "none", borderRadius: "8px", color: "#fff" }}
+                    />
+                    <Legend iconType="circle" />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+                Scan some URLs to see risk breakdown
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground mt-2 text-center italic">Based on real scan results</p>
           </Card>
 
-          {/* 3. Gamification Widget */}
+          {/* Gamification Widget */}
           <CyberRangeWidget />
         </div>
 
+        {/* Charts Row 2 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* 4. Transaction Alert (Alerts) */}
+          {/* Threat Categories */}
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-6">Threat Categories</h3>
             <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={ALERTS_DATA} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} stroke="#fff" />
-                  <XAxis dataKey="name" fontSize={12} axisLine={false} tickLine={false} />
-                  <YAxis fontSize={12} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px', color: '#fff' }}
-                  />
-                  <Bar
-                    dataKey="value"
-                    fill="#3b82f6"
-                    radius={[6, 6, 0, 0]}
-                    barSize={40}
-                    animationDuration={1500}
-                  >
-                    {ALERTS_DATA.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index === 1 ? '#ef4444' : '#3b82f6'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {analytics.alertsData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analytics.alertsData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} stroke="#fff" />
+                    <XAxis dataKey="name" fontSize={12} axisLine={false} tickLine={false} />
+                    <YAxis fontSize={12} axisLine={false} tickLine={false} />
+                    <Tooltip
+                      cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                      contentStyle={{ backgroundColor: "rgba(0,0,0,0.8)", border: "none", borderRadius: "8px", color: "#fff" }}
+                    />
+                    <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={40} animationDuration={1500}>
+                      {analytics.alertsData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={
+                            entry.name === "Malicious"
+                              ? "#ef4444"
+                              : entry.name === "Suspicious"
+                                ? "#eab308"
+                                : "#22c55e"
+                          }
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+                  No threat data for this period
+                </div>
+              )}
             </div>
           </Card>
 
-          {/* 5. Amount Over Time (Scan Volume) */}
+          {/* Scan Volume Trend */}
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-6">Scan Volume Trend</h3>
             <div className="h-[250px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={TREND_DATA} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <AreaChart data={analytics.trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorIncoming" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
@@ -391,77 +442,117 @@ export default function DashboardPage() {
                   <YAxis fontSize={12} />
                   <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px', color: '#fff' }}
+                    contentStyle={{ backgroundColor: "rgba(0,0,0,0.8)", border: "none", borderRadius: "8px", color: "#fff" }}
                   />
-                  <Area type="monotone" dataKey="incoming" stroke="#3b82f6" fillOpacity={1} fill="url(#colorIncoming)" animationDuration={2000} />
-                  <Area type="monotone" dataKey="blocked" stroke="#ef4444" fill="#ef4444" fillOpacity={0.3} animationDuration={2500} />
+                  <Legend />
+                  <Area
+                    type="monotone"
+                    dataKey="incoming"
+                    name="Total Scans"
+                    stroke="#3b82f6"
+                    fillOpacity={1}
+                    fill="url(#colorIncoming)"
+                    animationDuration={2000}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="blocked"
+                    name="Threats Blocked"
+                    stroke="#ef4444"
+                    fill="#ef4444"
+                    fillOpacity={0.3}
+                    animationDuration={2500}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </Card>
         </div>
 
-        {/* 6. Global Flow */}
+        {/* Live Security Logs */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Globe summary */}
           <Card className="p-6 lg:col-span-1">
-            <h3 className="text-lg font-semibold mb-4">Traffic Origins</h3>
+            <h3 className="text-lg font-semibold mb-4">Scan Summary</h3>
             <div className="space-y-4">
-              {GLOBAL_FLOW.map((item, i) => (
-                <div key={i} className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>{item.region}</span>
-                    <span className="font-semibold">{item.value}%</span>
+              {[
+                { label: "URL Scans", value: analytics.scanTypes.find((t) => t.name === "URL Scans")?.value ?? 0, color: "bg-blue-500" },
+                { label: "Email Scans", value: analytics.scanTypes.find((t) => t.name === "Email Analysis")?.value ?? 0, color: "bg-purple-500" },
+                { label: "Threats Blocked", value: analytics.threatsBlocked, color: "bg-red-500" },
+                { label: "Safe Scans", value: (analytics.riskSplit.find((r) => r.name === "Safe")?.value ?? 0), color: "bg-green-500" },
+              ].map((item, i) => {
+                const pct = analytics.totalScans > 0 ? Math.round((item.value / analytics.totalScans) * 100) : 0
+                return (
+                  <div key={i} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span>{item.label}</span>
+                      <span className="font-semibold">{item.value.toLocaleString()}</span>
+                    </div>
+                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                      <div className={`h-full ${item.color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+                    </div>
                   </div>
-                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full"
-                      style={{ width: `${item.value}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </Card>
 
-          {/* Recent Logs List (to keep some data view) */}
+          {/* Recent Scans */}
           <Card className="p-6 lg:col-span-2">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold">Live Security Logs</h3>
-              <Button variant="ghost" size="sm" className="text-xs">
-                View All
-              </Button>
+              <Link href="/scanner">
+                <Button variant="ghost" size="sm" className="text-xs">
+                  + New Scan
+                </Button>
+              </Link>
             </div>
             <div className="space-y-3">
-              {[
-                { id: "LOG-001", type: "Identity Spoofing", target: "paypal-security-update.com", time: "2m ago", status: "Blocked" },
-                { id: "LOG-002", type: "Virus Payload", target: "tax_statement_2024.exe", time: "5m ago", status: "Quarantined" },
-                { id: "LOG-003", type: "Clean", target: "google.com", time: "8m ago", status: "Allowed" },
-              ].map((log, i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg text-sm border border-border/50">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${log.status === 'Allowed' ? 'bg-green-500' : 'bg-red-500'}`} />
-                    <span className="font-mono text-muted-foreground">{log.id}</span>
-                    <span className="font-medium">{log.type}</span>
-                    <span className="text-muted-foreground hidden sm:inline-block">- {log.target}</span>
+              {recentScans.length > 0 ? (
+                recentScans.map((scan, i) => (
+                  <div
+                    key={scan.id ?? i}
+                    className="flex items-center justify-between p-3 bg-muted/30 rounded-lg text-sm border border-border/50"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`w-2 h-2 flex-shrink-0 rounded-full ${scan.classification === "SAFE" ? "bg-green-500" : "bg-red-500"
+                          }`}
+                      />
+                      <span className="font-mono text-muted-foreground text-xs flex-shrink-0">
+                        {scan.scan_type?.toUpperCase()}
+                      </span>
+                      <span className="font-medium truncate max-w-[180px]" title={scan.url}>
+                        {scan.url?.replace(/^https?:\/\//, "").split("?")[0]}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className="text-xs text-muted-foreground">{timeAgo(scan.created_at)}</span>
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${classificationColor(scan.classification)}`}
+                      >
+                        {scan.classification}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground">{log.time}</span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${log.status === 'Allowed'
-                      ? 'bg-green-500/10 text-green-600'
-                      : 'bg-red-500/10 text-red-600'
-                      }`}>
-                      {log.status}
-                    </span>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-10 text-muted-foreground">
+                  <Globe className="w-8 h-8 mx-auto mb-3 opacity-40" />
+                  <p className="text-sm">No scans yet.</p>
+                  <Link href="/scanner">
+                    <Button size="sm" className="mt-3">
+                      Run your first scan
+                    </Button>
+                  </Link>
                 </div>
-              ))}
+              )}
             </div>
           </Card>
         </div>
-
       </div>
 
-      {/* Floating Contact Button */}
+      {/* Floating Contact */}
       <Button
         onClick={() => setShowContactWidget(true)}
         className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 z-40"
@@ -470,11 +561,7 @@ export default function DashboardPage() {
         <MessageSquare className="w-6 h-6" />
       </Button>
 
-      {/* Contact Widget */}
-      <ContactWidget
-        isOpen={showContactWidget}
-        onClose={() => setShowContactWidget(false)}
-      />
+      <ContactWidget isOpen={showContactWidget} onClose={() => setShowContactWidget(false)} />
     </div>
   )
 }

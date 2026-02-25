@@ -1,0 +1,409 @@
+﻿Starting detection test for MSN...
+Detection complete!
+{
+  "riskScore": 100,
+  "classification": "MALICIOUS",
+  "confidence": 80,
+  "reasons": [
+    "JavaScript Behavior Analysis: Suspicious JavaScript patterns detected: potential credential harvesting behavior",
+    "Malware Pattern Detection: Malware patterns detected: command injection",
+    "Deep Content Analysis: Content Logic: Sensitive form detected on site mentioning 'microsoft' but hosted on unrelated domain",
+    "Ultra-Strict Heuristics: Ultra-Strict Pattern Match: Suspicious Base64-encoded string in URL (Potential Payload) (https://www.msn.com/en-in?o...)"
+  ],
+  "sources": [
+    {
+      "name": "Google Safe Browsing",
+      "detected": false,
+      "confidence": 5,
+      "reason": "No heuristic patterns detected",
+      "isReal": false,
+      "details": "https://www.msn.com/en-in?ocid=wispr&pc=u477&AR=1",
+      "category": "Intelligence"
+    },
+    {
+      "name": "PhishTank",
+      "detected": false,
+      "confidence": 5,
+      "reason": "No community flags detected in current environment",
+      "isReal": false,
+      "details": "https://www.msn.com/en-in?ocid=wispr&pc=u477&AR=1",
+      "category": "Intelligence"
+    },
+    {
+      "name": "VirusTotal",
+      "detected": false,
+      "confidence": 5,
+      "reason": "Standard URL structure observed",
+      "isReal": false,
+      "details": "https://www.msn.com/en-in?ocid=wispr&pc=u477&AR=1",
+      "category": "Intelligence"
+    },
+    {
+      "name": "WHOIS / DNS",
+      "detected": false,
+      "confidence": 10,
+      "reason": "Domain age: 79 days",
+      "isReal": false,
+      "details": "www.msn.com",
+      "category": "Technical"
+    },
+    {
+      "name": "SSL / TLS",
+      "detected": false,
+      "confidence": 5,
+      "reason": "Valid HTTPS connection",
+      "isReal": true,
+      "details": "https://www.msn.com/en-in?ocid=wispr&pc=u477&AR=1",
+      "category": "Technical"
+    },
+    {
+      "name": "Redirect Analysis",
+      "detected": false,
+      "confidence": 0,
+      "reason": "No immediate redirects detected",
+      "isReal": true,
+      "details": "https://www.msn.com/en-in?ocid=wispr&pc=u477&AR=1",
+      "category": "Technical"
+    },
+    {
+      "name": "IP Usage Check",
+      "detected": false,
+      "confidence": 0,
+      "reason": "Host is a domain name",
+      "isReal": true,
+      "details": "https://www.msn.com/en-in?ocid=wispr&pc=u477&AR=1",
+      "category": "Technical"
+    },
+    {
+      "name": "Homoglyph Attack Detection",
+      "detected": false,
+      "confidence": 0,
+      "reason": "No homoglyph indicators found",
+      "isReal": true,
+      "details": "https://www.msn.com/en-in?ocid=wispr&pc=u477&AR=1",
+      "category": "Technical"
+    },
+    {
+      "name": "Brand Analysis (Technical)",
+      "detected": false,
+      "confidence": 0,
+      "reason": "No brand impersonation detected",
+      "isReal": true,
+      "details": "https://www.msn.com/en-in?ocid=wispr&pc=u477&AR=1",
+      "category": "Technical"
+    },
+    {
+      "name": "Random Domain Analysis",
+      "detected": false,
+      "confidence": 5,
+      "reason": "Domain structure appears legitimate",
+      "isReal": true,
+      "details": "https://www.msn.com/en-in?ocid=wispr&pc=u477&AR=1",
+      "category": "Technical"
+    },
+    {
+      "name": "WHOIS Privacy Protection",
+      "detected": false,
+      "confidence": 10,
+      "reason": "Standard domain registration visible",
+      "isReal": true,
+      "details": "www.msn.com",
+      "category": "Technical"
+    },
+    {
+      "name": "Domain Parking Check",
+      "detected": false,
+      "confidence": 5,
+      "reason": "Domain hosted on standardized infrastructure",
+      "isReal": true,
+      "details": "www.msn.com",
+      "category": "Technical"
+    },
+    {
+      "name": "Deceptive Infrastructure Analysis",
+      "detected": false,
+      "confidence": 0,
+      "reason": "Infrastructure appears legitimate",
+      "isReal": true,
+      "details": "https://www.msn.com/en-in?ocid=wispr&pc=u477&AR=1",
+      "category": "Technical"
+    },
+    {
+      "name": "Punycode Detection",
+      "detected": false,
+      "confidence": 0,
+      "reason": "Standard non-ASCII characters not detected",
+      "isReal": true,
+      "category": "Technical"
+    },
+    {
+      "name": "JavaScript Behavior Analysis",
+      "detected": true,
+      "confidence": 50,
+      "reason": "Suspicious JavaScript patterns detected: potential credential harvesting behavior",
+      "isReal": true,
+      "category": "Technical"
+    },
+    {
+      "name": "Supply Chain Intelligence",
+      "detected": false,
+      "confidence": 5,
+      "reason": "External resources appear safe and standard",
+      "isReal": true,
+      "category": "Technical"
+    },
+    {
+      "name": "Malware Pattern Detection",
+      "detected": true,
+      "confidence": 45,
+      "reason": "Malware patterns detected: command injection",
+      "isReal": true,
+      "category": "Virus"
+    },
+    {
+      "name": "Historical Threat Intelligence",
+      "detected": false,
+      "confidence": 5,
+      "reason": "No historical threat patterns detected",
+      "isReal": true,
+      "category": "Intelligence"
+    },
+    {
+      "name": "Deep Content Analysis",
+      "detected": true,
+      "confidence": 60,
+      "reason": "Content Logic: Sensitive form detected on site mentioning 'microsoft' but hosted on unrelated domain",
+      "isReal": true,
+      "category": "Technical"
+    },
+    {
+      "name": "Ultra-Strict Heuristics",
+      "detected": true,
+      "confidence": 50,
+      "reason": "Ultra-Strict Pattern Match: Suspicious Base64-encoded string in URL (Potential Payload)",
+      "isReal": true,
+      "category": "Technical",
+      "details": "https://www.msn.com/en-in?ocid=wispr&pc=u477&AR=1"
+    },
+    {
+      "name": "Enhanced NLP Analysis",
+      "detected": false,
+      "confidence": 0,
+      "reason": "No suspicious patterns detected",
+      "isReal": false,
+      "category": "Trust"
+    },
+    {
+      "name": "Crypto Scam Analysis",
+      "detected": false,
+      "confidence": 0,
+      "reason": "No specific crypto scam indicators found",
+      "isReal": true,
+      "details": "Content Analysis",
+      "category": "Virus"
+    }
+  ],
+  "timestamp": "2026-02-25T09:15:04.838Z",
+  "processingTime": 498,
+  "url": "https://www.msn.com/en-in?ocid=wispr&pc=u477&AR=1",
+  "verdictReport": {
+    "url": "https://www.msn.com/en-in?ocid=wispr&pc=u477&AR=1",
+    "finalVerdict": "MALICIOUS",
+    "threatCategory": "Suspicious Activity",
+    "evidenceSourcesUsed": [
+      "SSL / TLS",
+      "Redirect Analysis",
+      "IP Usage Check",
+      "Homoglyph Attack Detection",
+      "Brand Analysis (Technical)",
+      "Random Domain Analysis",
+      "WHOIS Privacy Protection",
+      "Domain Parking Check",
+      "Deceptive Infrastructure Analysis",
+      "Punycode Detection",
+      "JavaScript Behavior Analysis",
+      "Supply Chain Intelligence",
+      "Malware Pattern Detection",
+      "Historical Threat Intelligence",
+      "Deep Content Analysis",
+      "Ultra-Strict Heuristics",
+      "Crypto Scam Analysis"
+    ],
+    "confirmedFindings": [
+      "JavaScript Behavior Analysis: Suspicious JavaScript patterns detected: potential credential harvesting behavior",
+      "Malware Pattern Detection: Malware patterns detected: command injection",
+      "Deep Content Analysis: Content Logic: Sensitive form detected on site mentioning 'microsoft' but hosted on unrelated domain",
+      "Ultra-Strict Heuristics: Ultra-Strict Pattern Match: Suspicious Base64-encoded string in URL (Potential Payload)"
+    ],
+    "confidenceLevel": "High",
+    "limitations": [
+      "Missing data: Google Safe Browsing, PhishTank, VirusTotal, WHOIS / DNS, Enhanced NLP Analysis"
+    ],
+    "recommendedAction": "Block",
+    "infrastructureFlags": []
+  },
+  "officialReport": {
+    "caseId": "VEC-WJWX0YJ8-2026",
+    "verificationSeal": "VERDICT_ENGINE_CERTIFIED_v2.0",
+    "primaryDeterminant": "Composite indicator alignment",
+    "mitigatingFactors": [
+      "No definitive external block"
+    ],
+    "auditTrail": [
+      {
+        "indicator": "Google Safe Browsing",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 5,
+        "tier": "T3 (Heuristic)"
+      },
+      {
+        "indicator": "PhishTank",
+        "status": "CLEAN",
+        "type": "Intelligence",
+        "confidence": 5,
+        "tier": "T3 (Simulated Intel)"
+      },
+      {
+        "indicator": "VirusTotal",
+        "status": "CLEAN",
+        "type": "Intelligence",
+        "confidence": 5,
+        "tier": "T3 (Simulated Intel)"
+      },
+      {
+        "indicator": "WHOIS / DNS",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 10,
+        "tier": "T3 (Heuristic)"
+      },
+      {
+        "indicator": "SSL / TLS",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 5,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "Redirect Analysis",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 0,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "IP Usage Check",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 0,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "Homoglyph Attack Detection",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 0,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "Brand Analysis (Technical)",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 0,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "Random Domain Analysis",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 5,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "WHOIS Privacy Protection",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 10,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "Domain Parking Check",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 5,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "Deceptive Infrastructure Analysis",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 0,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "Punycode Detection",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 0,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "JavaScript Behavior Analysis",
+        "status": "DETECTED",
+        "type": "Technical",
+        "confidence": 50,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "Supply Chain Intelligence",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 5,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "Malware Pattern Detection",
+        "status": "DETECTED",
+        "type": "Technical",
+        "confidence": 45,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "Historical Threat Intelligence",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 5,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "Deep Content Analysis",
+        "status": "DETECTED",
+        "type": "Technical",
+        "confidence": 60,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "Ultra-Strict Heuristics",
+        "status": "DETECTED",
+        "type": "Technical",
+        "confidence": 50,
+        "tier": "T2 (Forensic)"
+      },
+      {
+        "indicator": "Enhanced NLP Analysis",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 0,
+        "tier": "T3 (Heuristic)"
+      },
+      {
+        "indicator": "Crypto Scam Analysis",
+        "status": "CLEAN",
+        "type": "Technical",
+        "confidence": 0,
+        "tier": "T2 (Forensic)"
+      }
+    ]
+  }
+}
