@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Test script to demonstrate improved phishing detection
-import { RealPhishingDetector } from '../lib/real-detection.js'
+import { RealPhishingDetector } from './lib/real-detection.ts'
 
 const detector = new RealPhishingDetector()
 
@@ -25,7 +25,7 @@ Thank you,
 PayPal Security Team`
   },
   {
-    name: "Fraud Bank Email", 
+    name: "Fraud Bank Email",
     mode: "email",
     input: `From: noreply@chase-alert.xyz
 Subject: Urgent: Your Account Will Be Closed
@@ -42,7 +42,7 @@ Chase Security Team`
   },
   {
     name: "Fraud Amazon Email",
-    mode: "email", 
+    mode: "email",
     input: `From: order@amazon-prize.ga
 Subject: Congratulations! You Won!
 
@@ -78,31 +78,31 @@ The GitHub Team`
 
 async function runTests() {
   console.log("🔍 Testing Enhanced Phishing Detection\n")
-  
+
   for (const testCase of testCases) {
     console.log(`📧 Testing: ${testCase.name}`)
     console.log(`📝 Input: ${testCase.input.substring(0, 100)}...`)
-    
+
     try {
       const result = await detector.detect(testCase.input, testCase.mode)
-      
+
       console.log(`🎯 Classification: ${result.classification}`)
       console.log(`⚠️  Risk Score: ${result.riskScore}/100`)
       console.log(`🔍 Confidence: ${result.confidence}%`)
       console.log(`📋 Reasons:`)
       result.reasons.forEach(reason => console.log(`   • ${reason}`))
-      
+
       console.log(`🔍 Detection Sources:`)
       result.sources
         .filter(source => source.detected)
         .forEach(source => {
           console.log(`   • ${source.name}: ${source.reason} (${source.confidence}% confidence)`)
         })
-      
+
     } catch (error) {
       console.log(`❌ Error: ${error.message}`)
     }
-    
+
     console.log("\n" + "=".repeat(60) + "\n")
   }
 }

@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send activation email
-    const activationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/activate-account?token=${activation_token}`
+    const activationLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/activate-account?token=${activation_token}`
 
     try {
       await resend.emails.send({

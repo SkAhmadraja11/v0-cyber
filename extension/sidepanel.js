@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // API Configuration
     // Use centralized config if available
-    const API_BASE = (typeof CONFIG !== 'undefined' ? CONFIG.API_BASE : 'http://127.0.0.1:3000');
+    const API_BASE = (typeof CONFIG !== 'undefined' ? CONFIG.API_BASE : 'https://next-gen-cyber.vercel.app');
     const SESSION_API = (typeof CONFIG !== 'undefined' ? API_BASE + CONFIG.SESSION_ENDPOINT : `${API_BASE}/api/user/session`);
     const SCAN_API = (typeof CONFIG !== 'undefined' ? API_BASE + CONFIG.SCAN_ENDPOINT : `${API_BASE}/api/real-scan`);
 
@@ -132,16 +132,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (data.authenticated && data.user) {
-                userEmail.textContent = data.user.email;
-                userPlan.textContent = data.user.plan || 'Phishing Detective Pro';
+                if (userEmail) userEmail.textContent = data.user.email;
+                if (userPlan) userPlan.textContent = data.user.plan || 'Phishing Detective Pro';
             } else {
-                userEmail.textContent = 'Guest User';
-                userPlan.textContent = 'Limited Protection';
+                if (userEmail) userEmail.textContent = 'Guest User';
+                if (userPlan) userPlan.textContent = 'Limited Protection';
             }
         } catch (error) {
             console.error('Session fetch failed:', error);
-            userEmail.textContent = 'Offline Mode';
-            userPlan.textContent = 'Check Connection';
+            if (userEmail) userEmail.textContent = 'Offline Mode';
+            if (userPlan) userPlan.textContent = 'Check Connection';
         }
     }
 
@@ -174,12 +174,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // UI State: Loading
         scanBtn.disabled = true;
         scanBtn.textContent = 'SCANNING...';
-        resultsArea.style.display = 'none';
-        loader.style.display = 'block';
+        if (resultsArea) resultsArea.style.display = 'none';
+        if (loader) loader.style.display = 'block';
         const urlCard = document.querySelector('.url-card');
         if (urlCard) urlCard.classList.add('scanning-state');
-        statusBadge.textContent = 'Analyzing';
-        statusBadge.className = 'status-badge';
+        if (statusBadge) {
+            statusBadge.textContent = 'Analyzing';
+            statusBadge.className = 'status-badge';
+        }
 
         try {
             // Call API with identical request format as web app
@@ -219,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } finally {
             // UI State: Reset
-            loader.style.display = 'none';
+            if (loader) loader.style.display = 'none';
             const urlCard = document.querySelector('.url-card');
             if (urlCard) urlCard.classList.remove('scanning-state');
             scanBtn.disabled = false;
@@ -228,12 +230,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function showError(msg) {
-        resultsArea.style.display = 'block';
-        resultsArea.innerHTML = `<div class="card verdict-card bg-suspicious" style="padding: 20px; text-align: center; color: white;">
-            <div style="font-size: 24px; margin-bottom: 10px;">⚠️</div>
-            <div style="font-size: 14px;">${msg}</div>
-            <div style="font-size: 12px; margin-top: 8px; opacity: 0.8;">Backend: ${API_BASE}</div>
-        </div>`;
+        if (resultsArea) {
+            resultsArea.style.display = 'block';
+            resultsArea.innerHTML = `<div class="card verdict-card bg-suspicious" style="padding: 20px; text-align: center; color: white;">
+                <div style="font-size: 24px; margin-bottom: 10px;">⚠️</div>
+                <div style="font-size: 14px;">${msg}</div>
+                <div style="font-size: 12px; margin-top: 8px; opacity: 0.8;">Backend: ${API_BASE}</div>
+            </div>`;
+        }
     }
 
     function renderResults(result) {
@@ -259,49 +263,58 @@ document.addEventListener('DOMContentLoaded', () => {
         const verdictCard = document.querySelector('.verdict-card');
         const riskLevel = getRiskLevel(result.verdict);
 
-        verdictEl.textContent = riskLevel;
-        statusBadge.textContent = riskLevel;
+        if (verdictEl) verdictEl.textContent = riskLevel;
+        if (statusBadge) statusBadge.textContent = riskLevel;
 
         // Reset classes
-        verdictCard.className = 'card verdict-card';
-        scoreEl.className = 'risk-value';
-        verdictEl.className = 'verdict-value';
-        statusBadge.className = 'status-badge';
+        if (verdictCard) verdictCard.className = 'card verdict-card';
+        if (scoreEl) scoreEl.className = 'risk-value';
+        if (verdictEl) verdictEl.className = 'verdict-value';
+        if (statusBadge) statusBadge.className = 'status-badge';
 
         if (result.verdict === 'SAFE') {
-            verdictCard.classList.add('bg-safe');
-            scoreEl.classList.add('status-safe');
-            verdictEl.classList.add('status-safe');
-            statusBadge.classList.add('status-safe');
-            statusBadge.style.color = '#00ff9d';
-            statusBadge.style.borderColor = '#00ff9d';
+            if (verdictCard) verdictCard.classList.add('bg-safe');
+            if (scoreEl) scoreEl.classList.add('status-safe');
+            if (verdictEl) verdictEl.classList.add('status-safe');
+            if (statusBadge) {
+                statusBadge.classList.add('status-safe');
+                statusBadge.style.color = '#00ff9d';
+                statusBadge.style.borderColor = '#00ff9d';
+            }
         } else if (result.verdict === 'SUSPICIOUS') {
-            verdictCard.classList.add('bg-suspicious');
-            scoreEl.classList.add('status-suspicious');
-            verdictEl.classList.add('status-suspicious');
-            statusBadge.classList.add('status-suspicious');
-            statusBadge.style.color = '#ffb700';
-            statusBadge.style.borderColor = '#ffb700';
+            if (verdictCard) verdictCard.classList.add('bg-suspicious');
+            if (scoreEl) scoreEl.classList.add('status-suspicious');
+            if (verdictEl) verdictEl.classList.add('status-suspicious');
+            if (statusBadge) {
+                statusBadge.classList.add('status-suspicious');
+                statusBadge.style.color = '#ffb700';
+                statusBadge.style.borderColor = '#ffb700';
+            }
         } else if (result.verdict === 'HIGH_RISK') {
             // High Risk -> Orange-ish / Red mix
-            verdictCard.classList.add('bg-high-risk');
-            scoreEl.classList.add('status-high-risk');
-            verdictEl.classList.add('status-high-risk');
-            statusBadge.classList.add('status-high-risk');
-            statusBadge.style.color = 'var(--high-risk)';
-            statusBadge.style.borderColor = 'var(--high-risk)';
+            if (verdictCard) verdictCard.classList.add('bg-high-risk');
+            if (scoreEl) scoreEl.classList.add('status-high-risk');
+            if (verdictEl) verdictEl.classList.add('status-high-risk');
+            if (statusBadge) {
+                statusBadge.classList.add('status-high-risk');
+                statusBadge.style.color = 'var(--high-risk)';
+                statusBadge.style.borderColor = 'var(--high-risk)';
+            }
         } else {
             // MALICIOUS -> Critical (Red)
-            verdictCard.classList.add('bg-malicious');
-            scoreEl.classList.add('status-malicious');
-            verdictEl.classList.add('status-malicious');
-            statusBadge.classList.add('status-malicious');
-            statusBadge.style.color = '#ff0055';
-            statusBadge.style.borderColor = '#ff0055';
+            if (verdictCard) verdictCard.classList.add('bg-malicious');
+            if (scoreEl) scoreEl.classList.add('status-malicious');
+            if (verdictEl) verdictEl.classList.add('status-malicious');
+            if (statusBadge) {
+                statusBadge.classList.add('status-malicious');
+                statusBadge.style.color = '#ff0055';
+                statusBadge.style.borderColor = '#ff0055';
+            }
         }
 
         // Confidence
-        document.getElementById('confidence').textContent = result.confidence;
+        const confidenceEl = document.getElementById('confidence');
+        if (confidenceEl) confidenceEl.textContent = result.confidence;
 
         // Evidence Sources Used (Pills)
         const sourcesContainer = document.getElementById('evidenceSourcesUsed');
@@ -387,21 +400,26 @@ document.addEventListener('DOMContentLoaded', () => {
             threatContainer.textContent = 'None';
         }
 
-        document.getElementById('userImpact').textContent = result.user_impact;
-        document.getElementById('explanation').textContent = result.explanation;
+        const userImpactEl = document.getElementById('userImpact');
+        if (userImpactEl) userImpactEl.textContent = result.user_impact;
+
+        const explanationEl = document.getElementById('explanation');
+        if (explanationEl) explanationEl.textContent = result.explanation;
 
         const actionEl = document.getElementById('recommendedAction');
         const actionContainer = document.getElementById('actionContainer');
-        actionEl.textContent = result.recommended_action;
+        if (actionEl) actionEl.textContent = result.recommended_action;
 
         // Action Styling
-        actionContainer.className = 'action-banner'; // Reset
-        if (result.recommended_action === 'BLOCK' || result.recommended_action === 'QUARANTINE') {
-            actionContainer.classList.add('action-block');
-        } else if (result.recommended_action === 'WARN') {
-            actionContainer.classList.add('action-warn');
-        } else {
-            actionContainer.classList.add('action-allow');
+        if (actionContainer) {
+            actionContainer.className = 'action-banner'; // Reset
+            if (result.recommended_action === 'BLOCK' || result.recommended_action === 'QUARANTINE') {
+                actionContainer.classList.add('action-block');
+            } else if (result.recommended_action === 'WARN') {
+                actionContainer.classList.add('action-warn');
+            } else {
+                actionContainer.classList.add('action-allow');
+            }
         }
     }
 

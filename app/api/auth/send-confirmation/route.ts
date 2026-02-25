@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send confirmation email
-    const confirmationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/confirm-email?token=${confirmation_token}`
+    const confirmationLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/confirm-email?token=${confirmation_token}`
 
     try {
       await resend.emails.send({

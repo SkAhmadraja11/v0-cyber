@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
                 <p>If this was you, No action is needed. If this wasn't you, please secure your account immediately:</p>
                 
                 <div style="text-align: center; margin: 20px 0;">
-                  <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/login" class="button">
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL}/auth/login" class="button">
                     Secure Your Account
                   </a>
                 </div>

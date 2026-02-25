@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send activation email
-    const activationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/create-password?token=${activation_token}`
+    const activationLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/create-password?token=${activation_token}`
 
     try {
       const emailData = await resend.emails.send({
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
           error: 'Email service limitation detected. For testing, please use your Resend account email address.',
           details: 'The resend.dev domain only sends emails to the account owner. For production use, verify your custom domain.',
           activation_token, // Include token for manual testing
-          activation_link: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/create-password?token=${activation_token}`,
+          activation_link: `${process.env.NEXT_PUBLIC_APP_URL}/auth/create-password?token=${activation_token}`,
           workaround: 'Use your Resend account email for testing, or verify your custom domain in Resend.'
         }, { status: 403 })
       }
