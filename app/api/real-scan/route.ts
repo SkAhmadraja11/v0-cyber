@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: "Invalid JSON",
         message: "The request body must be a valid JSON object"
-      }, { status: 400 })
+      }, { status: 400, headers: CORS_HEADERS })
     }
 
     console.log("Incoming body:", body)
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: "URL is required",
         message: "URL is required"
-      }, { status: 400 })
+      }, { status: 400, headers: CORS_HEADERS })
     }
 
     const normalizedInput = input.trim()
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: "Invalid URL format",
         message: "Invalid URL format"
-      }, { status: 400 })
+      }, { status: 400, headers: CORS_HEADERS })
     }
 
     const supabase = await createClient()
