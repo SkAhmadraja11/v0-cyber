@@ -5,7 +5,9 @@ try {
     importScripts('offline-detector.js');
 } catch (e) { console.error('PhusGuard: Script load failed:', e); }
 
-const API_ENDPOINT = (typeof CONFIG !== 'undefined' ? CONFIG.API_BASE + CONFIG.SCAN_ENDPOINT : 'https://next-gen-cyber.vercel.app/scanner/real-scan');
+const API_ENDPOINT = 'https://next-gen-cyber.vercel.app/scanner/real-scan';
+
+console.log("API URL:", API_ENDPOINT);
 
 // --- IMPORTANT: Do NOT use a plain Map() for caching ---
 // Service workers are killed/restarted by Chrome every ~30s.
