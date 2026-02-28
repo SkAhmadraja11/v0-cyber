@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // API Configuration Hardcoded to bypass Cache
     const SESSION_API = 'https://next-gen-cyber.vercel.app/api/user/session';
-    const SCAN_API = 'https://next-gen-cyber.vercel.app/scanner';
+    const SCAN_API = 'https://next-gen-cyber.vercel.app/api/scanner';
 
     console.log("HARDCODED API URL:", SCAN_API);
 
