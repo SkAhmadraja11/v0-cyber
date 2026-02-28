@@ -23,6 +23,18 @@ const nextConfig = {
           { key: "Access-Control-Max-Age", value: "86400" },
         ],
       },
+      {
+        // Apply CORS to scanner routes
+        source: "/scanner/:path*",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "POST, OPTIONS" },
+          {
+            key: "Access-Control-Allow-Headers",
+            value: "Content-Type",
+          },
+        ],
+      },
     ]
   },
 }

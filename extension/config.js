@@ -4,7 +4,7 @@
 
 const CONFIG = {
     API_BASE: 'https://next-gen-cyber.vercel.app',
-    SCAN_ENDPOINT: '/api/real-scan',
+    SCAN_ENDPOINT: '/scanner/real-scan',
     SESSION_ENDPOINT: '/api/user/session'
 };
 
