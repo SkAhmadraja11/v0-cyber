@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Use centralized config if available
     const API_BASE = (typeof CONFIG !== 'undefined' ? CONFIG.API_BASE : 'https://next-gen-cyber.vercel.app');
     const SESSION_API = (typeof CONFIG !== 'undefined' ? API_BASE + CONFIG.SESSION_ENDPOINT : `${API_BASE}/api/user/session`);
-    const SCAN_API = (typeof CONFIG !== 'undefined' ? API_BASE + CONFIG.SCAN_ENDPOINT : `${API_BASE}/scanner/real-scan`);
+    const SCAN_API = (typeof CONFIG !== 'undefined' ? API_BASE + CONFIG.SCAN_ENDPOINT : `${API_BASE}/scanner`);
 
     console.log("API URL:", SCAN_API);
     console.log("API BASE:", API_BASE);
