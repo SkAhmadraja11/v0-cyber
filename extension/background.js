@@ -124,7 +124,7 @@ function isThreat(result) {
 async function scanUrl(tabId, url) {
     // Skip internal pages and known-safe high-traffic domains
     if (shouldSkip(url)) {
-        try { chrome.action.setBadgeText({ text: '', tabId }); } catch { }
+        try { chrome.action.setBadgeText({ text: '', tabId }).catch(() => { }); } catch { }
         return;
     }
 
@@ -185,8 +185,8 @@ async function scanUrl(tabId, url) {
     } catch (error) {
         console.warn("PhusGuard: Scan failed:", error);
         try {
-            chrome.action.setBadgeText({ text: 'ERR', tabId });
-            chrome.action.setBadgeBackgroundColor({ color: '#999', tabId });
+            chrome.action.setBadgeText({ text: 'ERR', tabId }).catch(() => { });
+            chrome.action.setBadgeBackgroundColor({ color: '#999', tabId }).catch(() => { });
         } catch (e) { }
     }
 }
@@ -209,8 +209,8 @@ function updateBadge(tabId, result) {
             text = 'OK';
         }
 
-        chrome.action.setBadgeText({ text, tabId });
-        chrome.action.setBadgeBackgroundColor({ color, tabId });
+        chrome.action.setBadgeText({ text, tabId }).catch(() => { });
+        chrome.action.setBadgeBackgroundColor({ color, tabId }).catch(() => { });
     } catch (e) { }
 }
 
