@@ -29,14 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const userEmail = document.getElementById('userEmail');
     const userPlan = document.getElementById('userPlan');
 
-    // API Configuration
-    // Use centralized config if available
-    const API_BASE = (typeof CONFIG !== 'undefined' ? CONFIG.API_BASE : 'https://next-gen-cyber.vercel.app');
-    const SESSION_API = (typeof CONFIG !== 'undefined' ? API_BASE + CONFIG.SESSION_ENDPOINT : `${API_BASE}/api/user/session`);
-    const SCAN_API = (typeof CONFIG !== 'undefined' ? API_BASE + CONFIG.SCAN_ENDPOINT : `${API_BASE}/scanner`);
+    // API Configuration Hardcoded to bypass Cache
+    const SESSION_API = 'https://next-gen-cyber.vercel.app/api/user/session';
+    const SCAN_API = 'https://next-gen-cyber.vercel.app/scanner';
 
-    console.log("API URL:", SCAN_API);
-    console.log("API BASE:", API_BASE);
+    console.log("HARDCODED API URL:", SCAN_API);
 
     // Live Technical Ticker Logic
     // ---------------------------------------------------------
