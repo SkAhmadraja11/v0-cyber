@@ -5,7 +5,7 @@ try {
     importScripts('offline-detector.js');
 } catch (e) { console.error('PhusGuard: Script load failed:', e); }
 
-const API_ENDPOINT = 'https://next-gen-cyber.vercel.app/api/scanner';
+const API_ENDPOINT = CONFIG.API_BASE + CONFIG.SCAN_ENDPOINT;
 
 console.log("API URL:", API_ENDPOINT);
 

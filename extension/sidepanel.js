@@ -29,11 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const userEmail = document.getElementById('userEmail');
     const userPlan = document.getElementById('userPlan');
 
-    // API Configuration Hardcoded to bypass Cache
-    const SESSION_API = 'https://next-gen-cyber.vercel.app/api/user/session';
-    const SCAN_API = 'https://next-gen-cyber.vercel.app/api/scanner';
+    // Use configuration from config.js
+    const SESSION_API = CONFIG.API_BASE + CONFIG.SESSION_ENDPOINT;
+    const SCAN_API = CONFIG.API_BASE + CONFIG.SCAN_ENDPOINT;
 
-    console.log("HARDCODED API URL:", SCAN_API);
+    console.log("API URL:", SCAN_API);
 
     // Live Technical Ticker Logic
     // ---------------------------------------------------------
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const measureLatency = async () => {
             try {
                 const start = performance.now();
-                await fetch(`${API_BASE}/api/health`, { method: 'HEAD', cache: 'no-store' }).catch(() => { });
+                await fetch(`${CONFIG.API_BASE}/api/health`, { method: 'HEAD', cache: 'no-store' }).catch(() => { });
                 const end = performance.now();
                 if (latencyDisplay) latencyDisplay.textContent = Math.round(end - start) + "ms";
             } catch (e) {
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsArea.innerHTML = `<div class="card verdict-card bg-suspicious" style="padding: 20px; text-align: center; color: white;">
                 <div style="font-size: 24px; margin-bottom: 10px;">⚠️</div>
                 <div style="font-size: 14px;">${msg}</div>
-                <div style="font-size: 12px; margin-top: 8px; opacity: 0.8;">Backend: ${API_BASE}</div>
+                <div style="font-size: 12px; margin-top: 8px; opacity: 0.8;">Backend: ${CONFIG.API_BASE}</div>
             </div>`;
         }
     }

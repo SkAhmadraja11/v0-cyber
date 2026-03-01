@@ -16,11 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const userEmail = document.getElementById('userEmail');
     const userPlan = document.getElementById('userPlan');
 
-    // API Configuration Hardcoded to bypass Cache
-    const SESSION_API = 'https://next-gen-cyber.vercel.app/api/user/session';
-    const SCAN_API = 'https://next-gen-cyber.vercel.app/api/scanner';
+    // Use configuration from config.js
+    const SESSION_API = CONFIG.API_BASE + CONFIG.SESSION_ENDPOINT;
+    const SCAN_API = CONFIG.API_BASE + CONFIG.SCAN_ENDPOINT;
 
-    console.log("HARDCODED API URL:", SCAN_API);
+    console.log("API URL:", SCAN_API);
 
     // Live Technical Ticker Logic
     // ---------------------------------------------------------
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const measureLatency = async () => {
             try {
                 const start = performance.now();
-                await fetch(`${API_BASE}/api/health`, { method: 'HEAD', cache: 'no-store' }).catch(() => { });
+                await fetch(`${CONFIG.API_BASE}/api/health`, { method: 'HEAD', cache: 'no-store' }).catch(() => { });
                 const end = performance.now();
                 if (latencyDisplay) latencyDisplay.textContent = Math.round(end - start) + "ms";
             } catch (e) {
