@@ -185,25 +185,61 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            // Call API with identical request format as web app
+            // Call API
             console.log('PhusGuard: Scanning URL:', url);
             const response = await fetch(SCAN_API, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: url, mode: 'url' })
+                body: JSON.stringify({ url: url })
             });
-
-            const data = await response.json();
 
             if (!response.ok) {
                 if (response.status === 400) {
                     showError('Invalid URL');
+                } else if (response.status === 405) {
+                    showError('API method error (405)');
                 } else if (response.status === 500) {
                     showError('Backend issue');
                 } else {
                     showError(`Server error: ${response.status}`);
                 }
-                throw new Error(data.message || data.error || `Server error: ${response.status}`);
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            const text = await response.text();
+            console.log('Raw API response:', text);
+
+            if (!text) {
+                throw new Error('Empty response from server');
+            }
+
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                showError('Invalid JSON from server');
+                throw new Error('Invalid JSON: ' + text.substring(0, 100));
+            }
+
+            // Normalize scanner response → renderResults format
+            // Scanner returns: { riskScore, status, scannedUrl }
+            // renderResults expects: { verdict, risk_score, ... }
+            if (typeof data.riskScore !== 'undefined' && data.status) {
+                const statusToVerdict = {
+                    'Safe': 'SAFE',
+                    'Suspicious': 'SUSPICIOUS',
+                    'High Risk': 'HIGH_RISK',
+                    'Malicious': 'MALICIOUS'
+                };
+                data.verdict = statusToVerdict[data.status] || 'SAFE';
+                data.risk_score = data.riskScore;
+                data.confidence = data.riskScore <= 20 ? 'High' : 'Medium';
+                data.key_indicators = data.key_indicators || [];
+                data.threat_type = data.threat_type || [];
+                data.user_impact = data.user_impact || 'No threats detected.';
+                data.explanation = data.explanation || `URL scanned: ${data.scannedUrl}`;
+                data.recommended_action = data.recommended_action || (data.verdict === 'SAFE' ? 'ALLOW' : 'WARN');
+                data.sources = data.sources || [];
             }
 
             if (data.verdict || typeof data.risk_score !== 'undefined') {
