@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-//  SecureNet Dynamic Real-Time Detection Engine v3.0
+//  SecureNet Dynamic Real-Time Detection Engine v4.0
 //  Continuous page monitoring: DOM, behavior, network, risk scoring
+//  Fixes: popup always shows, proper SSE fallback, isolated world compat
 // ═══════════════════════════════════════════════════════════════════════════════
 
 (function () {
@@ -8,12 +9,15 @@
     if (window.__securenet_rtengine) return;
     window.__securenet_rtengine = true;
 
-    // ── Config ──────────────────────────────────────────────────────────────────
+    const LOG = (...a) => console.log('%c[SecureNet]', 'color:#4ade80;font-weight:bold', ...a);
+    const WARN = (...a) => console.warn('%c[SecureNet]', 'color:#fbbf24;font-weight:bold', ...a);
+
+    // ── Config ──
     const API_BASE = 'https://next-gen-cyber.vercel.app';
     const SECURENET_EP = API_BASE + '/api/securenet';
-    const BATCH_WINDOW = 500;       // 500ms mutation batch
-    const DEBOUNCE_SCAN = 4000;     // 4s between backend scans
-    const POPUP_SAFE_MS = 4000;
+    const BATCH_WINDOW = 500;
+    const DEBOUNCE_SCAN = 4000;
+    const POPUP_SAFE_MS = 4500;
     const POPUP_WARN_MS = 8000;
     const POPUP_DANGER_MS = 15000;
 
@@ -25,41 +29,38 @@
         try { return SKIP_HOSTS.has(new URL(u).hostname); } catch { return true; }
     }
 
-    // ── State ───────────────────────────────────────────────────────────────────
+    // ── State ──
     let popupHost = null, shadow = null;
     let lastBackendScan = 0, lastBackendUrl = '';
     let backendScanning = false;
+    let initialPopupShown = false;
 
     // ═══════════════════════════════════════════════════════════════════════════
     //  § 1  REAL-TIME RISK SCORE ENGINE
     // ═══════════════════════════════════════════════════════════════════════════
 
     const riskState = {
-        url: 0,            // from backend scan
-        dom: 0,            // from DOM monitoring
-        behavior: 0,       // from heuristic detection
-        network: 0,        // from fetch/XHR interception
-        _alerts: [],       // accumulated alert messages
-        _level: 'safe',    // safe | suspicious | malicious
+        url: 0, dom: 0, behavior: 0, network: 0,
+        _alerts: [], _level: 'safe',
     };
 
     function computeLevel() {
-        const total = riskState.url + riskState.dom + riskState.behavior + riskState.network;
-        if (total >= 70) return 'malicious';
-        if (total >= 35) return 'suspicious';
+        const t = riskState.url + riskState.dom + riskState.behavior + riskState.network;
+        if (t >= 70) return 'malicious';
+        if (t >= 35) return 'suspicious';
         return 'safe';
     }
 
     function addRisk(category, points, reason) {
         riskState[category] = Math.min(100, (riskState[category] || 0) + points);
-        if (reason && !riskState._alerts.includes(reason)) {
-            riskState._alerts.push(reason);
-        }
+        if (reason && !riskState._alerts.includes(reason)) riskState._alerts.push(reason);
+        LOG(`Risk +${points} [${category}]: ${reason} → total=${totalRisk()}`);
+
         const newLevel = computeLevel();
-        // Only escalate, never downgrade during a session
         const levels = ['safe', 'suspicious', 'malicious'];
         if (levels.indexOf(newLevel) > levels.indexOf(riskState._level)) {
             riskState._level = newLevel;
+            WARN(`Risk ESCALATED → ${newLevel.toUpperCase()}`);
             showRiskPopup();
         }
     }
@@ -91,7 +92,7 @@
             });
         }
 
-        // Send to background for badge
+        // Badge update via background
         try {
             chrome.runtime.sendMessage({
                 action: 'securenet_scan_complete', result: {
@@ -113,19 +114,27 @@
     // ═══════════════════════════════════════════════════════════════════════════
 
     function ensureShadow() {
-        if (popupHost && document.body.contains(popupHost)) return;
+        if (popupHost && document.body && document.body.contains(popupHost)) return;
         popupHost = document.createElement('div');
         popupHost.id = 'sn-rt-host';
-        popupHost.style.cssText = 'all:initial;position:fixed;top:0;right:0;z-index:2147483647;pointer-events:none;';
+        popupHost.style.cssText = 'all:initial;position:fixed;top:0;right:0;z-index:2147483647;pointer-events:none;width:0;height:0;';
         shadow = popupHost.attachShadow({ mode: 'closed' });
         document.body.appendChild(popupHost);
     }
 
-    function removePopup() { if (shadow) { const p = shadow.querySelector('.sn-p'); if (p) p.remove(); } }
+    function removePopup() {
+        if (!shadow) return;
+        const old = shadow.querySelector('.sn-p');
+        if (old) old.remove();
+    }
 
     function showPopup({ level, title, message, score, reasons }) {
-        if (!document.body) return;
-        ensureShadow(); removePopup();
+        if (!document.body) { LOG('No body, retrying popup in 500ms'); setTimeout(() => showPopup({ level, title, message, score, reasons }), 500); return; }
+        LOG(`Showing popup: ${level} — "${title}"`);
+
+        ensureShadow();
+        removePopup();
+
         const C = {
             safe: { bg: '#0a1a0f', bd: '#22c55e', ac: '#4ade80', gl: 'rgba(34,197,94,0.3)', ic: '🛡️' },
             suspicious: { bg: '#1a1500', bd: '#f59e0b', ac: '#fbbf24', gl: 'rgba(245,158,11,0.3)', ic: '⚠️' },
@@ -133,18 +142,17 @@
         }[level] || { bg: '#0a1a0f', bd: '#22c55e', ac: '#4ade80', gl: 'rgba(34,197,94,0.3)', ic: '🛡️' };
 
         let btns = '';
-        if (level === 'suspicious') btns = `<div class="sn-a"><button class="sn-b sn-bd">View Details</button></div>`;
-        if (level === 'malicious') btns = `<div class="sn-a"><button class="sn-b sn-bl">Leave Page</button><button class="sn-b sn-bo">View Report</button></div>`;
+        if (level === 'suspicious') btns = '<div class="sn-a"><button class="sn-b sn-bdet">View Details</button></div>';
+        if (level === 'malicious') btns = '<div class="sn-a"><button class="sn-b sn-blev">Leave Page</button><button class="sn-b sn-brpt">View Report</button></div>';
 
         const scoreH = score ? `<div class="sn-sc">Risk Score: <strong>${score}</strong>/10</div>` : '';
         const reasonH = reasons && reasons.length ? `<div class="sn-rs">${reasons.slice(0, 3).map(r => `<div class="sn-r">• ${r}</div>`).join('')}</div>` : '';
         const dur = level === 'safe' ? POPUP_SAFE_MS : level === 'malicious' ? POPUP_DANGER_MS : POPUP_WARN_MS;
 
-        const el = document.createElement('div');
-        el.className = 'sn-p';
-        el.innerHTML = `
+        // Create a wrapper so styles apply properly
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `
       <style>
-        :host{all:initial}*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         .sn-p{position:fixed;top:20px;right:20px;width:370px;background:${C.bg};border:1.5px solid ${C.bd};
           border-radius:16px;box-shadow:0 0 30px ${C.gl},0 20px 50px rgba(0,0,0,.5);
           font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#e2e8f0;
@@ -157,7 +165,7 @@
         .sn-ic{font-size:28px;line-height:1;flex-shrink:0}
         .sn-tw{flex:1}.sn-t{font-size:15px;font-weight:700;color:${C.ac};line-height:1.2}
         .sn-st{font-size:12px;color:#94a3b8;margin-top:2px}
-        .sn-x{background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;padding:4px;border-radius:6px;transition:all .2s}
+        .sn-x{background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;padding:4px;line-height:1;border-radius:6px;transition:all .2s}
         .sn-x:hover{color:#e2e8f0;background:rgba(255,255,255,.1)}
         .sn-bd2{padding:0 18px 14px}.sn-m{font-size:13px;color:#cbd5e1;line-height:1.5}
         .sn-sc{font-size:13px;color:${C.ac};margin-top:8px;padding:6px 10px;background:rgba(255,255,255,.05);border-radius:8px;display:inline-block}
@@ -165,40 +173,69 @@
         .sn-a{display:flex;gap:8px;padding:0 18px 16px}
         .sn-b{flex:1;padding:10px 16px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
         .sn-b:hover{filter:brightness(1.15);transform:translateY(-1px)}.sn-b:active{transform:translateY(0)}
-        .sn-bd{background:linear-gradient(135deg,${C.bd},${C.ac});color:#000}
-        .sn-bl{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff}
-        .sn-bo{background:transparent;border:1px solid ${C.bd};color:${C.ac}}
+        .sn-bdet{background:linear-gradient(135deg,${C.bd},${C.ac});color:#000}
+        .sn-blev{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff}
+        .sn-brpt{background:transparent;border:1px solid ${C.bd};color:${C.ac}}
         .sn-pg{height:3px;background:rgba(255,255,255,.05);overflow:hidden}
         .sn-pb{height:100%;background:${C.ac};transition:width linear}
       </style>
-      <div class="sn-h">
-        <span class="sn-ic">${C.ic}</span>
-        <div class="sn-tw"><div class="sn-t">${title}</div><div class="sn-st">SecureNet Real-Time Engine</div></div>
-        <button class="sn-x" title="Dismiss">×</button>
-      </div>
-      <div class="sn-bd2">
-        <div class="sn-m">${message}</div>${scoreH}${reasonH}
-      </div>
-      ${btns}
-      <div class="sn-pg"><div class="sn-pb" style="width:100%"></div></div>`;
+      <div class="sn-p">
+        <div class="sn-h">
+          <span class="sn-ic">${C.ic}</span>
+          <div class="sn-tw"><div class="sn-t">${title}</div><div class="sn-st">SecureNet Real-Time Engine</div></div>
+          <button class="sn-x" title="Dismiss">×</button>
+        </div>
+        <div class="sn-bd2">
+          <div class="sn-m">${message}</div>${scoreH}${reasonH}
+        </div>
+        ${btns}
+        <div class="sn-pg"><div class="sn-pb" style="width:100%"></div></div>
+      </div>`;
 
-        shadow.appendChild(el);
-        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('vis')));
+        // Append all children (style + popup div) to shadow
+        while (wrapper.firstChild) shadow.appendChild(wrapper.firstChild);
 
+        const el = shadow.querySelector('.sn-p');
+        if (!el) { WARN('Popup element not found in shadow'); return; }
+
+        // Animate in after 2 frames
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            el.classList.add('vis');
+            LOG('Popup visible');
+        }));
+
+        // Progress bar
         const bar = el.querySelector('.sn-pb');
-        if (bar) { bar.style.transitionDuration = dur + 'ms'; requestAnimationFrame(() => bar.style.width = '0%'); }
+        if (bar) {
+            bar.style.transitionDuration = dur + 'ms';
+            requestAnimationFrame(() => bar.style.width = '0%');
+        }
 
+        // Auto-dismiss
         let timer = null;
-        const dismiss = () => { el.classList.remove('vis'); el.classList.add('hid'); setTimeout(() => { if (el.parentNode) el.remove(); }, 500); };
+        const dismiss = () => {
+            el.classList.remove('vis');
+            el.classList.add('hid');
+            setTimeout(() => { if (el.parentNode) el.remove(); }, 500);
+        };
         if (level !== 'malicious') timer = setTimeout(dismiss, dur);
-        el.querySelector('.sn-x').addEventListener('click', () => { if (timer) clearTimeout(timer); dismiss(); });
-        const db = el.querySelector('.sn-bd'); if (db) db.addEventListener('click', () => {
+
+        // Buttons
+        const closeBtn = el.querySelector('.sn-x');
+        if (closeBtn) closeBtn.addEventListener('click', () => { if (timer) clearTimeout(timer); dismiss(); });
+
+        const detBtn = el.querySelector('.sn-bdet');
+        if (detBtn) detBtn.addEventListener('click', () => {
             if (timer) clearTimeout(timer);
             try { chrome.runtime.sendMessage({ action: 'open_securenet_panel' }); } catch { window.open(API_BASE + '/securenet', '_blank'); }
             dismiss();
         });
-        const lb = el.querySelector('.sn-bl'); if (lb) lb.addEventListener('click', () => { window.location.href = 'about:blank'; });
-        const ob = el.querySelector('.sn-bo'); if (ob) ob.addEventListener('click', () => {
+
+        const levBtn = el.querySelector('.sn-blev');
+        if (levBtn) levBtn.addEventListener('click', () => { window.location.href = 'about:blank'; });
+
+        const rptBtn = el.querySelector('.sn-brpt');
+        if (rptBtn) rptBtn.addEventListener('click', () => {
             try { chrome.runtime.sendMessage({ action: 'open_securenet_panel' }); } catch { window.open(API_BASE + '/securenet', '_blank'); }
             dismiss();
         });
@@ -208,11 +245,11 @@
     //  § 3  CONTINUOUS DOM MONITORING (MutationObserver)
     // ═══════════════════════════════════════════════════════════════════════════
 
-    let mutationBatch = [];
     let batchTimer = null;
 
     function startDOMMonitor() {
-        if (!document.body) { setTimeout(startDOMMonitor, 200); return; }
+        if (!document.body) { setTimeout(startDOMMonitor, 300); return; }
+        LOG('DOM Monitor started');
 
         const observer = new MutationObserver((mutations) => {
             let urgent = false;
@@ -220,14 +257,16 @@
             for (const m of mutations) {
                 for (const node of m.addedNodes) {
                     if (!(node instanceof HTMLElement)) continue;
+                    // Skip our own popup host
+                    if (node.id === 'sn-rt-host') continue;
                     const tag = node.tagName;
 
-                    // ── Injected scripts ──
+                    // Injected scripts
                     if (tag === 'SCRIPT') {
                         const src = node.src || '';
                         const inline = node.textContent || '';
                         if (src && isExternalSuspicious(src)) {
-                            addRisk('dom', 25, `Suspicious script injected: ${new URL(src).hostname}`);
+                            try { addRisk('dom', 25, `Suspicious script injected: ${new URL(src).hostname}`); } catch { }
                             urgent = true;
                         }
                         if (inline.length > 100 && hasObfuscation(inline)) {
@@ -236,7 +275,7 @@
                         }
                     }
 
-                    // ── Injected iframes ──
+                    // Injected iframes
                     if (tag === 'IFRAME') {
                         const src = node.src || '';
                         const style = node.getAttribute('style') || '';
@@ -244,54 +283,44 @@
                             addRisk('dom', 30, 'Hidden iframe injected dynamically');
                             urgent = true;
                         } else if (src && isExternalSuspicious(src)) {
-                            addRisk('dom', 20, `Suspicious iframe injected: ${truncate(src, 60)}`);
+                            addRisk('dom', 20, `Suspicious iframe: ${truncate(src, 60)}`);
                         }
                     }
 
-                    // ── New forms / password fields ──
+                    // New forms / password fields
                     if (tag === 'FORM' || node.querySelector?.('form')) {
                         const forms = tag === 'FORM' ? [node] : Array.from(node.querySelectorAll('form'));
-                        for (const form of forms) {
-                            checkFormSecurity(form);
-                        }
+                        forms.forEach(checkFormSecurity);
                     }
-                    if (tag === 'INPUT' && node.type === 'password') {
-                        addRisk('dom', 15, 'Password input field injected dynamically');
-                    }
-                    if (node.querySelector?.('input[type="password"]')) {
+                    if ((tag === 'INPUT' && node.type === 'password') || node.querySelector?.('input[type="password"]')) {
                         addRisk('dom', 15, 'Password input field injected dynamically');
                     }
 
-                    // ── Full-screen overlays (phishing kits) ──
+                    // Full-screen overlays (phishing kits)
                     if (tag === 'DIV' || tag === 'SECTION') {
-                        const cs = node.style;
-                        if (cs.position === 'fixed' && cs.zIndex && parseInt(cs.zIndex) > 9999) {
-                            const rect = node.getBoundingClientRect?.();
-                            if (rect && rect.width > window.innerWidth * 0.8 && rect.height > window.innerHeight * 0.8) {
-                                // Check if it contains login elements
-                                if (node.querySelector('input[type="password"], input[type="email"], input[type="text"]')) {
-                                    addRisk('dom', 35, 'Full-screen login overlay injected (phishing indicator)');
-                                    urgent = true;
+                        try {
+                            const cs = getComputedStyle(node);
+                            if (cs.position === 'fixed' && parseInt(cs.zIndex) > 9999) {
+                                const rect = node.getBoundingClientRect();
+                                if (rect.width > window.innerWidth * 0.8 && rect.height > window.innerHeight * 0.8) {
+                                    if (node.querySelector('input[type="password"], input[type="email"], input[type="text"]')) {
+                                        addRisk('dom', 35, 'Full-screen login overlay injected (phishing indicator)');
+                                        urgent = true;
+                                    }
                                 }
                             }
-                        }
+                        } catch { }
                     }
                 }
 
-                // ── Form action URL changes ──
+                // Form action URL changes
                 if (m.type === 'attributes' && m.attributeName === 'action' && m.target instanceof HTMLFormElement) {
                     checkFormSecurity(m.target);
                 }
             }
 
-            if (urgent) {
-                flushBatch();
-            } else {
-                mutationBatch.push(Date.now());
-                if (!batchTimer) {
-                    batchTimer = setTimeout(flushBatch, BATCH_WINDOW);
-                }
-            }
+            if (urgent) { if (batchTimer) { clearTimeout(batchTimer); batchTimer = null; } }
+            else if (!batchTimer) { batchTimer = setTimeout(() => { batchTimer = null; }, BATCH_WINDOW); }
         });
 
         observer.observe(document.body, {
@@ -299,38 +328,27 @@
             attributes: true, attributeFilter: ['action', 'src', 'href', 'style']
         });
 
-        // Initial DOM scan
+        // Initial scan of existing DOM
         scanExistingDOM();
     }
 
-    function flushBatch() {
-        batchTimer = null;
-        mutationBatch = [];
-    }
-
     function scanExistingDOM() {
-        // Check all existing forms
         document.querySelectorAll('form').forEach(checkFormSecurity);
 
-        // Check for password fields
-        const pwFields = document.querySelectorAll('input[type="password"]');
-        if (pwFields.length > 0) {
-            // Password fields at load are normal — but check form action
-            pwFields.forEach(pw => {
-                const form = pw.closest('form');
-                if (form) checkFormSecurity(form);
-            });
-        }
-
-        // Check for hidden iframes
-        document.querySelectorAll('iframe').forEach(iframe => {
-            const style = (iframe.getAttribute('style') || '') + ' ' + getComputedStyle(iframe).cssText;
-            if (/display:\s*none|width:\s*0|height:\s*0/i.test(style)) {
-                addRisk('dom', 15, 'Hidden iframe present on page');
-            }
+        document.querySelectorAll('input[type="password"]').forEach(pw => {
+            const form = pw.closest('form');
+            if (form) checkFormSecurity(form);
         });
 
-        // Check existing scripts for obfuscation
+        document.querySelectorAll('iframe').forEach(iframe => {
+            try {
+                const style = (iframe.getAttribute('style') || '') + ' ' + getComputedStyle(iframe).cssText;
+                if (/display:\s*none|width:\s*0|height:\s*0/i.test(style)) {
+                    addRisk('dom', 15, 'Hidden iframe present on page');
+                }
+            } catch { }
+        });
+
         document.querySelectorAll('script:not([src])').forEach(s => {
             const code = s.textContent || '';
             if (code.length > 500 && hasObfuscation(code)) {
@@ -342,22 +360,16 @@
     function checkFormSecurity(form) {
         const action = form.action || form.getAttribute('action') || '';
         if (!action || action === '' || action === '#') return;
-
         try {
             const actionHost = new URL(action, window.location.href).hostname;
             const pageHost = window.location.hostname;
             if (actionHost !== pageHost && !actionHost.endsWith('.' + pageHost) && !pageHost.endsWith('.' + actionHost)) {
-                // Cross-domain form submission
                 const hasPw = !!form.querySelector('input[type="password"]');
-                if (hasPw) {
-                    addRisk('dom', 40, `Login form submits credentials to external domain: ${actionHost}`);
-                } else {
-                    addRisk('dom', 10, `Form submits to external domain: ${actionHost}`);
-                }
+                if (hasPw) addRisk('dom', 40, `Login form submits to external: ${actionHost}`);
+                else addRisk('dom', 10, `Form submits to external: ${actionHost}`);
             }
-            // HTTP form on HTTPS page
             if (window.location.protocol === 'https:' && action.startsWith('http://')) {
-                addRisk('dom', 20, 'Form submits data over insecure HTTP connection');
+                addRisk('dom', 20, 'Form submits over insecure HTTP');
             }
         } catch { }
     }
@@ -365,188 +377,131 @@
     function isExternalSuspicious(src) {
         try {
             const host = new URL(src).hostname;
-            const pageHost = window.location.hostname;
-            if (host === pageHost) return false;
-            // Suspicious TLDs
+            if (host === window.location.hostname) return false;
             if (/\.(xyz|tk|cf|ga|ml|click|download|loan|work|racing|top|club|science|review|stream|gq|bid)$/i.test(host)) return true;
-            // Very short / numeric domains
             if (host.length < 5 || /^\d+\.\d+\.\d+\.\d+$/.test(host)) return true;
-            return false;
-        } catch { return false; }
+        } catch { }
+        return false;
     }
 
     function hasObfuscation(code) {
-        let score = 0;
-        if ((code.match(/\\x[0-9a-f]{2}/gi) || []).length > 10) score += 3;
-        if ((code.match(/\\u[0-9a-f]{4}/gi) || []).length > 10) score += 3;
-        if ((code.match(/\batob\s*\(/g) || []).length > 2) score += 2;
-        if ((code.match(/\beval\s*\(/g) || []).length > 1) score += 3;
-        if ((code.match(/String\.fromCharCode/g) || []).length > 3) score += 3;
-        if ((code.match(/\bcharAt\b/g) || []).length > 5) score += 1;
-        if (/\['\\x/.test(code)) score += 2;
-        // Very long single lines (packed/minified malware)
+        let s = 0;
+        if ((code.match(/\\x[0-9a-f]{2}/gi) || []).length > 10) s += 3;
+        if ((code.match(/\\u[0-9a-f]{4}/gi) || []).length > 10) s += 3;
+        if ((code.match(/\batob\s*\(/g) || []).length > 2) s += 2;
+        if ((code.match(/\beval\s*\(/g) || []).length > 1) s += 3;
+        if ((code.match(/String\.fromCharCode/g) || []).length > 3) s += 3;
+        if (/\['\\x/.test(code)) s += 2;
         const lines = code.split('\n');
-        if (lines.some(l => l.length > 5000)) score += 2;
-        return score >= 5;
+        if (lines.some(l => l.length > 5000)) s += 2;
+        return s >= 5;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    //  § 4  BEHAVIORAL HEURISTIC DETECTION
+    //  § 4  BEHAVIORAL HEURISTIC DETECTION (page-world safe)
     // ═══════════════════════════════════════════════════════════════════════════
 
     function startBehaviorMonitor() {
-        // ── Keystroke capture detection ──
-        let keystrokeListenerCount = 0;
-        const origAddEventListener = EventTarget.prototype.addEventListener;
-        EventTarget.prototype.addEventListener = function (type, fn, opts) {
-            if ((type === 'keydown' || type === 'keypress' || type === 'keyup') && this instanceof HTMLInputElement) {
-                keystrokeListenerCount++;
-                if (keystrokeListenerCount > 10) {
-                    addRisk('behavior', 15, 'Excessive keystroke listeners on input fields');
-                }
-            }
-            return origAddEventListener.call(this, type, fn, opts);
-        };
+        LOG('Behavior Monitor started');
 
-        // ── Clipboard access detection ──
-        const origExecCommand = document.execCommand?.bind(document);
-        if (origExecCommand) {
-            document.execCommand = function (cmd) {
-                if (cmd === 'copy' || cmd === 'paste') {
-                    addRisk('behavior', 10, `Clipboard access detected: ${cmd}`);
-                }
-                return origExecCommand(cmd);
-            };
-        }
-
-        // Check navigator.clipboard usage via proxy
-        if (navigator.clipboard) {
-            const origRead = navigator.clipboard.readText?.bind(navigator.clipboard);
-            if (origRead) {
-                navigator.clipboard.readText = function () {
-                    addRisk('behavior', 20, 'Page attempted to read clipboard content');
-                    return origRead();
-                };
-            }
-        }
-
-        // ── Auto-redirect detection ──
-        let redirectCount = 0;
-        const origAssign = window.location.assign?.bind(window.location);
-        const origReplace = window.location.replace?.bind(window.location);
-
-        // Monitor location changes via setter
-        let currentHref = window.location.href;
+        // Periodic DOM checks instead of wrapping page APIs (which don't work in isolated world)
         setInterval(() => {
-            if (window.location.href !== currentHref) {
-                redirectCount++;
-                currentHref = window.location.href;
-                if (redirectCount > 2) {
-                    addRisk('behavior', 15, `Multiple auto-redirects detected (${redirectCount})`);
-                }
-            }
-        }, 1000);
-
-        // ── window.open spam detection ──
-        let popupCount = 0;
-        const origOpen = window.open;
-        window.open = function (...args) {
-            popupCount++;
-            if (popupCount > 2) {
-                addRisk('behavior', 15, `Excessive popup windows (${popupCount})`);
-            }
-            return origOpen.apply(this, args);
-        };
-
-        // ── Base64 script detection in DOM ──
-        setTimeout(() => {
-            const allScripts = document.querySelectorAll('script:not([src])');
-            allScripts.forEach(s => {
+            // Check for base64 encoded scripts
+            document.querySelectorAll('script:not([src])').forEach(s => {
                 const code = s.textContent || '';
-                // Detect base64 encoded payloads being decoded
-                const b64Matches = code.match(/atob\s*\(\s*['"`]([A-Za-z0-9+/=]{20,})['"`]\s*\)/g);
-                if (b64Matches && b64Matches.length >= 2) {
-                    addRisk('behavior', 15, 'Multiple Base64-encoded script payloads detected');
-                }
+                const b64 = (code.match(/atob\s*\(\s*['"`]([A-Za-z0-9+/=]{20,})['"`]\s*\)/g) || []);
+                if (b64.length >= 2) addRisk('behavior', 15, 'Multiple Base64-encoded script payloads');
             });
-        }, 2000);
 
-        // ── Detect rapid form submission attempts ──
+            // Check for data: URI scripts or srcs
+            document.querySelectorAll('[src^="data:text/html"], [src^="data:application"]').forEach(() => {
+                addRisk('behavior', 20, 'Data URI used to load content (potential XSS)');
+            });
+
+            // Check for javascript: URIs in links
+            document.querySelectorAll('a[href^="javascript:"]').forEach(a => {
+                const code = a.getAttribute('href') || '';
+                if (code.length > 30) addRisk('behavior', 10, 'Long javascript: URI in link');
+            });
+
+        }, 5000);
+
+        // Detect rapid form submission attempts
         let formSubmitCount = 0;
         document.addEventListener('submit', () => {
             formSubmitCount++;
-            if (formSubmitCount > 5) {
-                addRisk('behavior', 10, 'Excessive form submissions detected');
-            }
+            if (formSubmitCount > 5) addRisk('behavior', 10, 'Excessive form submissions');
         }, true);
+
+        LOG('Behavior Monitor: periodic checks active');
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    //  § 5  NETWORK MONITORING (fetch/XHR Wrapper)
+    //  § 5  NETWORK MONITORING (via page-world script injection)
     // ═══════════════════════════════════════════════════════════════════════════
 
     function startNetworkMonitor() {
-        const pageHost = window.location.hostname;
-        const suspiciousEndpoints = /password|credential|login|auth|token|session|cc|card|ssn|social/i;
+        LOG('Network Monitor started');
 
-        // ── Wrap fetch() ──
-        const origFetch = window.fetch;
-        window.fetch = async function (input, init) {
+        // Inject a MAIN-world script to wrap fetch/XHR on the page
+        try {
+            const script = document.createElement('script');
+            script.textContent = `
+        (function(){
+          if(window.__sn_net_mon) return;
+          window.__sn_net_mon = true;
+          var host = location.hostname;
+          var susp = /password|credential|login|auth|token|session|cc|card|ssn|social/i;
+          var origF = window.fetch;
+          window.fetch = function(input, init) {
             try {
-                const url = typeof input === 'string' ? input : input?.url || '';
-                const method = (init?.method || 'GET').toUpperCase();
-                const body = init?.body || '';
-
-                checkNetworkRequest(url, method, body, 'fetch');
-            } catch { }
-            return origFetch.apply(this, arguments);
-        };
-
-        // ── Wrap XMLHttpRequest ──
-        const origXHROpen = XMLHttpRequest.prototype.open;
-        const origXHRSend = XMLHttpRequest.prototype.send;
-
-        XMLHttpRequest.prototype.open = function (method, url) {
-            this._snMethod = method;
-            this._snUrl = url;
-            return origXHROpen.apply(this, arguments);
-        };
-
-        XMLHttpRequest.prototype.send = function (body) {
+              var url = typeof input === 'string' ? input : (input && input.url || '');
+              var method = (init && init.method || 'GET').toUpperCase();
+              if (method === 'POST' && url) {
+                try {
+                  var rh = new URL(url, location.href).hostname;
+                  if (rh !== host) {
+                    window.dispatchEvent(new CustomEvent('__sn_net', {detail:{type:'fetch',url:url,host:rh,method:method}}));
+                  }
+                } catch(e){}
+              }
+            } catch(e){}
+            return origF.apply(this, arguments);
+          };
+          var origOpen = XMLHttpRequest.prototype.open;
+          var origSend = XMLHttpRequest.prototype.send;
+          XMLHttpRequest.prototype.open = function(m,u){this.__snM=m;this.__snU=u;return origOpen.apply(this,arguments);};
+          XMLHttpRequest.prototype.send = function(){
             try {
-                checkNetworkRequest(this._snUrl || '', this._snMethod || 'GET', body || '', 'xhr');
-            } catch { }
-            return origXHRSend.apply(this, arguments);
-        };
+              var m = (this.__snM||'GET').toUpperCase();
+              var u = this.__snU||'';
+              if(m==='POST'&&u){
+                try{var rh=new URL(u,location.href).hostname;if(rh!==host){
+                  window.dispatchEvent(new CustomEvent('__sn_net',{detail:{type:'xhr',url:u,host:rh,method:m}}));
+                }}catch(e){}
+              }
+            }catch(e){}
+            return origSend.apply(this,arguments);
+          };
+        })();
+      `;
+            (document.head || document.documentElement).appendChild(script);
+            script.remove();
 
-        function checkNetworkRequest(url, method, body, type) {
-            if (!url) return;
-            try {
-                const reqUrl = new URL(url, window.location.href);
-                const reqHost = reqUrl.hostname;
-
-                // Cross-origin POST with sensitive data
-                if (method === 'POST' && reqHost !== pageHost) {
-                    const bodyStr = typeof body === 'string' ? body : '';
-                    if (suspiciousEndpoints.test(url) || suspiciousEndpoints.test(bodyStr)) {
-                        addRisk('network', 25, `Credentials posted to external domain: ${reqHost}`);
-                    } else {
-                        // Any cross-origin POST is worth noting
-                        addRisk('network', 5, `Cross-origin POST to: ${reqHost}`);
-                    }
+            // Listen for events from the injected script
+            window.addEventListener('__sn_net', (e) => {
+                const d = e.detail;
+                if (!d) return;
+                LOG(`Network: ${d.method} ${d.type} to ${d.host}`);
+                addRisk('network', 5, `Cross-origin ${d.method} to: ${d.host}`);
+                if (isExternalSuspicious('https://' + d.host + '/')) {
+                    addRisk('network', 20, `Data sent to suspicious domain: ${d.host}`);
                 }
+            });
 
-                // Requests to suspicious TLDs
-                if (isExternalSuspicious(url) && method === 'POST') {
-                    addRisk('network', 20, `Data sent to suspicious domain: ${reqHost}`);
-                }
-
-                // Exfiltration patterns: very long query strings or encoded data
-                if (reqUrl.search.length > 2000 && reqHost !== pageHost) {
-                    addRisk('network', 15, `Possible data exfiltration via long query string to ${reqHost}`);
-                }
-
-            } catch { }
+            LOG('Network Monitor: page-world injection OK');
+        } catch (err) {
+            WARN('Network Monitor: injection failed:', err.message);
         }
     }
 
@@ -555,54 +510,58 @@
     // ═══════════════════════════════════════════════════════════════════════════
 
     async function runBackendScan(url) {
-        if (backendScanning) return;
+        if (backendScanning) { LOG('Scan already in progress, skipping'); return; }
         const now = Date.now();
-        if (url === lastBackendUrl && (now - lastBackendScan) < DEBOUNCE_SCAN) return;
+        if (url === lastBackendUrl && (now - lastBackendScan) < DEBOUNCE_SCAN) { LOG('Debounced, skipping'); return; }
         backendScanning = true;
         lastBackendUrl = url;
         lastBackendScan = now;
 
+        LOG(`Backend scan starting for: ${url}`);
+
         try {
-            // Use the original fetch (not our wrapped version)
-            const origFetch = window.__sn_origFetch || window.fetch;
-            const response = await origFetch(SECURENET_EP, {
+            const response = await fetch(SECURENET_EP, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url })
             });
 
-            if (!response.ok || !response.body) { backendScanning = false; return; }
+            LOG(`Backend response: ${response.status}`);
+            if (!response.ok) { backendScanning = false; WARN(`Backend error: ${response.status}`); showSafePopupFallback(); return; }
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
+            // Try streaming first, fallback to text
             let scanResult = null;
 
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
-                const chunks = buffer.split('\n\n');
-                buffer = chunks.pop() || '';
-                for (const chunk of chunks) {
-                    const line = chunk.trim();
+            try {
+                const text = await response.text();
+                LOG(`SSE response length: ${text.length}`);
+
+                // Parse SSE events from text
+                const events = text.split('\n\n');
+                for (const event of events) {
+                    const line = event.trim();
                     if (!line.startsWith('data: ')) continue;
                     try {
                         const data = JSON.parse(line.slice(6));
-                        if (data.type === 'complete') scanResult = data;
+                        if (data.type === 'complete') {
+                            scanResult = data;
+                            LOG('Got complete event from SSE');
+                        }
                     } catch { }
                 }
+            } catch (err) {
+                WARN('SSE parse error:', err.message);
             }
 
             backendScanning = false;
 
             if (scanResult) {
-                // Feed backend results into risk engine
                 const summary = scanResult.summary || {};
                 const maxCvss = summary.max_cvss || 0;
+                LOG(`Scan complete: risk=${summary.overall_risk}, cvss=${maxCvss}, findings=${summary.total_findings}`);
+
                 riskState.url = Math.min(100, maxCvss * 10);
 
-                // Extract alert reasons from findings
                 const findings = scanResult.findings || [];
                 findings.filter(f => f.severity === 'critical' || f.severity === 'high')
                     .slice(0, 5)
@@ -610,26 +569,46 @@
                         if (!riskState._alerts.includes(f.title)) riskState._alerts.push(f.title);
                     });
 
-                const newLevel = computeLevel();
-                const levels = ['safe', 'suspicious', 'malicious'];
-                if (levels.indexOf(newLevel) >= levels.indexOf(riskState._level)) {
-                    riskState._level = newLevel;
+                // Force show popup for initial scan (even if safe)
+                riskState._level = computeLevel();
+                if (!initialPopupShown) {
+                    initialPopupShown = true;
+                    showRiskPopup();
+                } else {
+                    // Only show if level changed
                     showRiskPopup();
                 }
+            } else {
+                WARN('No complete event received from backend');
+                backendScanning = false;
+                showSafePopupFallback();
             }
-        } catch {
+        } catch (err) {
             backendScanning = false;
+            WARN('Backend scan failed:', err.message);
+            showSafePopupFallback();
+        }
+    }
+
+    function showSafePopupFallback() {
+        if (!initialPopupShown) {
+            initialPopupShown = true;
+            showPopup({
+                level: 'safe', title: 'SecureNet Active — Monitoring Page',
+                message: 'Real-time protection is running. Monitoring for threats.', score: null
+            });
         }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    //  § 7  EMAIL DYNAMIC MONITORING (Gmail / Outlook)
+    //  § 7  EMAIL DYNAMIC MONITORING
     // ═══════════════════════════════════════════════════════════════════════════
 
     const isEmailSite = /mail\.google\.com|outlook\.live\.com|outlook\.office\.com|outlook\.office365\.com/i.test(window.location.hostname);
 
     function startEmailMonitor() {
         if (!isEmailSite) return;
+        LOG('Email Monitor started');
 
         const scannedLinks = new Set();
         let emailDebounce = null;
@@ -640,66 +619,49 @@
         });
 
         function scanEmailContent() {
-            // Gmail: .a3s.aiL  |  Outlook: .ReadMsgBody, [role="main"]
             const emailBodies = document.querySelectorAll('.a3s.aiL, .ReadMsgBody, .RpC6Td, [data-testid="message-view-body"]');
-
             emailBodies.forEach(body => {
                 const links = Array.from(body.querySelectorAll('a[href]'));
-
                 links.forEach(a => {
                     const href = a.href;
                     const text = (a.textContent || '').trim();
                     if (scannedLinks.has(href)) return;
                     scannedLinks.add(href);
-
                     if (!href.startsWith('http')) return;
 
-                    // ── Link text ≠ actual href ──
+                    // Link text ≠ href
                     if (text.startsWith('http') && text !== href) {
                         try {
                             const textHost = new URL(text).hostname;
                             const hrefHost = new URL(href).hostname;
                             if (textHost !== hrefHost) {
-                                addRisk('dom', 30, `Email link mismatch: text shows "${textHost}" but goes to "${hrefHost}"`);
+                                addRisk('dom', 30, `Email link mismatch: "${textHost}" → "${hrefHost}"`);
                                 a.style.outline = '2px solid #ef4444';
                                 a.style.outlineOffset = '2px';
                             }
                         } catch { }
                     }
 
-                    // ── Homograph domain detection ──
+                    // Homograph detection
                     try {
                         const host = new URL(href).hostname;
-                        if (/xn--/.test(host) || /[\u0400-\u04FF\u0500-\u052F\u0370-\u03FF]/.test(host)) {
-                            addRisk('dom', 25, `Homograph domain detected in email link: ${host}`);
-                            a.style.outline = '2px solid #f59e0b';
-                        }
+                        if (/xn--/.test(host)) addRisk('dom', 25, `Homograph domain: ${host}`);
                     } catch { }
 
-                    // ── Suspicious redirect URLs ──
-                    if (/\bredirect\b.*?url=/i.test(href) || /\bgoto\b.*?url=/i.test(href)) {
-                        addRisk('dom', 10, `Email link uses redirect: ${truncate(href, 80)}`);
-                    }
+                    // Redirect URLs
+                    if (/\bredirect\b.*?url=/i.test(href)) addRisk('dom', 10, `Email redirect link`);
                 });
 
-                // ── Tracking pixels ──
-                const imgs = body.querySelectorAll('img');
-                let trackerCount = 0;
-                imgs.forEach(img => {
-                    const src = img.src || '';
-                    if ((img.width <= 1 || img.height <= 1 || img.naturalWidth <= 1 || img.naturalHeight <= 1) && src.startsWith('http')) {
-                        trackerCount++;
-                    }
+                // Tracking pixels
+                let trackers = 0;
+                body.querySelectorAll('img').forEach(img => {
+                    if ((img.width <= 1 || img.height <= 1) && (img.src || '').startsWith('http')) trackers++;
                 });
-                if (trackerCount > 3) {
-                    addRisk('dom', 5, `${trackerCount} tracking pixels detected in email`);
-                }
+                if (trackers > 3) addRisk('dom', 5, `${trackers} tracking pixels in email`);
             });
         }
 
-        if (document.body) {
-            emailObserver.observe(document.body, { childList: true, subtree: true });
-        }
+        if (document.body) emailObserver.observe(document.body, { childList: true, subtree: true });
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -710,33 +672,20 @@
         let currentUrl = window.location.href;
 
         const origPush = history.pushState;
-        history.pushState = function () {
-            origPush.apply(this, arguments);
-            onNavigate();
-        };
+        history.pushState = function () { origPush.apply(this, arguments); onNav(); };
         const origReplace = history.replaceState;
-        history.replaceState = function () {
-            origReplace.apply(this, arguments);
-            onNavigate();
-        };
-        window.addEventListener('popstate', onNavigate);
+        history.replaceState = function () { origReplace.apply(this, arguments); onNav(); };
+        window.addEventListener('popstate', onNav);
 
-        function onNavigate() {
-            const newUrl = window.location.href;
-            if (newUrl !== currentUrl) {
-                currentUrl = newUrl;
-                // Reset risk for new "page"
-                riskState.dom = 0;
-                riskState.behavior = 0;
-                riskState.network = 0;
-                riskState.url = 0;
-                riskState._alerts = [];
-                riskState._level = 'safe';
-                // Re-scan
-                if (!skipUrl(newUrl)) {
-                    runBackendScan(newUrl);
-                    setTimeout(scanExistingDOM, 1000);
-                }
+        function onNav() {
+            const u = window.location.href;
+            if (u !== currentUrl) {
+                currentUrl = u;
+                LOG(`SPA navigation → ${u}`);
+                riskState.dom = 0; riskState.behavior = 0; riskState.network = 0; riskState.url = 0;
+                riskState._alerts = []; riskState._level = 'safe';
+                initialPopupShown = false;
+                if (!skipUrl(u)) { runBackendScan(u); setTimeout(scanExistingDOM, 1000); }
             }
         }
     }
@@ -748,20 +697,19 @@
     function truncate(s, n) { return s.length > n ? s.slice(0, n) + '…' : s; }
 
     function init() {
-        if (skipUrl(window.location.href)) return;
+        const url = window.location.href;
+        if (skipUrl(url)) { LOG(`Skipping: ${url}`); return; }
 
-        // Save original fetch before wrapping
-        window.__sn_origFetch = window.fetch;
+        LOG(`Engine v4.0 initializing on: ${url}`);
 
-        // Start all monitors
         startDOMMonitor();
         startBehaviorMonitor();
         startNetworkMonitor();
         startSPAMonitor();
         startEmailMonitor();
 
-        // Initial backend scan
-        runBackendScan(window.location.href);
+        // Initial backend scan with slight delay for page to settle
+        setTimeout(() => runBackendScan(url), 2000);
     }
 
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
@@ -770,7 +718,7 @@
         document.addEventListener('DOMContentLoaded', init, { once: true });
     }
 
-    // Listen for external messages
+    // External message handler
     try {
         chrome.runtime.onMessage.addListener((msg) => {
             if (msg.action === 'show_scan_popup' && msg.result) {
