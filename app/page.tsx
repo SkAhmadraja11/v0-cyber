@@ -6,6 +6,7 @@ import LiveThreatTicker from "@/components/live-threat-ticker"
 import useEmblaCarousel from "embla-carousel-react"
 import {
   Shield,
+  ShieldAlert,
   Zap,
   Gamepad2,
   Brain,
@@ -360,6 +361,13 @@ export default function Home() {
                 </Button>
               </Link>
 
+              <Link href="/securenet">
+                <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10">
+                  <ShieldAlert className="w-4 h-4 mr-2" />
+                  SecureNet
+                </Button>
+              </Link>
+
               <Link href="/scanner">
                 <Button className="font-bold shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:shadow-[0_0_30px_rgba(var(--primary),0.5)] transition-all">
                   Launch Scanner
@@ -435,6 +443,12 @@ export default function Home() {
                   <Button className="w-full justify-start" size="sm">
                     <Zap className="w-4 h-4 mr-2" />
                     Launch Scanner
+                  </Button>
+                </Link>
+                <Link href="/securenet" className="block">
+                  <Button variant="outline" className="w-full justify-start bg-transparent border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-500/50" size="sm">
+                    <ShieldAlert className="w-4 h-4 mr-2" />
+                    SecureNet
                   </Button>
                 </Link>
                 <Link href="/dashboard" className="block">

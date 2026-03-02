@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Menu, X, Shield, Zap, GraduationCap, Lock, Activity, Gamepad2, Settings, User } from "lucide-react"
+import { Menu, X, Shield, ShieldAlert, Zap, GraduationCap, Lock, Activity, Gamepad2, Settings, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export function MobileNav() {
@@ -10,6 +10,7 @@ export function MobileNav() {
 
     const navItems = [
         { label: "Scanner", href: "/scanner", icon: Shield },
+        { label: "SecureNet", href: "/securenet", icon: ShieldAlert },
         { label: "Security Awareness", href: "/awareness", icon: GraduationCap },
         { label: "Cryptography", href: "/encryption", icon: Lock },
         { label: "Dashboard", href: "/dashboard", icon: Activity },

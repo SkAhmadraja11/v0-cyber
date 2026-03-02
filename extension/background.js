@@ -3,6 +3,7 @@
 try {
     importScripts('config.js');
     importScripts('offline-detector.js');
+    importScripts('background_autoscan.js');
 } catch (e) { console.error('PhusGuard: Script load failed:', e); }
 
 const API_ENDPOINT = CONFIG.API_BASE + CONFIG.SCAN_ENDPOINT;

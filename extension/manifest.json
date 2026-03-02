@@ -10,7 +10,8 @@
         "storage",
         "notifications",
         "tabs",
-        "sidePanel"
+        "sidePanel",
+        "webNavigation"
     ],
     "host_permissions": [
         "https://next-gen-cyber.vercel.app/*",
@@ -42,7 +43,8 @@
                 "*://*/*"
             ],
             "js": [
-                "content.js"
+                "content.js",
+                "content_autoscan.js"
             ],
             "run_at": "document_idle"
         },
